@@ -527,3 +527,11 @@ body {
   font-size: var(--size-small);
   font-weight: 700;
 }
+
+.habit-row__time {
+  position: relative;
+  margin-left: auto;
+  font-size: var(--size-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}

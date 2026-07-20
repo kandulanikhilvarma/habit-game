@@ -34,6 +34,7 @@ jobs:
           diff shared/game-math.js app/www/game-math.js
           diff shared/paths.js app/www/paths.js
           diff shared/gesture-math.js app/www/gesture-math.js
+          diff shared/reminder-math.js app/www/reminder-math.js
       - name: firebase bundle built
         run: test -s app/www/vendor/firebase.js
 

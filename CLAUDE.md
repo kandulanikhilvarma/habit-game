@@ -9,7 +9,7 @@
 5. `docs/HANDOVER_GUIDE.md` — session workflow and current gate.
 
 ## Current state
-- Active gate: **Gate 0** (update this line as gates close).
+- Active gate: **Gate 1** (update this line as gates close). Gate 0's build is done and merged, but its exit criterion is still open: nobody has run the APK on a phone. Nothing animated or audible has been verified since the Gate 0 scaffold — the browser pane used for verification has a frozen frame clock.
 - Game math lives in `shared/game-math.js`, tested by `shared/game-math.test.js` (`npm test`). It is the single source of truth for XP, levels, stages, moods and streaks — change the numbers there and nowhere else. `app/www/game-math.js` is a generated copy (`npm run sync:shared`), never edit it.
 - There is no `prototype/index.html`; the math was written from MASTER_PLAN §3.4 directly.
 
