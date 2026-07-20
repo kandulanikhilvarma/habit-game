@@ -3,13 +3,15 @@ import {
   streakAfterDay, PERFECT_DAY_BONUS,
 } from './game-math.js';
 import { load, save, rollover, todayKey } from './store.js';
-import { creatureSvg } from './creature.js';
+import { creatureSvg, SPECIES } from './creature.js';
+import { renderJourney, renderYou } from './screens.js';
 import { icons } from './icons.js';
 import { celebrate, bindIdleLifecycle, randomizeBlink } from './fx.js';
 
 const el = (id) => document.getElementById(id);
 let state = load();
 let cloud = null;
+let screen = 'home';
 
 function render() {
   const { level, into, need } = levelFromTotalXp(state.creature.xp);
@@ -22,7 +24,8 @@ function render() {
     `<span class="flame-icon" id="flame">${icons.flame}</span><span>${state.gStreak} day streak</span>`;
   el('xp-fill').style.transform = `scaleX(${(into / need).toFixed(3)})`;
 
-  el('creature').innerHTML = creatureSvg(stage, Math.min(done, 3));
+  const cracks = Math.min((state.creature.cracks ?? 0) + done, 3);
+  el('creature').innerHTML = creatureSvg(state.creature.species, stage, cracks);
   el('creature-name').textContent = state.creature.name;
   el('creature-stage-tag').textContent = `${stage === 1 ? 'Egg' : 'Hatchling'} · ${moodFor(done, total)}`;
 
@@ -33,6 +36,9 @@ function render() {
 
   el('quests').innerHTML = state.habits.map(questMarkup).join('');
   randomizeBlink();
+
+  if (screen === 'journey') renderJourney(el('screen-journey'), state);
+  if (screen === 'you') renderYou(el('screen-you'), state);
 }
 
 function questMarkup(h) {
@@ -55,14 +61,15 @@ function questMarkup(h) {
 }
 
 // ponytail: no undo this gate. Reversing XP, per-habit streak, global streak and the perfect-day
-// bonus is real accounting; it belongs with the edit/delete flows in Gate 1, not bolted on here.
+// bonus is real accounting; it belongs with the edit/delete flows, not bolted on here.
 function complete(habitId, at) {
   if (state.day.doneIds.includes(habitId)) return;
   const habit = state.habits.find((h) => h.id === habitId);
   if (!habit) return;
 
   const firstToday = state.day.doneIds.length === 0;
-  let xp = xpForCompletion({ streak: habit.streak, auto: false });
+  const affinity = habit.category === SPECIES[state.creature.species]?.affinity;
+  let xp = xpForCompletion({ streak: habit.streak, auto: false, affinity });
 
   habit.streak += 1;
   habit.best = Math.max(habit.best, habit.streak);
@@ -103,8 +110,20 @@ el('creature').addEventListener('pointerdown', () => {
   );
 });
 
+// Navigation is instant by design (DESIGN_MOTION_SPEC §3 part 2): tabs are hit dozens of times a
+// day, so the screens swap with a 120ms opacity fade and nothing slides.
+function showScreen(name) {
+  screen = name;
+  document.querySelectorAll('.screen').forEach((s) => { s.hidden = s.dataset.screen !== name; });
+  document.querySelectorAll('.tab').forEach((t) => {
+    t.setAttribute('aria-selected', String(t.dataset.screen === name));
+  });
+  render();
+}
+
 document.querySelectorAll('.tab').forEach((tab) => {
   tab.innerHTML = `${icons[tab.dataset.icon]}<span>${tab.dataset.label}</span>`;
+  tab.addEventListener('pointerdown', () => showScreen(tab.dataset.screen));
 });
 
 // Day rollover is event-driven: no polling timer burning battery in a WebView.
@@ -119,14 +138,22 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) chec
 window.addEventListener('focus', checkRollover);
 document.addEventListener('resume', checkRollover);   // Capacitor app resume
 
-checkRollover();
-render();
-bindIdleLifecycle();
+async function boot() {
+  if (!state.creature.species) {
+    const { runOnboarding } = await import('./onboarding.js');
+    const species = await runOnboarding(el('overlay'));
+    state.creature.species = species;
+    state.creature.name = SPECIES[species].name;
+    save(state);
+  }
 
-// The cloud is optional and always second: the screen is already drawn from local state by now.
-// ponytail: newest-write-wins on whole state. Real per-field merge only matters once one account
-// has two devices, which is a Gate 1+ problem.
-(async () => {
+  checkRollover();
+  render();
+  bindIdleLifecycle();
+
+  // The cloud is optional and always second: the screen is already drawn from local state by now.
+  // ponytail: newest-write-wins on whole state. Real per-field merge only matters once one account
+  // has two devices, which is a Gate 1+ problem.
   const { initCloud, pullState, pushCompletion, pushWholeState } = await import('./cloud.js');
   const ctx = await initCloud();
   if (!ctx) return;
@@ -140,4 +167,6 @@ bindIdleLifecycle();
     await pushWholeState(ctx, state);
   }
   cloud = { push: (s, completion) => pushCompletion(ctx, s, completion) };
-})().catch((err) => console.warn('cloud unavailable, running local-only', err));
+}
+
+boot().catch((err) => console.warn('boot fell back to local-only', err));

@@ -27,6 +27,12 @@ test('xp: auto-verified pays 1.5x', () => {
   assert.equal(xpForCompletion({ streak: 15, auto: true }), 38); // 25 * 1.5 = 37.5
 });
 
+test('xp: affinity adds a flat bonus and auto multiplies the total', () => {
+  assert.equal(xpForCompletion({ streak: 0, affinity: true }), 15);
+  assert.equal(xpForCompletion({ streak: 5, affinity: true }), 20);
+  assert.equal(xpForCompletion({ streak: 0, affinity: true, auto: true }), 23); // 15 * 1.5 = 22.5
+});
+
 test('xp: perfect day bonus is 30', () => {
   assert.equal(PERFECT_DAY_BONUS, 30);
 });

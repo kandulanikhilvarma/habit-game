@@ -20,26 +20,33 @@
       <div class="xp__fill" id="xp-fill"></div>
     </div>
 
-    <section class="scene">
-      <div class="glade"></div>
-      <div class="creature-stage" id="creature"></div>
-      <h1 class="creature-name" id="creature-name"></h1>
-      <p class="creature-stage-tag" id="creature-stage-tag"></p>
+    <section class="screen" id="screen-home" data-screen="home">
+      <div class="scene">
+        <div class="glade"></div>
+        <div class="creature-stage" id="creature"></div>
+        <h1 class="creature-name" id="creature-name"></h1>
+        <p class="creature-stage-tag" id="creature-stage-tag"></p>
+      </div>
+
+      <div class="today">
+        <span class="today__label" id="today-label"></span>
+        <span class="today__dots" id="today-dots"></span>
+      </div>
+
+      <ul class="quests" id="quests"></ul>
     </section>
 
-    <section class="today">
-      <span class="today__label" id="today-label"></span>
-      <span class="today__dots" id="today-dots"></span>
-    </section>
-
-    <ul class="quests" id="quests"></ul>
+    <section class="screen" id="screen-journey" data-screen="journey" hidden></section>
+    <section class="screen" id="screen-you" data-screen="you" hidden></section>
 
     <nav class="tabs" role="tablist">
-      <button class="tab" role="tab" aria-selected="true" data-icon="home" data-label="Home"></button>
-      <button class="tab" role="tab" aria-selected="false" data-icon="chart" data-label="Journey"></button>
-      <button class="tab" role="tab" aria-selected="false" data-icon="user" data-label="You"></button>
+      <button class="tab" role="tab" aria-selected="true" data-screen="home" data-icon="home" data-label="Home"></button>
+      <button class="tab" role="tab" aria-selected="false" data-screen="journey" data-icon="chart" data-label="Journey"></button>
+      <button class="tab" role="tab" aria-selected="false" data-screen="you" data-icon="user" data-label="You"></button>
     </nav>
   </main>
+
+  <div class="overlay" id="overlay"></div>
 
   <script type="module" src="app.js"></script>
 </body>
