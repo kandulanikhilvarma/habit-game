@@ -1,0 +1,49 @@
+/* Design tokens — DESIGN_MOTION_SPEC §1 (motion) and §2 (visual). Single source of truth. */
+:root {
+  /* Easing — custom curves; built-ins are too weak */
+  --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);     /* enter, response — default */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);    /* on-screen movement/morph */
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);     /* sheets (iOS drawer curve) */
+  --spring-pop:  cubic-bezier(0.22, 1.4, 0.36, 1);   /* overshoot — rewards ONLY */
+
+  /* Durations — UI stays under 300ms; ceremonies are the exception */
+  --t-press: 120ms;
+  --t-fast:  180ms;
+  --t-ui:    240ms;
+  --t-sheet: 320ms;
+  --t-beat:  600ms;
+
+  /* Z-index scale */
+  --z-widget-fx: 10;
+  --z-sheet: 20;
+  --z-banner: 30;
+  --z-toast: 40;
+
+  /* Surfaces */
+  --bg: #0d1022;
+  --bg-glow: #1c2150;
+  --surface: #1a1f3d;
+  --surface-raised: #222850;
+  --border: #2b3163;
+
+  /* Text — muted is #a7adcf, not the prototype's #8b91b8 (that was ~4.2:1) */
+  --text: #eef0ff;
+  --text-muted: #a7adcf;
+
+  /* Accent — progress and rewards only; scarcity keeps it meaningful */
+  --mint: #5ef0c0;
+  --violet: #9d7bff;
+  --accent-gradient: linear-gradient(135deg, var(--mint), var(--violet));
+  --flame: #ffd166;
+  --blush: #ff8fb1;
+
+  /* Type — 3 sizes only */
+  --font: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --size-title: 1.5rem;
+  --size-body: 1rem;    /* 16px floor */
+  --size-small: 0.875rem;
+
+  --radius: 18px;
+  --radius-sm: 12px;
+  --tap: 44px;          /* minimum touch target */
+}

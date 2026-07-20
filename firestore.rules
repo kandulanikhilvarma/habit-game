@@ -1,0 +1,22 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Everything under a user's tree belongs to that user and nobody else.
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Feedback is write-only from the app; nobody reads it back through the client.
+    match /feedback/{id} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if false;
+    }
+
+    // Deny-all default for anything not matched above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
