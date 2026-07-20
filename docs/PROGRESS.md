@@ -32,10 +32,16 @@ Living log. Every session ends by updating this file; every session starts by re
 - Haptics (`Capacitor Haptics` is referenced in `fx.js` but the plugin is not installed yet — the browser vibrate fallback is what ran).
 
 ### Verified in CI, not locally
-- Firestore rules test: no JDK on this machine, so the emulator could not start here. The `rules` job in CI is the evidence.
+- Firestore rules test: no JDK on this machine, so the emulator could not start here. The `rules` job in CI is the evidence — it passes, including "another uid cannot read or write that tree".
+- Repo: https://github.com/kandulanikhilvarma/habit-game (public). PR #1 merged with all three CI jobs green.
+- APK: run 29745232136 built `kumo-debug-apk`, 3,768,666 bytes, downloadable from the Actions page.
+
+### Two bugs CI caught that local runs hid
+- `pytest` collected nothing in CI: `python -m pytest` puts the repo root on `sys.path`, bare `pytest` does not. Fixed with `pythonpath = .` in `pytest.ini`.
+- `./gradlew: Permission denied`: the wrapper was committed from Windows without the exec bit. Fixed with `git update-index --chmod=+x` (PR #2). Anything executable added from this machine needs the same treatment.
 
 ### Next
-1. Confirm CI is green and the APK artifact downloads and installs.
+1. Download the APK on the phone and install it — first real launch.
 2. Firebase project → Anonymous auth + Firestore → `app/www/firebase-config.js`, service account into Vercel env.
 3. Connect the repo to Vercel (native Git integration; no token in a public repo).
 4. Gate 0 exit: complete a habit on the phone and prove XP survives offline → sync.
