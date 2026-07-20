@@ -3,7 +3,7 @@
 // ponytail: localStorage, not a hand-written IndexedDB layer — Firestore's own offline cache
 // replaces this wholesale in Gate 1, so anything cleverer here would be written twice.
 
-import { applyMissedDays } from './game-math.js';
+import { applyMissedDays, isComeback } from './game-math.js';
 
 const KEY = 'habitgame.state.v1';
 const DAY_MS = 86400000;
@@ -32,15 +32,34 @@ function seed() {
       { id: 'workout', name: 'Morning workout', glyph: '🏃', category: 'body', streak: 0, best: 0, total: 0 },
       { id: 'phone', name: 'No phone after 11pm', glyph: '🌙', category: 'order', streak: 0, best: 0, total: 0 },
     ],
+    comeback: false,
+    badges: [],
+    settings: { sound: null },
     day: { date: todayKey(), doneIds: [], xpEarned: 0 },
     createdAt: Date.now(),
+  };
+}
+
+/**
+ * State saved by an older build is missing whatever keys that build did not have. Fill them from
+ * the seed rather than reaching into `state.settings.sound` and throwing on somebody's real data.
+ * Cheap forward-compatibility: every new top-level key gets a default here for free.
+ */
+function withDefaults(stored) {
+  const base = seed();
+  return {
+    ...base,
+    ...stored,
+    creature: { ...base.creature, ...stored.creature },
+    settings: { ...base.settings, ...stored.settings },
+    day: { ...base.day, ...stored.day },
   };
 }
 
 export function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? JSON.parse(raw) : seed();
+    return raw ? withDefaults(JSON.parse(raw)) : seed();
   } catch {
     return seed();
   }
@@ -70,6 +89,9 @@ export function rollover(state, today = todayKey()) {
   state.habits.forEach((h) => {
     if (missed > 0) h.streak = 0;
   });
+  // The creature sleeps through a long absence and wakes on the next completion — a paused world
+  // reads as "waiting for you", where a punished one reads as "delete the app" (MASTER_PLAN §3.3).
+  if (isComeback(Math.max(0, missed))) state.comeback = true;
   state.day = { date: today, doneIds: [], xpEarned: 0 };
   save(state);
   return { state, rolled: true, freezeUsed: next.freezeUsed, missed: Math.max(0, missed) };

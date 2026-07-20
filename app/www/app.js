@@ -6,7 +6,7 @@ import { load, save, rollover, todayKey } from './store.js';
 import { creatureSvg, SPECIES } from './creature.js';
 import { renderJourney, renderYou } from './screens.js';
 import { icons } from './icons.js';
-import { celebrate, bindIdleLifecycle, randomizeBlink } from './fx.js';
+import { celebrate, wakeUp, bindIdleLifecycle, randomizeBlink } from './fx.js';
 import { sheetMarkup, makeHabit, TEMPLATES, MAX_HABITS } from './habits.js';
 import { presentSheet } from './sheet.js';
 
@@ -27,9 +27,11 @@ function render() {
   el('xp-fill').style.transform = `scaleX(${(into / need).toFixed(3)})`;
 
   const cracks = Math.min((state.creature.cracks ?? 0) + done, 3);
-  el('creature').innerHTML = creatureSvg(state.creature.species, stage, cracks);
+  el('creature').innerHTML = creatureSvg(state.creature.species, stage, cracks, state.comeback);
   el('creature-name').textContent = state.creature.name;
-  el('creature-stage-tag').textContent = `${stage === 1 ? 'Egg' : 'Hatchling'} · ${moodFor(done, total)}`;
+  el('creature-stage-tag').textContent = state.comeback
+    ? 'Asleep · waiting for you'
+    : `${stage === 1 ? 'Egg' : 'Hatchling'} · ${moodFor(done, total)}`;
 
   el('today-label').textContent = `Today ${done}/${total}`;
   el('today-dots').innerHTML = state.habits
@@ -85,14 +87,33 @@ function complete(habitId, at) {
     state.freezes = rolled.freezes;
     state.gBest = Math.max(state.gBest, state.gStreak);
   }
-  if (state.day.doneIds.length === state.habits.length) xp += PERFECT_DAY_BONUS;
+  const perfect = state.day.doneIds.length === state.habits.length;
+  if (perfect) xp += PERFECT_DAY_BONUS;
+  const wasAsleep = state.comeback;
 
   state.creature.xp += xp;
   state.day.xpEarned += xp;
-  save(state);
-  render();
 
-  celebrate({ xp, at, stageEl: el('creature'), flameEl: el('flame') });
+  if (wasAsleep) {
+    // Coming back is the moment worth marking, so the badge is earned here and never expires.
+    state.comeback = false;
+    if (!state.badges.includes('rekindled')) state.badges.push('rekindled');
+  }
+  save(state);
+
+  if (wasAsleep) {
+    wakeUp(el('creature'), { sound: state.settings.sound === true }).then(render);
+  } else {
+    render();
+  }
+
+  celebrate({
+    xp, at, stageEl: el('creature'), flameEl: el('flame'),
+    indexToday: state.day.doneIds.length - 1,
+    perfect,
+    sound: state.settings.sound === true,
+  });
+  if (state.settings.sound === null) askAboutSound();
 
   // Fire-and-forget: the write is already local and Firestore replays it whenever the network
   // comes back. A failure here must never cost the user their completion.
@@ -112,6 +133,28 @@ el('creature').addEventListener('pointerdown', () => {
     { duration: 320, easing: 'cubic-bezier(0.22, 1.4, 0.36, 1)' },
   );
 });
+
+// Asked once, after the first completion, in the creature's voice rather than as a settings prompt
+// (§6). Until it is answered the app stays silent — `settings.sound === null` means "not asked".
+function askAboutSound() {
+  const banner = document.createElement('div');
+  banner.className = 'ask';
+  banner.innerHTML = `
+    <p class="ask__text">${state.creature.name} wants to make sounds — okay?</p>
+    <div class="ask__actions">
+      <button class="ask__btn" data-sound="no">Not now</button>
+      <button class="ask__btn ask__btn--yes" data-sound="yes">Sure</button>
+    </div>`;
+  document.body.append(banner);
+
+  banner.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-sound]');
+    if (!btn) return;
+    state.settings.sound = btn.dataset.sound === 'yes';
+    save(state);
+    banner.remove();
+  });
+}
 
 function openAddSheet() {
   const sheet = el('sheet');

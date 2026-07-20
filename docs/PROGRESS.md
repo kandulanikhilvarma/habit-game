@@ -4,6 +4,42 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-20 — Gate 1 slice 3: sound, haptics, comeback arc
+
+### Shipped
+- `app/www/audio.js` — WebAudio oscillators, no assets. Completion chimes climb C5-E5-G5-C6 across
+  the day, perfect day is a triad, level-up a 3-note motif, comeback a warm low-to-high pair, freeze
+  spent a single soft low note. Nothing else makes a sound; navigation is silent (§6 utility budget).
+- Sound is opt-in, asked once after the *first* completion in the creature's voice ("Embr wants to
+  make sounds — okay?"). `settings.sound === null` means "not asked yet" and the app stays silent
+  until answered. The AudioContext is created on that user gesture, never at import.
+- Haptics: `impactLight` on a completion, `notificationSuccess` on a perfect day, via
+  `@capacitor/haptics` 8.0.2 with a `navigator.vibrate` fallback in the browser.
+- Comeback arc: 3+ missed days puts the creature to sleep under a blanket with closed eyes and the
+  tag "Asleep · waiting for you". The next completion plays the wake-up (blanket slides off, stretch,
+  settle), clears the state, and earns the permanent "Rekindled" badge shown on You.
+
+### A real bug this slice found
+`state.settings.sound` threw for anyone whose saved state predates this build — which is every
+existing install. `load()` now merges stored state over the seed defaults, so a missing top-level key
+can never crash the app again, and new keys get a default for free. Verified by writing a genuine
+old-format state (no `settings`, no `badges`, no `comeback`) and loading it.
+
+### Verified in this session
+- `npm test` — 28/28.
+- Comeback end-to-end on migrated old-format state: 5-day gap → creature asleep with blanket →
+  completion wakes it → `comeback` false, `badges: ["rekindled"]`, blanket gone, tag back to
+  "Hatchling · radiant". XP 120 → 160 (10 base with the streak reset by the absence, +30 perfect day).
+- Sound prompt appears after the first completion, names the creature, and the first completion is
+  silent. Answering "Sure" persists `settings.sound: true`; a later completion runs the audio path
+  with no errors thrown.
+
+### Unverifiable here — still needs the device
+Whether any of it is *audible*, whether the chimes are pleasant, haptic strength, and every animation
+including the wake-up ceremony. The frozen-frame-clock problem from slice 2 is unchanged.
+
+---
+
 ## 2026-07-20 — Gate 1 slice 2: habit sheet, templates, hold-to-delete
 
 ### Correction to the previous entry

@@ -67,17 +67,41 @@ function hatchling(species, s) {
     </g>`;
 }
 
+// Asleep after a long absence: a blanket and closed eyes, never a sad or dying creature. The
+// blanket is a separate group so fx.js can slide it off in the wake-up ceremony.
+function blanket(s) {
+  return `
+    <g id="blanket">
+      <path d="M46 126 q54 -22 108 0 q6 26 -8 32 q-46 12 -92 0 q-14 -6 -8 -32z" fill="${s.trim}" opacity="0.85"/>
+      <path d="M46 126 q54 -22 108 0" stroke="${s.shellLight}" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <text x="132" y="70" font-size="18" fill="${s.shellLight}" opacity="0.8">z</text>
+      <text x="146" y="52" font-size="13" fill="${s.shellLight}" opacity="0.6">z</text>
+    </g>`;
+}
+
 /**
  * @param species key of SPECIES
  * @param stage 1 = egg, 2 = hatchling
  * @param cracks 0-3 egg cracks; onboarding hands out the first one free (endowed progress)
+ * @param asleep true after 3+ missed days, until the next completion wakes it
  */
-export function creatureSvg(species, stage, cracks = 0) {
+export function creatureSvg(species, stage, cracks = 0, asleep = false) {
   const s = SPECIES[species] ?? SPECIES.kumo;
-  const body = stage >= 2 ? hatchling(species, s) : egg(s, cracks);
+  let body = stage >= 2 ? hatchling(species, s) : egg(s, cracks);
+  if (asleep && stage >= 2) {
+    // Closed eyes: swap the pupils for lids rather than drawing a second creature.
+    body = body.replace(
+      /<g id="eyes">[\s\S]*?<\/g>/,
+      `<g id="eyes">
+        <path d="M79 102 q7 6 14 0" stroke="${s.ink}" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M107 102 q7 6 14 0" stroke="${s.ink}" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </g>`,
+    );
+  }
   return `
-    <svg viewBox="0 0 200 200" role="img" aria-label="Your creature">
+    <svg viewBox="0 0 200 200" role="img" aria-label="${asleep ? 'Your creature, asleep' : 'Your creature'}">
       <ellipse id="shadow" cx="100" cy="164" rx="44" ry="10" fill="#050718" opacity="0.55"/>
       ${body}
+      ${asleep ? blanket(s) : ''}
     </svg>`;
 }
