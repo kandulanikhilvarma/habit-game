@@ -20,7 +20,9 @@ function daysBetween(fromKey, toKey) {
 
 function seed() {
   return {
-    creature: { species: 'kumo', name: 'Kumo', xp: 0 },
+    // species and name are replaced by the starter pick; cracks:1 is endowed progress
+    // (VALIDATION_REPORT §4) — the egg is already cracking before the first completion.
+    creature: { species: null, name: null, xp: 0, cracks: 1 },
     gStreak: 0,
     gBest: 0,
     freezes: 0,

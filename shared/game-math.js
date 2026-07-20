@@ -9,9 +9,16 @@ export const FREEZE_EARNED_EVERY = 7;
 export const EVOLUTION_LEVELS = [3, 7, 12, 20];
 export const COMEBACK_AFTER_MISSED_DAYS = 3;
 
-/** XP for one completion. Streak makes consistency literally worth more; auto-verified pays 1.5x. */
-export function xpForCompletion({ streak = 0, auto = false } = {}) {
-  const base = 10 + Math.min(streak, STREAK_XP_CAP);
+// The master plan calls for an affinity bonus but never fixes its size. 5 XP is a starting value
+// picked here, not a spec number — tune it once real completion data exists.
+export const AFFINITY_BONUS_XP = 5;
+
+/**
+ * XP for one completion. Streak makes consistency literally worth more, auto-verified pays 1.5x,
+ * and a habit matching the creature's affinity category pays a small flat bonus.
+ */
+export function xpForCompletion({ streak = 0, auto = false, affinity = false } = {}) {
+  const base = 10 + Math.min(streak, STREAK_XP_CAP) + (affinity ? AFFINITY_BONUS_XP : 0);
   return Math.round(base * (auto ? AUTO_MULTIPLIER : 1));
 }
 

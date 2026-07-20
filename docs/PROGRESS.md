@@ -4,6 +4,36 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-20 — Gate 1 slice 1: onboarding + tabs
+
+### Shipped
+- Three-starter pick as the first-run overlay: Kumo (mind), Embr (body), Moss (order). Renders per-species colours + one silhouette cue (wisp / spark tail / sprout) on the shared rig, so branching evolution in Gate 2 keeps the same skeleton.
+- Onboarding gate on boot: no species stored → overlay blocks the app until a pick lands. Choice writes `creature.species` + `creature.name` and clears the overlay.
+- Egg starts with 1 crack of 3 (endowed progress, VALIDATION_REPORT §4). Completions add cracks up to the hatchling threshold.
+- Tab routing: Home / Journey / You swap with a 120ms opacity fade, never slide (§3 Part 2). `aria-selected` follows the active screen.
+- Journey (v1): current + best streak, all-time completions, freezes banked, per-habit totals + best. Explicit note that heatmap / time-of-day / trends land at Gate 2 — they need history to say anything true.
+- You (v1): creature summary (species, stage, level, XP into level, affinity), habit list, disclosure about on-device data.
+- `xpForCompletion` now takes `affinity` — matching category adds a flat 5 XP before the auto multiplier. Number is a starting value, not a spec number; tune with real data.
+
+### Verified in this session
+- `npm test` — 18/18 pass (added the affinity case).
+- Fresh browser: onboarding overlay renders 3 cards, picking Embr enables the CTA labelled "Begin with Embr", tapping it clears the overlay, Home shows the Embr-coloured egg with `creature-name` "Embr" and stage tag "Egg · sleeping".
+- Tab switching from the DOM: `aria-selected` follows the click; each screen renders its own content (Journey stat "1" after a workout completion, You card "Embr · Egg").
+
+### Screenshot tool broken this session
+Browser pane's screenshot MCP has been timing out all session; verification is DOM/text-based instead. Behavior confirmed, visual polish (crack art, dim-others rule not firing under `:has(.picked)`) still needs a real screenshot to sign off.
+
+### What went wrong along the way (root causes, not just fixes)
+- First tried a `@keyframes starter-in ... forwards` entry: the filled animation outranks the "dim the non-picked" rule via CSS specificity, so picking a starter can't visibly dim the others.
+- Replaced it with `.onboard.ready` toggled by `requestAnimationFrame`: rAF is throttled/paused in background tabs and never fires there, which would leave the first-run screen invisible forever.
+- Tried `@starting-style` next: transition stayed stuck partway through — cause unclear, and hunting it for a screen the user sees once is not worth the token budget.
+- Dropped the entry animation entirely (`ponytail:` comment marks it). Press feedback and picked-state border stay. Same class of failure — a transition that never fires — was also blocking the exit path via `transitionend`; that now has a 400ms `setTimeout` fallback so the user can never get stuck on a blank overlay.
+
+### Still open (Gate 1 remainder)
+Add-habit sheet with the gesture spec, templates, sound (opt-in via the creature), notification ✓ actions, comeback beat, streak-freeze animation. Each shipped as its own PR.
+
+---
+
 ## 2026-07-20 — Firestore sync (Gate 0 exit criterion)
 
 ### Decision taken
