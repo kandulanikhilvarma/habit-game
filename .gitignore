@@ -1,0 +1,37 @@
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+.env
+.env.*
+!.env.example
+*-service-account*.json
+serviceAccountKey.json
+**/google-services.json
+app/www/firebase-config.js
+
+*.keystore
+*.jks
+
+app/android/build/
+app/android/app/build/
+app/android/.gradle/
+app/android/local.properties
+app/android/app/release/
+
+.vercel
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.firebase/
+
+.DS_Store
+Thumbs.db
+
+# generated copy of shared/game-math.js (npm run sync:shared)
+app/www/game-math.js
+
+# per-machine session permissions, not project config
+.claude/settings.local.json
