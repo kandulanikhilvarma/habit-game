@@ -4,6 +4,42 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-20 — Gate 1 slice 4: reminders with a ✓ action
+
+### Scope decision (asked, not assumed)
+MASTER_PLAN §4.1 budgets "complete via notification" at 1 tap with **no app open**. Capacitor's Local
+Notifications cannot deliver that: the action is handed to JS, so the app has to wake to apply it.
+True app-less completion needs a Kotlin BroadcastReceiver. Agreed to ship the Capacitor version now
+and defer the receiver to Gate 2, where the widget's native work happens anyway. **The friction
+budget line is therefore not yet met as written** — one tap, but the app flashes open.
+
+### Shipped
+- `shared/reminder-math.js` — `parseTime`, `nextTriggerAt`, `notificationId`. Pure, so the midnight
+  and month-boundary edges are testable without a device.
+- `app/www/reminders.js` — action type registration, permission, cancel-then-schedule sync, and the
+  `localNotificationActionPerformed` listener that completes the habit.
+- Optional reminder time per habit via a native `<input type="time">` (platform-native beats a
+  custom picker). Permission is requested at the moment a reminder is set, never as a cold prompt.
+- Reminder times shown on the You screen; deleting a habit cancels its pending notification.
+- Notification copy is in the creature's voice — "Embr is ready when you are" — never "We miss you!"
+  (VALIDATION_REPORT §4 notification ethics).
+
+### Verified in this session
+- `npm test` — 37/37 (9 new reminder cases: current minute counts as passed so saving never fires
+  instantly, 23:59 → 00:05 rolls the day, 31 Jul → 1 Aug rolls the month, invalid times schedule
+  nothing rather than throwing, ids stable and distinct).
+- Browser with no plugin present: adding a habit with a reminder stores `reminder: "19:45"`, shows it
+  on You, and throws nothing — the whole reminder layer no-ops cleanly off-device.
+- Scheduling contract verified against a fake plugin: stale pending notifications cancelled first,
+  one notification scheduled with a stable id, title `📖 Evening walk`, daily repeat, trigger at the
+  next 19:45, `extra.habitId` round-tripping, and the ✓ action handler firing with `evening-walk`.
+
+### Still device-only
+Whether a notification actually appears, whether the ✓ button renders on the Android shade, whether
+`allowWhileIdle` survives Doze, and how much the app-wake flash is felt.
+
+---
+
 ## 2026-07-20 — Gate 1 slice 3: sound, haptics, comeback arc
 
 ### Shipped

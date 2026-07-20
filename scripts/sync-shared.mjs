@@ -2,7 +2,7 @@
 // itself. Copy the shared modules in before serving or syncing; the copies are gitignored.
 import { copyFileSync } from 'node:fs';
 
-for (const file of ['game-math.js', 'paths.js', 'gesture-math.js']) {
+for (const file of ['game-math.js', 'paths.js', 'gesture-math.js', 'reminder-math.js']) {
   copyFileSync(`shared/${file}`, `app/www/${file}`);
   console.log(`copied shared/${file} -> app/www/${file}`);
 }

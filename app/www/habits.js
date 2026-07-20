@@ -52,6 +52,11 @@ export function sheetMarkup(habitCount) {
         <button type="button" class="segment${i === 0 ? ' on' : ''}" data-category="${key}" aria-pressed="${i === 0}">${label}</button>`).join('')}
     </div>
 
+    <label class="field">
+      <span class="field__label">Remind me (optional)</span>
+      <input class="field__input" id="habit-reminder" type="time" autocomplete="off">
+    </label>
+
     <button class="cta" id="add-habit" disabled>Add quest</button>`;
 }
 
@@ -64,12 +69,13 @@ export function habitId(name, existing) {
   return `${base}-${n}`;
 }
 
-export function makeHabit({ name, glyph, category }, existing) {
+export function makeHabit({ name, glyph, category, reminder = null }, existing) {
   return {
     id: habitId(name, existing),
     name: name.trim(),
     glyph,
     category,
+    reminder: reminder || null,
     streak: 0,
     best: 0,
     total: 0,

@@ -9,6 +9,7 @@ import { icons } from './icons.js';
 import { celebrate, wakeUp, bindIdleLifecycle, randomizeBlink } from './fx.js';
 import { sheetMarkup, makeHabit, TEMPLATES, MAX_HABITS } from './habits.js';
 import { presentSheet } from './sheet.js';
+import { initReminders, ensurePermission, syncReminders } from './reminders.js';
 
 const el = (id) => document.getElementById(id);
 let state = load();
@@ -191,12 +192,18 @@ function openAddSheet() {
 
   const close = presentSheet(sheet, el('scrim'));
 
-  submit.addEventListener('click', () => {
+  submit.addEventListener('click', async () => {
     const name = nameInput.value.trim();
     if (!name || state.habits.length >= MAX_HABITS) return;
-    state.habits.push(makeHabit({ name, glyph, category }, state.habits));
+    const reminder = sheet.querySelector('#habit-reminder').value || null;
+
+    // Permission is asked here, at the moment it is actually needed, rather than on first launch.
+    if (reminder) await ensurePermission();
+
+    state.habits.push(makeHabit({ name, glyph, category, reminder }, state.habits));
     save(state);
     render();
+    syncReminders(state.habits, state.creature.name).catch((err) => console.warn('reminder sync failed', err));
     cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
     close(0);
   });
@@ -221,6 +228,8 @@ function bindHoldToDelete(host) {
       state.day.doneIds = state.day.doneIds.filter((id) => id !== row.dataset.delete);
       save(state);
       render();
+      // A deleted habit must stop reminding: cancel-and-reschedule clears its pending notification.
+      syncReminders(state.habits, state.creature.name).catch((err) => console.warn('reminder sync failed', err));
       cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
     }, HOLD_MS);
   };
@@ -277,6 +286,15 @@ async function boot() {
   checkRollover();
   render();
   bindIdleLifecycle();
+
+  // A ✓ tapped on a notification lands here. The habit completes at the centre of the screen
+  // because there is no tap point to float the XP from.
+  initReminders((habitId) => {
+    const centre = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    complete(habitId, centre);
+  }).then((ready) => {
+    if (ready) syncReminders(state.habits, state.creature.name);
+  }).catch((err) => console.warn('reminders unavailable', err));
 
   // The cloud is optional and always second: the screen is already drawn from local state by now.
   // ponytail: newest-write-wins on whole state. Real per-field merge only matters once one account
