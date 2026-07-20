@@ -34,6 +34,10 @@
       </div>
 
       <ul class="quests" id="quests"></ul>
+      <button class="add-quest" id="add-quest">
+        <span class="add-quest__plus" aria-hidden="true"></span>
+        <span>Add a quest</span>
+      </button>
     </section>
 
     <section class="screen" id="screen-journey" data-screen="journey" hidden></section>
@@ -47,6 +51,9 @@
   </main>
 
   <div class="overlay" id="overlay"></div>
+
+  <div class="scrim" id="scrim" hidden></div>
+  <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="New habit quest" hidden></section>
 
   <script type="module" src="app.js"></script>
 </body>

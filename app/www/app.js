@@ -7,6 +7,8 @@ import { creatureSvg, SPECIES } from './creature.js';
 import { renderJourney, renderYou } from './screens.js';
 import { icons } from './icons.js';
 import { celebrate, bindIdleLifecycle, randomizeBlink } from './fx.js';
+import { sheetMarkup, makeHabit, TEMPLATES, MAX_HABITS } from './habits.js';
+import { presentSheet } from './sheet.js';
 
 const el = (id) => document.getElementById(id);
 let state = load();
@@ -35,6 +37,7 @@ function render() {
     .join('');
 
   el('quests').innerHTML = state.habits.map(questMarkup).join('');
+  el('add-quest').hidden = state.habits.length >= MAX_HABITS;
   randomizeBlink();
 
   if (screen === 'journey') renderJourney(el('screen-journey'), state);
@@ -110,6 +113,87 @@ el('creature').addEventListener('pointerdown', () => {
   );
 });
 
+function openAddSheet() {
+  const sheet = el('sheet');
+  sheet.innerHTML = sheetMarkup(state.habits.length);
+
+  let glyph = sheet.querySelector('.glyph').dataset.glyph;
+  let category = sheet.querySelector('.segment').dataset.category;
+  const nameInput = sheet.querySelector('#habit-name');
+  const submit = sheet.querySelector('#add-habit');
+  const sync = () => { submit.disabled = nameInput.value.trim().length === 0; };
+
+  const pick = (group, chosen, attr) => {
+    sheet.querySelectorAll(group).forEach((b) => {
+      const on = b === chosen;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    return chosen.dataset[attr];
+  };
+
+  sheet.querySelectorAll('.chip-btn').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const t = TEMPLATES[Number(chip.dataset.template)];
+      nameInput.value = t.name;
+      glyph = pick('.glyph', sheet.querySelector(`.glyph[data-glyph="${t.glyph}"]`) ?? sheet.querySelector('.glyph'), 'glyph');
+      category = pick('.segment', sheet.querySelector(`.segment[data-category="${t.category}"]`), 'category');
+      sync();
+    });
+  });
+
+  sheet.querySelectorAll('.glyph').forEach((b) => b.addEventListener('click', () => { glyph = pick('.glyph', b, 'glyph'); }));
+  sheet.querySelectorAll('.segment').forEach((b) => b.addEventListener('click', () => { category = pick('.segment', b, 'category'); }));
+  nameInput.addEventListener('input', sync);
+
+  const close = presentSheet(sheet, el('scrim'));
+
+  submit.addEventListener('click', () => {
+    const name = nameInput.value.trim();
+    if (!name || state.habits.length >= MAX_HABITS) return;
+    state.habits.push(makeHabit({ name, glyph, category }, state.habits));
+    save(state);
+    render();
+    cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
+    close(0);
+  });
+}
+
+el('add-quest').addEventListener('click', openAddSheet);
+
+// Hold-to-delete, not a confirm dialog: deliberate where destructive, snappy on cancel
+// (DESIGN_MOTION_SPEC §5). The overlay fills over 1.2s; letting go before it completes cancels.
+const HOLD_MS = 1200;
+function bindHoldToDelete(host) {
+  let timer = null;
+  let held = null;
+
+  const start = (e) => {
+    const row = e.target.closest('[data-delete]');
+    if (!row) return;
+    held = row;
+    row.classList.add('holding');
+    timer = setTimeout(() => {
+      state.habits = state.habits.filter((h) => h.id !== row.dataset.delete);
+      state.day.doneIds = state.day.doneIds.filter((id) => id !== row.dataset.delete);
+      save(state);
+      render();
+      cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
+    }, HOLD_MS);
+  };
+  const cancel = () => {
+    clearTimeout(timer);
+    held?.classList.remove('holding');
+    held = null;
+  };
+
+  host.addEventListener('pointerdown', start);
+  host.addEventListener('pointerup', cancel);
+  host.addEventListener('pointercancel', cancel);
+  host.addEventListener('pointerleave', cancel);
+}
+bindHoldToDelete(el('screen-you'));
+
 // Navigation is instant by design (DESIGN_MOTION_SPEC §3 part 2): tabs are hit dozens of times a
 // day, so the screens swap with a 120ms opacity fade and nothing slides.
 function showScreen(name) {
@@ -166,7 +250,10 @@ async function boot() {
   } else {
     await pushWholeState(ctx, state);
   }
-  cloud = { push: (s, completion) => pushCompletion(ctx, s, completion) };
+  cloud = {
+    push: (s, completion) => pushCompletion(ctx, s, completion),
+    pushAll: (s) => pushWholeState(ctx, s),
+  };
 }
 
 boot().catch((err) => console.warn('boot fell back to local-only', err));
