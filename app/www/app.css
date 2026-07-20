@@ -83,6 +83,33 @@ body {
 .card__meta { font-size: var(--size-small); color: var(--text-muted); }
 .plain-list { list-style: none; display: grid; gap: 4px; padding: 4px 0; }
 
+/* ---- sound opt-in, asked once ---- */
+.ask {
+  position: fixed; inset: auto 16px calc(76px + env(safe-area-inset-bottom));
+  z-index: var(--z-banner);
+  max-width: 448px; margin: 0 auto;
+  display: grid; gap: 10px;
+  padding: 14px 16px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.ask__text { font-size: var(--size-small); }
+.ask__actions { display: flex; gap: 8px; justify-content: flex-end; }
+.ask__btn {
+  min-height: var(--tap);
+  padding: 0 16px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font: inherit; font-size: var(--size-small); font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--t-press) var(--ease-out);
+}
+.ask__btn:active { transform: scale(0.96); }
+.ask__btn--yes { background: var(--accent-gradient); border-color: transparent; color: #0d1022; }
+
 /* ---- add-quest button ---- */
 .add-quest {
   display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -487,4 +514,16 @@ body {
 @media (prefers-reduced-transparency: reduce) {
   .glade { background: #161b3a; }
   .sheet { background: #131735; backdrop-filter: none; }
+}
+
+.badge {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #ff8fb122;
+  border: 1px solid #ff8fb155;
+  color: var(--blush);
+  font-size: var(--size-small);
+  font-weight: 700;
 }

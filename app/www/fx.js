@@ -1,6 +1,8 @@
 // The one entry point for reward feedback: visual + haptic fire on the same frame (§6 causality).
 // Recipe from DESIGN_MOTION_SPEC §3 item 1.
 
+import { playCompletion, playPerfectDay, playComeback } from './audio.js';
+
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 function hapticLight() {
@@ -8,6 +10,12 @@ function hapticLight() {
   const haptics = window.Capacitor?.Plugins?.Haptics;
   if (haptics) haptics.impact({ style: 'LIGHT' });
   else navigator.vibrate?.(12);
+}
+
+function hapticSuccess() {
+  const haptics = window.Capacitor?.Plugins?.Haptics;
+  if (haptics) haptics.notification({ type: 'SUCCESS' });
+  else navigator.vibrate?.([12, 60, 24]);
 }
 
 /** XP number floats up from the point the finger actually touched. */
@@ -45,14 +53,50 @@ export function tickFlame(flameEl) {
 }
 
 /**
- * Fire the whole check-in beat. Haptic goes off on frame 1, with the check fill — not at the end.
- * @param {{xp:number, at:{x:number,y:number}, stageEl:Element, flameEl:Element}} beat
+ * Fire the whole check-in beat. Sound and haptic go off on frame 1, with the check fill — not at
+ * the end of the sequence (§6 causality: feedback belongs on the causal frame).
+ * @param {{xp:number, at:{x:number,y:number}, stageEl:Element, flameEl:Element,
+ *          indexToday:number, perfect:boolean, sound:boolean}} beat
  */
-export function celebrate({ xp, at, stageEl, flameEl }) {
-  hapticLight();
+export function celebrate({ xp, at, stageEl, flameEl, indexToday = 0, perfect = false, sound = false }) {
+  if (perfect) hapticSuccess();
+  else hapticLight();
+  if (sound) {
+    if (perfect) playPerfectDay();
+    else playCompletion(indexToday);
+  }
   floatXp(xp, at.x, at.y);
   hop(stageEl);
   tickFlame(flameEl);
+}
+
+/**
+ * The comeback wake-up (DESIGN_MOTION_SPEC §3 item 8). Blanket slides off, the creature stretches,
+ * then settles. Rare and high-emotion, so it is allowed to be long — but it never blocks input.
+ * Resolves when the beat is over so the caller can re-render the awake creature.
+ */
+export function wakeUp(stageEl, { sound = false } = {}) {
+  if (sound) playComeback();
+  if (reduced.matches) return Promise.resolve();
+
+  const blanketEl = stageEl.querySelector('#blanket');
+  const body = stageEl.querySelector('#body-group');
+
+  blanketEl?.animate(
+    [{ transform: 'translateY(0)', opacity: 1 }, { transform: 'translateY(70px)', opacity: 0 }],
+    { duration: 400, easing: 'cubic-bezier(0.23, 1, 0.32, 1)', fill: 'forwards' },
+  );
+  const stretch = body?.animate(
+    [{ transform: 'scaleY(1)' },
+     { transform: 'scaleY(1.06) translateY(-6px)', offset: 0.45 },
+     { transform: 'scaleY(0.98)', offset: 0.75 },
+     { transform: 'scaleY(1)' }],
+    { duration: 600, delay: 300, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' },
+  );
+
+  // Timer rather than the animation's finished promise: on a tab that never paints, WAAPI never
+  // resolves and the caller would wait forever for a creature that is already awake in state.
+  return new Promise((resolve) => setTimeout(resolve, 1000));
 }
 
 /** Idle life costs battery on a WebView; stop it whenever the app is not on screen. */

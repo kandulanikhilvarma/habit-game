@@ -47,6 +47,9 @@ export function renderYou(host, state) {
       <p class="card__label">Your creature</p>
       <p class="card__value">${state.creature.name} · ${STAGE_NAMES[stage - 1]}</p>
       <p class="card__meta">Level ${level} · ${into}/${need} XP · affinity for ${species.affinity} habits</p>
+      ${(state.badges ?? []).includes('rekindled')
+        ? '<p class="badge">Rekindled — you came back</p>'
+        : ''}
     </div>
 
     <div class="card">
