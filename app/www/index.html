@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0d1022">
+  <title>Kumo</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <span class="chip chip--level" id="level"></span>
+      <span class="chip chip--streak" id="streak"></span>
+    </header>
+
+    <div class="xp" role="progressbar" aria-label="Level progress">
+      <div class="xp__fill" id="xp-fill"></div>
+    </div>
+
+    <section class="scene">
+      <div class="glade"></div>
+      <div class="creature-stage" id="creature"></div>
+      <h1 class="creature-name" id="creature-name"></h1>
+      <p class="creature-stage-tag" id="creature-stage-tag"></p>
+    </section>
+
+    <section class="today">
+      <span class="today__label" id="today-label"></span>
+      <span class="today__dots" id="today-dots"></span>
+    </section>
+
+    <ul class="quests" id="quests"></ul>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-icon="home" data-label="Home"></button>
+      <button class="tab" role="tab" aria-selected="false" data-icon="chart" data-label="Journey"></button>
+      <button class="tab" role="tab" aria-selected="false" data-icon="user" data-label="You"></button>
+    </nav>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
