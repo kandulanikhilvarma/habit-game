@@ -4,6 +4,51 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-20 — Gate 1 slice 2: habit sheet, templates, hold-to-delete
+
+### Correction to the previous entry
+The browser pane used for verification has a **frozen frame clock**: `requestAnimationFrame` never
+fires, CSS transitions stay pinned at their start value, and screenshots time out. That invalidates
+the diagnosis written in the slice-1 entry below — the starter-card entry animation may well have
+been fine, and the `@starting-style` attempt probably never got a chance to run. What is still true:
+a `forwards`-filled animation does outrank the dim-the-others rule, and the simplification stands on
+its own merits. **No animation in this project has been visually verified since the Gate 0 scaffold.**
+
+### Shipped
+- `app/www/sheet.js` — the one gesture surface (DESIGN_MOTION_SPEC §4): pointer capture with grab
+  offset, 5-sample velocity window, rubber-band above rest, velocity-over-position release, and an
+  analytic critically-damped spring (stiffness 440, damping 42, mass 1 → ω = √440). Positioned only
+  by `transform: translateY`, so a drag can interrupt an in-flight animation and continue from the
+  live value.
+- `shared/gesture-math.js` — the pure decisions (rubber band, momentum projection, release, velocity)
+  pulled out of the DOM so they are testable in node. This is the only part of the gesture that could
+  be verified in this environment.
+- `app/www/habits.js` — 8 templates, 12 glyphs, 3 categories, unique slug generation, 7-habit cap.
+- Add-quest button on Home, hidden once the cap is reached.
+- Hold-to-delete on the You screen (§5): overlay fills over 1.2s linear, snaps back in 200ms on
+  release. No confirm dialog — deliberate where destructive, snappy on cancel.
+
+### Verified in this session
+- `npm test` — 28/28 (18 game math + 10 gesture math).
+- Sheet opens, template tap fills name + glyph + category together, submit creates the habit with a
+  unique slug (`10-000-steps`), sheet hides, Home re-renders with the new quest.
+- Hold-to-delete: releasing at 300ms cancels (habit count unchanged at 4); holding the full 1.2s
+  removes it (back to 3).
+- Cap: adding habits stops at 7 and the add button hides itself.
+
+### A real bug the frozen pane exposed
+`close()` completes inside the spring's rAF callback. On a tab where frames never run, the sheet
+would never hide — it would sit open forever with no way out. `springTo` now carries a 700ms
+deadline that settles to the target and fires `onDone` regardless. The same fix protects open,
+close, and settle. Worth keeping on real devices too: backgrounded WebViews stop ticking.
+
+### Cannot be verified here — needs the device or a working pane
+Sheet drag feel, rubber-band resistance, flick-to-dismiss, spring settle, scrim fade, all screen
+transitions, hold-to-delete fill animation. The arithmetic behind the gesture is unit-tested; how it
+*feels* is untested.
+
+---
+
 ## 2026-07-20 — Gate 1 slice 1: onboarding + tabs
 
 ### Shipped
