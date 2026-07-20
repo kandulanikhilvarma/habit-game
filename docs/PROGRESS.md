@@ -4,6 +4,45 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-20 — Firestore sync (Gate 0 exit criterion)
+
+### Decision taken
+The Firebase JS SDK reaches `app/www` through **esbuild**, not a CDN. `scripts/firebase-entry.js`
+re-exports the handful of symbols the app uses; `npm run build:firebase` bundles them into
+`app/www/vendor/firebase.js` (676 KB minified, gitignored, generated). A CDN import would have
+cost a network fetch on first launch and weakened the offline-first promise for nothing.
+
+### Shipped
+- `app/www/cloud.js` — anonymous auth, Firestore with `persistentLocalCache`, whole-state pull at
+  boot, and one batched write per completion covering the user doc, the habit, the day rollup and
+  the completion row. Completion rows are written from day one because analytics cannot be backfilled.
+- `shared/paths.js` — Firestore paths in one place, imported by both the app and the rules test, so
+  a path cannot drift away from the rule that protects it.
+- Boot order: local state renders first, the cloud catches up second. A cloud failure never costs a completion.
+- No Firebase config present → the app runs local-only, no errors. That is what ships until the
+  project exists.
+- OpenJDK 21 installed on this machine (with your approval), so the emulator suite runs locally now.
+
+### Verified in this session
+- `npm run test:rules` locally: 8/8, including every document shape the app actually writes and the
+  same documents denied to a second uid.
+- Real app in a browser against the auth + Firestore emulators: anonymous sign-in, whole-state push,
+  then a completion wrote `users/{uid}/completions/2026-07-20_workout` with `{hid, date, ts, source, xp}`
+  and `users/{uid}/days/2026-07-20` with `{done:1, total:3, perfect:false, xpEarned:11, doneIds:[workout]}`.
+- **Offline → sync**: killed the emulator, completed a habit (UI advanced to 2/3, XP 82 stored
+  locally), restarted the emulator — the queued write landed 6 s later. The completion's `ts`
+  (13:41:55, the moment of the tap) is earlier than Firestore's `createTime` (13:42:22), which is the
+  proof it was queued rather than re-sent.
+- Boot pull: cleared `localStorage`, reloaded, and the app restored XP 60 and the 1-day streak from Firestore.
+- Local-only fallback with the config file removed: completions still work, perfect-day bonus applied
+  (82 + 11 + 30 = 123).
+
+### Still needs the phone
+Same list as below, plus: airplane-mode round-trip on the device, and whether the 676 KB bundle hurts
+cold start on a cheap Android.
+
+---
+
 ## 2026-07-20 — Gate 0 scaffold
 
 ### Shipped
@@ -47,6 +86,7 @@ Living log. Every session ends by updating this file; every session starts by re
 4. Gate 0 exit: complete a habit on the phone and prove XP survives offline → sync.
 
 ### Open questions
-- **How does the Firebase JS SDK get into `app/www` without a bundler?** The stack is bundler-free vanilla JS, but `firebase` is an npm package. Two honest options: (a) add `esbuild` as a dev dependency and bundle just the Firebase SDK into one file at build time; (b) import the Firebase ESM build from the gstatic CDN, which costs a network fetch on first launch and weakens the offline-first promise. Recommendation is (a). Not decided — do not pick silently.
+- ~~How does the Firebase JS SDK get into `app/www` without a bundler?~~ Settled on esbuild — see the entry above.
+- Multi-device conflict handling is newest-write-wins on whole state (`ponytail:` comment in `app/www/app.js`). Fine for one device; revisit when an account can be on two.
 - Nunito is referenced in `tokens.css` but no woff2 is bundled, so the WebView currently falls back to Roboto. Self-host the variable font before Gate 1 (no Google Fonts CDN call from the app shell).
 - Undo on a completed habit is deliberately absent this gate (see the `ponytail:` comment in `app/www/app.js`); decide the accounting rules with the edit/delete flows in Gate 1.

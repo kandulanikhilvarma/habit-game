@@ -9,6 +9,7 @@ import { celebrate, bindIdleLifecycle, randomizeBlink } from './fx.js';
 
 const el = (id) => document.getElementById(id);
 let state = load();
+let cloud = null;
 
 function render() {
   const { level, into, need } = levelFromTotalXp(state.creature.xp);
@@ -82,6 +83,10 @@ function complete(habitId, at) {
   render();
 
   celebrate({ xp, at, stageEl: el('creature'), flameEl: el('flame') });
+
+  // Fire-and-forget: the write is already local and Firestore replays it whenever the network
+  // comes back. A failure here must never cost the user their completion.
+  cloud?.push(state, { hid: habitId, xp }).catch((err) => console.warn('cloud write queued/failed', err));
 }
 
 // Respond on pointerdown — feedback belongs on the press, not on click.
@@ -117,3 +122,22 @@ document.addEventListener('resume', checkRollover);   // Capacitor app resume
 checkRollover();
 render();
 bindIdleLifecycle();
+
+// The cloud is optional and always second: the screen is already drawn from local state by now.
+// ponytail: newest-write-wins on whole state. Real per-field merge only matters once one account
+// has two devices, which is a Gate 1+ problem.
+(async () => {
+  const { initCloud, pullState, pushCompletion, pushWholeState } = await import('./cloud.js');
+  const ctx = await initCloud();
+  if (!ctx) return;
+
+  const remote = await pullState(ctx, todayKey());
+  if (remote && (remote.updatedAt ?? 0) > (state.updatedAt ?? 0)) {
+    state = { ...state, ...remote };
+    save(state);
+    render();
+  } else {
+    await pushWholeState(ctx, state);
+  }
+  cloud = { push: (s, completion) => pushCompletion(ctx, s, completion) };
+})().catch((err) => console.warn('cloud unavailable, running local-only', err));

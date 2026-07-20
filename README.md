@@ -39,7 +39,7 @@ import from outside itself. Edit the file in `shared/`, never the copy.
 
 ```bash
 npm install                      # node 22+
-npm run serve                    # game UI at localhost:4173
+npm run serve                    # build + game UI at localhost:4173
 npm test                         # game math (node --test, no framework)
 npm run check                    # syntax check the frontend modules
 
@@ -47,7 +47,18 @@ python -m venv .venv && .venv/Scripts/pip install -r requirements-dev.txt
 pytest                           # Flask API
 
 npm run test:rules               # Firestore rules against the emulator (needs a JDK)
-npm run cap:sync                 # copy the webroot into the Android project
+npm run cap:sync                 # build, then copy the webroot into the Android project
+```
+
+`npm run build` does two generated things: copies `shared/*.js` into the webroot, and bundles the
+Firebase SDK into `app/www/vendor/firebase.js` with esbuild. Both outputs are gitignored.
+
+Without `app/www/firebase-config.js` the app runs local-only against `localStorage` — no errors, no
+account. Copy `firebase-config.example.js` to wire it up. To develop against emulators instead of a
+real project, set `projectId: 'demo-kumo'` and `useEmulator: true`, then:
+
+```bash
+npx firebase emulators:start --only firestore,auth --project demo-kumo
 ```
 
 The debug APK is built by CI on every push to `main` — download `kumo-debug-apk` from the

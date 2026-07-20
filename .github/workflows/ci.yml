@@ -24,12 +24,17 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
+          cache: npm
+      - run: npm ci
       - run: npm test
+      - run: npm run build
       - run: npm run check
-      - name: webroot copy matches the shared source
+      - name: webroot copies match the shared sources
         run: |
-          npm run sync:shared
           diff shared/game-math.js app/www/game-math.js
+          diff shared/paths.js app/www/paths.js
+      - name: firebase bundle built
+        run: test -s app/www/vendor/firebase.js
 
   rules:
     runs-on: ubuntu-latest

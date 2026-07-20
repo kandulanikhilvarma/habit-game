@@ -45,6 +45,7 @@ export function load() {
 }
 
 export function save(state) {
+  state.updatedAt = Date.now();   // the tiebreaker when local and cloud disagree at boot
   localStorage.setItem(KEY, JSON.stringify(state));
 }
 
