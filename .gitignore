@@ -35,3 +35,6 @@ app/www/game-math.js
 
 # per-machine session permissions, not project config
 .claude/settings.local.json
+
+app/www/paths.js
+app/www/vendor/

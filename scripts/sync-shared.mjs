@@ -1,6 +1,8 @@
-// shared/game-math.js is the single source of truth, but a Capacitor webroot cannot import from
-// outside itself. Copy it in before serving or syncing; the copy is gitignored.
+// shared/ is the single source of truth, but a Capacitor webroot cannot import from outside
+// itself. Copy the shared modules in before serving or syncing; the copies are gitignored.
 import { copyFileSync } from 'node:fs';
 
-copyFileSync('shared/game-math.js', 'app/www/game-math.js');
-console.log('copied shared/game-math.js -> app/www/game-math.js');
+for (const file of ['game-math.js', 'paths.js']) {
+  copyFileSync(`shared/${file}`, `app/www/${file}`);
+  console.log(`copied shared/${file} -> app/www/${file}`);
+}
