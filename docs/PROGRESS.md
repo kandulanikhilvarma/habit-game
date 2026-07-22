@@ -4,6 +4,31 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-22 — Gate 2 compliance drafts: privacy policy + deletion page
+
+### Shipped (drafts, not final)
+- `web/privacy.html` and `web/delete-account.html`, styled with the existing site tokens, linked from
+  the landing footer (restored — they were pulled when the pages did not exist).
+- The policy describes only what the app actually does today: anonymous auth, and game data
+  (creature, habits, completion events, daily rollups) in Firestore. It names the real sub-processors
+  (Firebase, Vercel), says plainly that we do not sell data or run ad trackers, and links deletion.
+- The health/usage section is written but tagged "applies when you enable these features — not in the
+  current build", so it is honest for a listing made before Health Connect ships.
+
+### Needs a human before it can be published
+- Placeholders, all greppable as `[...]`: `[PUBLISHER NAME]`, `[CONTACT EMAIL]`, `[EFFECTIVE DATE]`,
+  `[DATE]`, the deletion window `[30]`, and the note that the in-app delete control is not built yet.
+- **This is a draft, not legal advice.** VALIDATION_REPORT §5 makes a matching privacy policy a Gate 2
+  exit criterion and the Health-data declaration form a separate Play requirement — both still need a
+  real review and the actual declaration filled in the Play Console. The in-app "Delete my account"
+  control (You tab) is still to build; the deletion page currently points at an email request path.
+
+### Verified in this session
+- Both pages serve 200, the landing footer links resolve to them, and every unfilled value is a
+  bracketed placeholder so nothing can ship blank by accident.
+
+---
+
 ## 2026-07-22 — Gate 2 slice 2: Journey analytics v1
 
 ### The gap this had to close first

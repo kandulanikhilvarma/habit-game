@@ -47,3 +47,32 @@ h1 em {
 
 footer { display: flex; gap: 20px; padding-top: 24px; border-top: 1px solid var(--border); }
 footer a { color: var(--muted); font-size: 0.875rem; }
+
+/* ---- legal pages (privacy, deletion) ---- */
+.legal { max-width: 720px; }
+.legal h1 { font-size: clamp(1.75rem, 5vw, 2.5rem); line-height: 1.15; letter-spacing: -0.02em; }
+.legal h2 { font-size: 1.25rem; margin-top: 8px; }
+.legal p, .legal li { color: var(--muted); }
+.legal strong { color: var(--text); }
+.legal ul, .legal ol { padding-left: 20px; display: grid; gap: 6px; }
+.legal a { color: var(--mint); }
+.legal__meta { font-size: 0.875rem; }
+.eyebrow a { color: var(--mint); text-decoration: none; }
+
+.legal__table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+.legal__table th, .legal__table td {
+  text-align: left; padding: 10px 12px; border: 1px solid var(--border); vertical-align: top;
+}
+.legal__table th { color: var(--text); background: var(--surface); }
+.legal__table td { color: var(--muted); }
+
+/* Placeholders and forward-looking notes stand out so nothing ships unfilled by accident. */
+.fill { color: var(--violet); font-weight: 700; }
+.tag {
+  display: inline-block; font-size: 0.8125rem; font-weight: 600;
+  color: var(--muted); background: var(--surface); border: 1px solid var(--border);
+  border-radius: 999px; padding: 1px 10px;
+}
+
+.legal__footer { display: flex; gap: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+.legal__footer a { color: var(--muted); font-size: 0.875rem; }
