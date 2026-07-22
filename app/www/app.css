@@ -535,3 +535,10 @@ body {
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
 }
+
+/* ---- attunement blend (You screen) ---- */
+.attune { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 6px 10px; padding: 4px 0; }
+.attune__label { font-size: var(--size-small); color: var(--text-muted); }
+.attune__track { height: 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); overflow: hidden; }
+.attune__fill { display: block; height: 100%; border-radius: 999px; transition: width var(--t-ui) var(--ease-out); }
+.attune__val { font-size: var(--size-small); font-variant-numeric: tabular-nums; color: var(--text-muted); min-width: 2ch; text-align: right; }

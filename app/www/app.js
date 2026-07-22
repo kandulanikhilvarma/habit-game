@@ -1,9 +1,9 @@
 import {
   xpForCompletion, levelFromTotalXp, stageForLevel, moodFor,
-  streakAfterDay, PERFECT_DAY_BONUS,
+  streakAfterDay, attunementFrom, lineageFor, PERFECT_DAY_BONUS,
 } from './game-math.js';
 import { load, save, rollover, todayKey } from './store.js';
-import { creatureSvg, SPECIES } from './creature.js';
+import { creatureSvg, SPECIES, LINEAGE_STYLE } from './creature.js';
 import { renderJourney, renderYou } from './screens.js';
 import { icons } from './icons.js';
 import { celebrate, wakeUp, bindIdleLifecycle, randomizeBlink } from './fx.js';
@@ -28,11 +28,14 @@ function render() {
   el('xp-fill').style.transform = `scaleX(${(into / need).toFixed(3)})`;
 
   const cracks = Math.min((state.creature.cracks ?? 0) + done, 3);
-  el('creature').innerHTML = creatureSvg(state.creature.species, stage, cracks, state.comeback);
+  const lineage = lineageFor(attunementFrom(state.habits));
+  el('creature').innerHTML = creatureSvg(state.creature.species, stage, {
+    cracks, asleep: state.comeback, lineage,
+  });
   el('creature-name').textContent = state.creature.name;
   el('creature-stage-tag').textContent = state.comeback
     ? 'Asleep · waiting for you'
-    : `${stage === 1 ? 'Egg' : 'Hatchling'} · ${moodFor(done, total)}`;
+    : `${stageName(stage, lineage)} · ${moodFor(done, total)}`;
 
   el('today-label').textContent = `Today ${done}/${total}`;
   el('today-dots').innerHTML = state.habits
@@ -45,6 +48,14 @@ function render() {
 
   if (screen === 'journey') renderJourney(el('screen-journey'), state);
   if (screen === 'you') renderYou(el('screen-you'), state);
+}
+
+// Stages 1-2 are the shared rail; from stage 3 the name carries the lineage the user's habits chose.
+const BASE_STAGE_NAMES = ['Egg', 'Hatchling', 'Sprite', 'Guardian', 'Radiant'];
+function stageName(stage, lineage) {
+  const base = BASE_STAGE_NAMES[stage - 1] ?? 'Egg';
+  if (stage < 3) return base;
+  return `${LINEAGE_STYLE[lineage]?.name ?? 'Prismatic'} ${base}`;
 }
 
 function questMarkup(h) {

@@ -67,6 +67,35 @@ function hatchling(species, s) {
     </g>`;
 }
 
+// Lineage marks for stage 3+ (branching evolution). ponytail: this is a palette-and-mark overlay on
+// the shared rig, NOT four bespoke redraws — VALIDATION_REPORT §6 explicitly costs branches as
+// "different palettes, markings, 2-3 swapped parts, not full redraws". Full per-stage art is a
+// deferred art pass; the mechanic — the data choosing the branch — is what ships here.
+export const LINEAGE_STYLE = {
+  ember:     { name: 'Ember-beast', accent: '#ff7a3c', glow: '#ffb066' },
+  moth:      { name: 'Moth-sage',   accent: '#9d7bff', glow: '#c9b6ff' },
+  sentinel:  { name: 'Sentinel',    accent: '#5ec7f0', glow: '#a6e6ff' },
+  prismatic: { name: 'Prismatic',   accent: '#5ef0c0', glow: '#9d7bff' },
+};
+
+function lineageMark(lineage) {
+  const l = LINEAGE_STYLE[lineage] ?? LINEAGE_STYLE.prismatic;
+  if (lineage === 'ember') {
+    return `<path d="M100 46 q10 16 4 30 q-4 -6 -10 -8 q2 12 -6 18 q-10 -14 0 -30 q6 -6 12 -10z" fill="${l.accent}"/>`;
+  }
+  if (lineage === 'moth') {
+    return `<path d="M72 58 q-22 -6 -28 12 q18 8 28 -2z" fill="${l.accent}" opacity="0.85"/>
+            <path d="M128 58 q22 -6 28 12 q-18 8 -28 -2z" fill="${l.accent}" opacity="0.85"/>`;
+  }
+  if (lineage === 'sentinel') {
+    return `<path d="M100 44 l14 20 -14 10 -14 -10z" fill="${l.accent}"/>
+            <path d="M100 44 l14 20 -14 10z" fill="${l.glow}" opacity="0.6"/>`;
+  }
+  // prismatic: a small aura ring
+  return `<circle cx="100" cy="100" r="60" fill="none" stroke="${l.accent}" stroke-width="2" opacity="0.5"/>
+          <circle cx="100" cy="100" r="66" fill="none" stroke="${l.glow}" stroke-width="1.5" opacity="0.3"/>`;
+}
+
 // Asleep after a long absence: a blanket and closed eyes, never a sad or dying creature. The
 // blanket is a separate group so fx.js can slide it off in the wake-up ceremony.
 function blanket(s) {
@@ -81,13 +110,24 @@ function blanket(s) {
 
 /**
  * @param species key of SPECIES
- * @param stage 1 = egg, 2 = hatchling
- * @param cracks 0-3 egg cracks; onboarding hands out the first one free (endowed progress)
- * @param asleep true after 3+ missed days, until the next completion wakes it
+ * @param stage 1 = egg, 2 = hatchling, 3+ = branched (lineage-tinted)
+ * @param opts.cracks 0-3 egg cracks; onboarding hands out the first one free (endowed progress)
+ * @param opts.asleep true after 3+ missed days, until the next completion wakes it
+ * @param opts.lineage 'ember'|'moth'|'sentinel'|'prismatic' — used from stage 3
  */
-export function creatureSvg(species, stage, cracks = 0, asleep = false) {
+export function creatureSvg(species, stage, { cracks = 0, asleep = false, lineage = 'prismatic' } = {}) {
   const s = SPECIES[species] ?? SPECIES.kumo;
-  let body = stage >= 2 ? hatchling(species, s) : egg(s, cracks);
+  const branched = stage >= 3;
+  const style = LINEAGE_STYLE[lineage] ?? LINEAGE_STYLE.prismatic;
+  // From stage 3 the shell takes on the lineage accent — the creature you built starts to show.
+  const skin = branched ? { ...s, trim: style.accent } : s;
+
+  let body = stage >= 2 ? hatchling(species, skin) : egg(skin, cracks);
+  if (branched) {
+    // Insert before the LAST </g> (body-group's close), not the first (which closes the eyes).
+    const cut = body.lastIndexOf('</g>');
+    body = `${body.slice(0, cut)}${lineageMark(lineage)}${body.slice(cut)}`;
+  }
   if (asleep && stage >= 2) {
     // Closed eyes: swap the pupils for lids rather than drawing a second creature.
     body = body.replace(

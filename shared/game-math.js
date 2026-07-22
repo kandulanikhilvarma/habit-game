@@ -40,13 +40,53 @@ export function levelFromTotalXp(totalXp) {
   return { level, into: remaining, need };
 }
 
-/** Evolution stage 1-5. Stages 3+ pick a *branch* from attunement at Gate 2; the number is the rail. */
+/** Evolution stage 1-5. Stages 3+ pick a *branch* from attunement; the number is the rail. */
 export function stageForLevel(level) {
   let stage = 1;
   for (const threshold of EVOLUTION_LEVELS) {
     if (level >= threshold) stage += 1;
   }
   return stage;
+}
+
+// Branching evolution (VALIDATION_REPORT §6/§7): the creature's later form is chosen by which
+// habits the user actually lives, not a fixed rail. Each category feeds a hidden attunement; the
+// dominant blend at stage 3+ picks a lineage. A clear leader wins; a balanced life gets the rare
+// prismatic branch. This is what makes "what did YOUR creature become?" a real question.
+export const LINEAGES = {
+  body: 'ember',       // powerful ember-beast
+  mind: 'moth',        // mystic moth-sage
+  order: 'sentinel',   // crystalline sentinel
+  balanced: 'prismatic',
+};
+export const LINEAGE_DOMINANCE = 0.45;   // a leader needs >45% of completions to pull the branch
+
+/** Lifetime attunement from per-habit totals. Completions, not habit count — living it is what counts. */
+export function attunementFrom(habits = []) {
+  const att = { mind: 0, body: 0, order: 0 };
+  for (const h of habits) {
+    if (h.category in att) att[h.category] += h.total || 0;
+  }
+  return att;
+}
+
+/**
+ * Which lineage a blend resolves to. No dominant category (or no data yet) → balanced/prismatic.
+ * @returns 'ember' | 'moth' | 'sentinel' | 'prismatic'
+ */
+export function lineageFor(attunement = {}) {
+  const mind = attunement.mind || 0;
+  const body = attunement.body || 0;
+  const order = attunement.order || 0;
+  const total = mind + body + order;
+  if (total === 0) return LINEAGES.balanced;
+
+  const ranked = [['body', body], ['mind', mind], ['order', order]].sort((a, b) => b[1] - a[1]);
+  const [leadCat, leadVal] = ranked[0];
+  const secondVal = ranked[1][1];
+  // A co-leader (tie for the top) is no identity at all → prismatic, not an arbitrary winner.
+  if (leadVal === secondVal) return LINEAGES.balanced;
+  return leadVal / total >= LINEAGE_DOMINANCE ? LINEAGES[leadCat] : LINEAGES.balanced;
 }
 
 /** Mood from today's completion ratio. Drives creature animation, world light, widget image, copy. */

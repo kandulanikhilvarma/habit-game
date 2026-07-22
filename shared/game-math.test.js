@@ -9,6 +9,8 @@ import {
   streakAfterDay,
   applyMissedDays,
   isComeback,
+  attunementFrom,
+  lineageFor,
   PERFECT_DAY_BONUS,
 } from './game-math.js';
 
@@ -137,4 +139,35 @@ test('comeback: fires at 3 missed days, not 2', () => {
   assert.equal(isComeback(0), false);
   assert.equal(isComeback(2), false);
   assert.equal(isComeback(3), true);
+});
+
+test('attunement: sums completions by category, ignores unknown categories', () => {
+  const habits = [
+    { category: 'mind', total: 5 },
+    { category: 'body', total: 3 },
+    { category: 'mind', total: 2 },
+    { category: 'custom', total: 9 },
+  ];
+  assert.deepEqual(attunementFrom(habits), { mind: 7, body: 3, order: 0 });
+});
+
+test('lineage: a clear leader pulls its branch', () => {
+  assert.equal(lineageFor({ body: 50, mind: 30, order: 20 }), 'ember');
+  assert.equal(lineageFor({ mind: 60, body: 20, order: 20 }), 'moth');
+  assert.equal(lineageFor({ order: 46, mind: 27, body: 27 }), 'sentinel');
+});
+
+test('lineage: a spread-out life gets the prismatic branch', () => {
+  assert.equal(lineageFor({ mind: 40, body: 35, order: 25 }), 'prismatic'); // leader < 45%
+  assert.equal(lineageFor({ mind: 10, body: 10, order: 10 }), 'prismatic'); // dead even
+});
+
+test('lineage: a co-leader tie is prismatic, never an arbitrary winner', () => {
+  assert.equal(lineageFor({ mind: 50, body: 50, order: 0 }), 'prismatic');
+  assert.equal(lineageFor({ mind: 5, body: 5, order: 2 }), 'prismatic');
+});
+
+test('lineage: no completions yet is prismatic, not a crash', () => {
+  assert.equal(lineageFor({ mind: 0, body: 0, order: 0 }), 'prismatic');
+  assert.equal(lineageFor({}), 'prismatic');
 });
