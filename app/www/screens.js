@@ -1,10 +1,11 @@
 // Journey and You. Both are deliberately thin at Gate 1: the real analytics screen (heatmap,
 // time-of-day curve, per-habit trends) is Gate 2 and needs completion history to say anything true.
 
-import { levelFromTotalXp, stageForLevel } from './game-math.js';
-import { SPECIES } from './creature.js';
+import { levelFromTotalXp, stageForLevel, attunementFrom, lineageFor } from './game-math.js';
+import { SPECIES, LINEAGE_STYLE } from './creature.js';
 
 const STAGE_NAMES = ['Egg', 'Hatchling', 'Sprite', 'Guardian', 'Radiant'];
+const CATEGORY_REGION = { mind: 'grove', body: 'forge', order: 'crystal garden' };
 
 export function renderJourney(host, state) {
   const { level } = levelFromTotalXp(state.creature.xp);
@@ -40,16 +41,26 @@ export function renderYou(host, state) {
   const { level, into, need } = levelFromTotalXp(state.creature.xp);
   const stage = stageForLevel(level);
   const species = SPECIES[state.creature.species] ?? SPECIES.kumo;
+  const att = attunementFrom(state.habits);
+  const lineage = lineageFor(att);
+  const lineageName = LINEAGE_STYLE[lineage]?.name ?? 'Prismatic';
+  const stageLabel = stage >= 3 ? `${lineageName} ${STAGE_NAMES[stage - 1]}` : STAGE_NAMES[stage - 1];
 
   host.innerHTML = `
     <h2 class="screen__title">You</h2>
     <div class="card">
       <p class="card__label">Your creature</p>
-      <p class="card__value">${state.creature.name} · ${STAGE_NAMES[stage - 1]}</p>
+      <p class="card__value">${state.creature.name} · ${stageLabel}</p>
       <p class="card__meta">Level ${level} · ${into}/${need} XP · affinity for ${species.affinity} habits</p>
       ${(state.badges ?? []).includes('rekindled')
         ? '<p class="badge">Rekindled — you came back</p>'
         : ''}
+    </div>
+
+    <div class="card">
+      <p class="card__label">Attunement</p>
+      ${attunementBars(att)}
+      <p class="card__meta">${lineageBlurb(stage, lineageName, att)}</p>
     </div>
 
     <div class="card">
@@ -69,6 +80,31 @@ export function renderYou(host, state) {
       Sound, reminders and account settings are still being built. Nothing here leaves your phone
       except completion events.
     </p>`;
+}
+
+// The blend the creature's later form is chosen from. Bars, not numbers — the shape is the point.
+function attunementBars(att) {
+  const total = (att.mind + att.body + att.order) || 1;
+  const rows = [
+    ['Mind', att.mind, 'var(--violet)'],
+    ['Body', att.body, 'var(--flame)'],
+    ['Order', att.order, 'var(--mint)'],
+  ];
+  return `<div class="attune">${rows.map(([label, val, color]) => `
+    <span class="attune__label">${label}</span>
+    <span class="attune__track"><span class="attune__fill" style="width:${Math.round((val / total) * 100)}%;background:${color}"></span></span>
+    <span class="attune__val">${val}</span>`).join('')}</div>`;
+}
+
+function lineageBlurb(stage, lineageName, att) {
+  if (stage < 3) {
+    const lead = Object.entries(att).sort((a, b) => b[1] - a[1])[0];
+    const region = lead && lead[1] > 0 ? CATEGORY_REGION[lead[0]] : null;
+    return region
+      ? `Your ${region} is leading. Which habits you keep shapes what your creature becomes at stage 3.`
+      : 'Keep habits in different categories and the blend will choose your creature’s branch at stage 3.';
+  }
+  return `Your habits chose the ${lineageName} branch — no two lives make the same creature.`;
 }
 
 function stat(label, value, unit) {

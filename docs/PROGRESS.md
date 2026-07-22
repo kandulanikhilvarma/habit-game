@@ -4,6 +4,49 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-20 — Gate 2 slice 1: branching evolution
+
+### Why this slice first
+Gate 2 splits cleanly into verifiable-now logic and device-only Kotlin (Health Connect, UsageStats,
+widget). Branching evolution is VALIDATION_REPORT §7 condition 1 — the mechanic that makes this not a
+Finch clone — and it is pure game math, so it is both the highest-value and the most verifiable piece.
+
+### Shipped
+- `attunementFrom(habits)` and `lineageFor(attunement)` in `shared/game-math.js`. Each category's
+  lifetime completions feed a hidden meter; the dominant blend at stage 3+ picks a lineage:
+  body → Ember-beast, mind → Moth-sage, order → Sentinel, no clear leader → Prismatic. A leader needs
+  >45% of completions; a co-leader tie resolves to Prismatic, never an arbitrary winner.
+- `creatureSvg` takes stage 3+ and re-tints the shared rig with the lineage accent plus one
+  distinguishing mark (ember flame, moth wings, sentinel crystal, prismatic aura).
+- Stage tag and the You screen now name the branch ("Ember-beast Sprite") and show an attunement
+  blend (Mind/Body/Order bars) with copy that explains the branch is still forming before stage 3.
+
+### ponytail note on the art
+The lineage forms are a palette-and-mark overlay on the existing hatchling rig, **not** four bespoke
+per-stage redraws. VALIDATION_REPORT §6 explicitly budgets branches that way ("different palettes,
+markings, 2-3 swapped parts, not full redraws"). Full stage-3/4/5 silhouettes are a deferred art pass;
+what ships here is the *mechanic* — the data choosing the branch — which is the validated-novel part.
+
+### Verified in this session
+- `npm test` — 42/42 (5 new: attunement sums by category, clear leader pulls its branch, spread-out
+  life is prismatic, co-leader tie is prismatic, empty data is prismatic not a crash).
+- In the browser on seeded state: a body-heavy level-7 creature renders "Ember-beast Sprite" with the
+  ember accent and flame mark in the SVG; swapping to order-heavy habits re-renders "Sentinel Sprite"
+  with the crystal palette and the ember palette gone. The branch tracks the habits, live.
+
+### Not verified — art, not logic
+Whether the lineage marks read well or look cheap. They have never been seen rendered (frozen pane),
+and they are deliberately minimal pending a real art pass.
+
+### The rest of Gate 2 is device-only
+Health Connect, UsageStats screen-time habits, and the home-screen widget are all native Android with
+no browser fallback, and they carry the two compliance gates (Health data declaration + privacy
+policy) that VALIDATION_REPORT §7 condition 3 makes Gate 2 exit criteria. None of it can be verified
+in this environment, and it should not be written blind on top of a core loop nobody has felt on a
+phone yet. Those slices are staged behind an on-device pass of what already exists.
+
+---
+
 ## 2026-07-20 — Gate 1 slice 4: reminders with a ✓ action
 
 ### Scope decision (asked, not assumed)
