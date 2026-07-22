@@ -4,6 +4,42 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-22 — Gate 2 slice 2: Journey analytics v1
+
+### The gap this had to close first
+The app wrote completion rows to Firestore but kept **no local history** — the store only held today.
+An offline-first analytics screen had nothing to read. So this slice adds a local completion log
+(`state.log`, one `{date, hid, ts, category}` per completion) as the source the Journey screen reads
+with no network and no Firebase project.
+
+### Shipped
+- `shared/analytics.js` — pure functions over the log: `heatmap`, `successRate` (due-days capped at
+  habit age so a new habit is not punished), `trend`, `hourHistogram`, `bestHourInsight`,
+  `weekdayWeekendSplit`. No ML; every insight is a plain query over timestamps (MASTER_PLAN §4.4).
+- Journey screen rebuilt: 150-day GitHub-style heatmap, a Best-hour insight card ("You win mornings —
+  70% before 9am"), and per-habit 30-day success rate with an up/down/flat trend arrow. Charts render
+  complete and never animate in — this is data the user reads (DESIGN_MOTION_SPEC §3 rejection list).
+- Below the evidence floor (<5 completions) the best-hour card shows a "come back with more data"
+  note instead of inventing a finding.
+
+### Two real bugs found while testing
+- `successRate` had **no upper date bound**, so `trend` (which queries a past window) counted later
+  completions and every trend arrow would have been wrong. Fixed with a `toDate` clamp.
+- `due` days were a rounded millisecond delta, sensitive to the time of day a habit was created.
+  Switched to whole-calendar-day counting, consistent with how `done` is computed.
+
+### Verified in this session
+- `npm test` — 50/50 (8 new analytics cases incl. the trend upper-bound and the new-habit due cap).
+- Browser on 40 days of seeded history: heatmap lit 35 distinct days (matches the seeded density),
+  best-hour resolved to 7am / 70%-before-9am from the timestamps, workout 80% and read 33% over 30
+  days. A live completion appended to the log (46 → 47) with the right shape.
+
+### Still Gate-2, still device-only
+Health Connect, UsageStats screen-time habits, and the widget — plus the health-data declaration and
+privacy policy that gate them. Unchanged from the previous entry: staged behind an on-device pass.
+
+---
+
 ## 2026-07-20 — Gate 2 slice 1: branching evolution
 
 ### Why this slice first

@@ -2,13 +2,16 @@
 // time-of-day curve, per-habit trends) is Gate 2 and needs completion history to say anything true.
 
 import { levelFromTotalXp, stageForLevel, attunementFrom, lineageFor } from './game-math.js';
+import { heatmap, successRate, trend, bestHourInsight, hourLabel } from './analytics.js';
 import { SPECIES, LINEAGE_STYLE } from './creature.js';
+
+const TREND_ICON = { up: '↗', down: '↘', flat: '→' };
 
 const STAGE_NAMES = ['Egg', 'Hatchling', 'Sprite', 'Guardian', 'Radiant'];
 const CATEGORY_REGION = { mind: 'grove', body: 'forge', order: 'crystal garden' };
 
 export function renderJourney(host, state) {
-  const { level } = levelFromTotalXp(state.creature.xp);
+  const log = state.log ?? [];
   const totalDone = state.habits.reduce((sum, h) => sum + h.total, 0);
 
   host.innerHTML = `
@@ -20,21 +23,54 @@ export function renderJourney(host, state) {
       ${stat('Freezes banked', `${state.freezes}`, 'of 2')}
     </div>
 
+    <h3 class="screen__sub">Last 5 months</h3>
+    ${heatmapMarkup(heatmap(log, { days: 150 }))}
+
+    ${bestHourMarkup(bestHourInsight(log))}
+
     <h3 class="screen__sub">Per habit</h3>
     <ul class="habit-stats">
-      ${state.habits.map((h) => `
-        <li class="habit-stat">
-          <span class="habit-stat__glyph">${h.glyph}</span>
-          <span class="habit-stat__name">${h.name}</span>
-          <span class="habit-stat__num">${h.total}<small> done</small></span>
-          <span class="habit-stat__num">${h.best}<small> best</small></span>
-        </li>`).join('')}
-    </ul>
+      ${state.habits.map((h) => habitStatMarkup(h, log)).join('')}
+    </ul>`;
+}
 
-    <p class="screen__note">
-      Heatmap, best-hour insight and trend lines arrive at Gate 2 — they need more days of history
-      than you have yet. Every completion is already being recorded for them.
-    </p>`;
+function habitStatMarkup(h, log) {
+  const r = successRate(log, h, { windowDays: 30 });
+  const t = trend(log, h, { windowDays: 14 });
+  const pct = Math.round(r.rate * 100);
+  return `
+    <li class="habit-stat">
+      <span class="habit-stat__glyph">${h.glyph}</span>
+      <span class="habit-stat__name">${h.name}</span>
+      <span class="habit-stat__num">${pct}%<small> 30d</small></span>
+      <span class="habit-stat__trend trend--${t}">${TREND_ICON[t]}</span>
+    </li>`;
+}
+
+// GitHub-style cells, coloured by count. Rendered complete and instantly — this is data the user
+// reads, so it never animates in (DESIGN_MOTION_SPEC §3 part 2 rejection list).
+function heatmapMarkup(cells) {
+  const dots = cells.map((c) => {
+    const level = c.count === 0 ? 0 : Math.min(4, c.count);
+    return `<span class="heat heat--${level}" title="${c.date}: ${c.count}"></span>`;
+  }).join('');
+  return `<div class="heatmap" role="img" aria-label="Completion history, last 150 days">${dots}</div>`;
+}
+
+function bestHourMarkup(insight) {
+  if (!insight) {
+    return `<p class="screen__note">A few more days of completions and your best-hour insight appears here.</p>`;
+  }
+  const share = Math.round(insight.morningShare * 100);
+  const line = share >= 50
+    ? `You win mornings — ${share}% of your wins land before 9am.`
+    : `Your peak hour is ${hourLabel(insight.peakHour)}. Only ${share}% of wins are before 9am.`;
+  return `
+    <div class="card">
+      <p class="card__label">Best hour</p>
+      <p class="card__value">${hourLabel(insight.peakHour)}</p>
+      <p class="card__meta">${line}</p>
+    </div>`;
 }
 
 export function renderYou(host, state) {
