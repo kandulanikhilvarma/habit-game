@@ -92,6 +92,8 @@ function complete(habitId, at) {
   habit.best = Math.max(habit.best, habit.streak);
   habit.total += 1;
   state.day.doneIds.push(habitId);
+  // Append to the local completion log — the source the Journey screen reads offline.
+  state.log.push({ date: state.day.date, hid: habitId, ts: Date.now(), category: habit.category });
 
   if (firstToday) {
     const rolled = streakAfterDay({ streak: state.gStreak, freezes: state.freezes, completedToday: true });
