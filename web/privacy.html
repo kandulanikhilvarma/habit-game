@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Kumo — Privacy Policy</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="legal">
+    <p class="eyebrow"><a href="/">← Kumo</a></p>
+    <h1>Privacy Policy</h1>
+    <p class="legal__meta">Effective date: <span class="fill">[EFFECTIVE DATE]</span> · Last updated: <span class="fill">[DATE]</span></p>
+
+    <p>
+      Kumo is a habit game published by <span class="fill">[PUBLISHER NAME]</span> ("we", "us"). This
+      policy explains what data the app handles, where it goes, and how you remove it. It is written to
+      match what the app actually does — not to reserve rights we do not use.
+    </p>
+
+    <h2>The short version</h2>
+    <ul>
+      <li>You can use Kumo without an email, a name, or an account you create — sign-in is anonymous.</li>
+      <li>We store the game data you generate (your creature, your habits, and when you complete them) so it survives across devices.</li>
+      <li>Health and usage data, when you connect it, is read on your device and never leaves it. Only the resulting "habit completed" events sync.</li>
+      <li>We do not sell your data, show ads, or use advertising trackers.</li>
+      <li>You can delete everything at any time — see <a href="/delete-account.html">Delete your account</a>.</li>
+    </ul>
+
+    <h2>What we collect</h2>
+    <p>Kumo works offline first: the same data lives on your device and syncs to the cloud when you are online.</p>
+    <table class="legal__table">
+      <thead><tr><th>Data</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>An anonymous account identifier (a random ID from Firebase Authentication)</td><td>To attach your game to a stable account without asking for personal details</td></tr>
+        <tr><td>Your creature (species, name you choose, level, evolution state)</td><td>The game itself</td></tr>
+        <tr><td>Your habits (name, icon, category, schedule, optional reminder time)</td><td>To show and track your quests</td></tr>
+        <tr><td>Completion events and daily summaries (which habit, the date and time, how much XP)</td><td>To run streaks, evolution, and your Journey analytics</td></tr>
+      </tbody>
+    </table>
+    <p>
+      We do not collect your contacts, your location, your photos, or your device identifiers for
+      advertising. If you choose to add an optional note or photo to a completion, it is stored with
+      that completion and shown only to you.
+    </p>
+
+    <h2 class="fill">Health and usage data <span class="tag">[applies when you enable these features — not in the current build]</span></h2>
+    <p>
+      Kumo can verify some habits automatically from Health Connect (steps, sleep, exercise,
+      mindfulness minutes) and from Android usage statistics (screen time, app usage). When you grant
+      these permissions:
+    </p>
+    <ul>
+      <li>The raw health and usage data is read <strong>on your device only</strong>, to check your own habit rules.</li>
+      <li>Only the result — a "habit completed" event — syncs to the cloud. The underlying step count, sleep record, or app-usage figure <strong>never leaves your device</strong>.</li>
+      <li>You can disconnect a source at any time; the habit falls back to a one-tap manual check-in.</li>
+    </ul>
+    <p>You grant and revoke these permissions in Android's own settings, and in Health Connect's permission screen, which links back to this policy.</p>
+
+    <h2>Where your data is processed</h2>
+    <p>We use a small number of service providers to run the app. They process data on our behalf under their own terms:</p>
+    <ul>
+      <li><strong>Google Firebase</strong> (Authentication, Firestore database, and push notifications) — stores your account and game data.</li>
+      <li><strong>Vercel</strong> — hosts this website and our backend API.</li>
+    </ul>
+    <p>Data may be stored and processed on servers operated by these providers, which may be located outside your country.</p>
+
+    <h2>How long we keep it</h2>
+    <p>We keep your game data until you delete it. When you delete your account, the data under your account identifier is removed from our database.</p>
+
+    <h2>Your rights</h2>
+    <p>You can:</p>
+    <ul>
+      <li><strong>Access and export</strong> your data — request a copy at <span class="fill">[CONTACT EMAIL]</span>.</li>
+      <li><strong>Delete</strong> your account and its data — see <a href="/delete-account.html">Delete your account</a>.</li>
+      <li><strong>Withdraw</strong> automatic-tracking permissions at any time in your device settings.</li>
+    </ul>
+
+    <h2>Children</h2>
+    <p>Kumo is not directed to children under 13, and we do not knowingly collect personal information from them.</p>
+
+    <h2>Changes</h2>
+    <p>If we change this policy, we will update the date above and, for material changes, note it in the app.</p>
+
+    <h2>Contact</h2>
+    <p>Questions about this policy or your data: <span class="fill">[CONTACT EMAIL]</span>.</p>
+
+    <footer class="legal__footer">
+      <a href="/">Home</a>
+      <a href="/delete-account.html">Delete your account</a>
+    </footer>
+  </main>
+</body>
+</html>
