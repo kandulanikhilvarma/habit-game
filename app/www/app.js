@@ -331,3 +331,37 @@ async function boot() {
 }
 
 boot().catch((err) => console.warn('boot fell back to local-only', err));
+
+// On-device diagnostics: open /play/?diag to dump real layout numbers as plain text (inline styles,
+// no dependency on tokens/app.css), so an engine-specific render bug can be read off a screenshot.
+if (location.search.includes('diag')) {
+  setTimeout(() => {
+    const rect = (sel) => {
+      const e = sel[0] === '#' ? document.getElementById(sel.slice(1)) : document.querySelector(sel);
+      if (!e) return `${sel}: MISSING`;
+      const r = e.getBoundingClientRect();
+      return `${sel}: ${Math.round(r.width)}x${Math.round(r.height)} @top${Math.round(r.top)}`;
+    };
+    const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+    const sheets = [...document.styleSheets].map((s) => {
+      let rules = '?';
+      try { rules = s.cssRules.length; } catch { rules = 'BLOCKED'; }
+      return `${(s.href || 'inline').split('/').pop()}=${rules}`;
+    }).join(' ');
+    const report = [
+      'DIAG',
+      navigator.userAgent,
+      `viewport ${window.innerWidth}x${window.innerHeight}`,
+      `--text resolved: "${cssVar}"  (should be #eef0ff)`,
+      `stylesheets: ${sheets}`,
+      rect('.app'), rect('#level'), rect('.scene'), rect('#creature'),
+      rect('#screen-home'), rect('#quests'), rect('.tabs'),
+    ].join('\n');
+    const box = document.createElement('pre');
+    box.textContent = report;
+    box.setAttribute('style',
+      'position:fixed;left:0;top:0;right:0;z-index:99999;margin:0;padding:10px;'
+      + 'background:#000;color:#0f0;font:11px/1.4 monospace;white-space:pre-wrap;border-bottom:2px solid #0f0');
+    document.body.appendChild(box);
+  }, 800);
+}

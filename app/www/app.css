@@ -11,38 +11,43 @@ body {
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   -webkit-user-select: none;
-  overflow: hidden;
+  /* Allow vertical scroll, hide only horizontal. If the layout ever computes taller than the
+     viewport (engine differences), it scrolls — it must never clip content to nothing. */
+  overflow-x: hidden;
 }
 
 :focus-visible { outline: 2px solid #5ef0c0aa; outline-offset: 2px; }
 
+/* Flex column, not a fixed-height nested grid: nested minmax(0,1fr) grids resolve their height
+   differently across engines and collapse to zero on WebKit. Flex column with min-height:0 on the
+   growable middle is the cross-engine-safe full-height shell. */
 .app {
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-  height: 100vh;              /* fallback: no dvh on older iOS. In standalone there's no toolbar,
-                                 so 100vh is exactly full-screen anyway. */
-  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;          /* min-, not fixed height: grow-and-scroll beats clip-to-nothing */
+  min-height: 100dvh;
   max-width: 480px;
   margin: 0 auto;
   padding: max(12px, env(safe-area-inset-top)) 16px 0;
   gap: 12px;
 }
+.topbar, .xp { flex: none; }
 
 /* Screens swap, they never slide — navigation must feel instant. */
 .screen {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto auto;
-  gap: 12px;
+  flex: 1 1 auto;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   animation: screen-in var(--t-press) linear;
 }
 .screen[hidden] { display: none; }
 #screen-journey, #screen-you {
-  grid-template-rows: none;
-  align-content: start;
   overflow-y: auto;
   padding-bottom: 8px;
 }
+.tabs { flex: none; position: sticky; bottom: 0; }
 @keyframes screen-in { from { opacity: 0; } to { opacity: 1; } }
 
 .screen__title { font-size: var(--size-title); letter-spacing: -0.02em; }
@@ -359,12 +364,14 @@ body {
 /* ---- scene ---- */
 .scene {
   position: relative;
+  flex: 1 1 auto;            /* takes the free space in the home column */
   display: grid;
   place-items: center;
   align-content: center;
   gap: 4px;
   min-height: 0;
 }
+.today, .quests, .add-quest { flex: none; }
 .glade {
   position: absolute; inset: auto -16px -8px; height: 55%;
   background: radial-gradient(78% 100% at 50% 100%, #2b3168aa 0%, #1a1f3d55 45%, transparent 72%);
@@ -490,6 +497,7 @@ body {
   display: flex;
   border-top: 1px solid var(--border);
   padding-bottom: env(safe-area-inset-bottom);
+  background: var(--bg);   /* opaque: it is sticky, content scrolls under it */
 }
 .tab {
   flex: 1;
