@@ -18,6 +18,21 @@ function hapticSuccess() {
   else navigator.vibrate?.([12, 60, 24]);
 }
 
+/**
+ * One haptic entry point for the whole app. 'light' for taps/selections, 'success' for completions.
+ * Note: iOS Safari ignores navigator.vibrate entirely, so on iOS-web this is a no-op — haptics land
+ * in the native Android shell via the Capacitor plugin.
+ */
+export function haptic(kind = 'light') {
+  const haptics = window.Capacitor?.Plugins?.Haptics;
+  if (haptics) {
+    if (kind === 'success') haptics.notification({ type: 'SUCCESS' });
+    else haptics.impact({ style: kind === 'medium' ? 'MEDIUM' : 'LIGHT' });
+    return;
+  }
+  navigator.vibrate?.(kind === 'success' ? [12, 60, 24] : 8);
+}
+
 /** XP number floats up from the point the finger actually touched. */
 export function floatXp(amount, x, y) {
   const el = document.createElement('div');
