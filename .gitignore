@@ -42,3 +42,4 @@ app/www/vendor/
 app/www/gesture-math.js
 app/www/reminder-math.js
 app/www/analytics.js
+public/

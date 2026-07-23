@@ -9,6 +9,7 @@
     "sync:shared": "node scripts/sync-shared.mjs",
     "build:firebase": "esbuild scripts/firebase-entry.js --bundle --format=esm --minify --outfile=app/www/vendor/firebase.js",
     "build": "npm run sync:shared && npm run build:firebase",
+    "vercel-build": "node scripts/build-site.mjs",
     "serve": "npm run build && python -m http.server 4173 --directory app/www",
     "cap:sync": "npm run build && cap sync android",
     "test:rules": "firebase emulators:exec --only firestore \"node --test tests/rules/rules.test.js\""
