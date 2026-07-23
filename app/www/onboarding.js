@@ -7,19 +7,21 @@ import { haptic } from './fx.js';
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 /** Resolves with the chosen species key. Renders into `host` and removes itself when done. */
-export function runOnboarding(host) {
+export function runOnboarding(host, { change = false } = {}) {
+  const verb = change ? 'Switch to' : 'Begin with';
   host.innerHTML = `
     <div class="onboard">
-      <h1 class="onboard__title">Who will grow with you?</h1>
+      <h1 class="onboard__title">${change ? 'Choose a new creature' : 'Who will grow with you?'}</h1>
+      ${change ? '<p class="onboard__sub">Your progress stays — only the look and affinity change.</p>' : ''}
       <div class="onboard__cards">
         ${Object.entries(SPECIES).map(([key, s], i) => `
           <button class="starter" data-species="${key}" aria-pressed="false">
-            <span class="starter__art">${creatureSvg(key, 1)}</span>
+            <span class="starter__art">${creatureSvg(key, change ? 2 : 1)}</span>
             <span class="starter__name">${s.name}</span>
             <span class="starter__line">${s.tagline}</span>
           </button>`).join('')}
       </div>
-      <button class="cta" id="begin" disabled>Pick one to begin</button>
+      <button class="cta" id="begin" disabled>Pick one to ${change ? 'switch' : 'begin'}</button>
     </div>`;
 
   return new Promise((resolve) => {
@@ -41,7 +43,7 @@ export function runOnboarding(host) {
           );
         }
         cta.disabled = false;
-        cta.textContent = `Begin with ${SPECIES[chosen].name}`;
+        cta.textContent = `${verb} ${SPECIES[chosen].name}`;
         haptic('light');   // sound stays off until the opt-in after first completion (§6)
       });
     });

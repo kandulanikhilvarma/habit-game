@@ -91,6 +91,7 @@ export function renderYou(host, state, identity = { anonymous: true }) {
       ${(state.badges ?? []).includes('rekindled')
         ? '<p class="badge">Rekindled — you came back</p>'
         : ''}
+      <button class="ask__btn" id="change-creature">Change creature</button>
     </div>
 
     <div class="card">
