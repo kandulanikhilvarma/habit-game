@@ -4,6 +4,8 @@
 export { initializeApp } from 'firebase/app';
 export {
   getAuth, signInAnonymously, onAuthStateChanged, connectAuthEmulator,
+  GoogleAuthProvider, signInWithRedirect, linkWithRedirect, getRedirectResult,
+  signInWithCredential, signOut,
 } from 'firebase/auth';
 export {
   initializeFirestore, persistentLocalCache, connectFirestoreEmulator,
