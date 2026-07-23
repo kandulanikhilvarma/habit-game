@@ -165,14 +165,26 @@ body {
   backdrop-filter: blur(20px) saturate(160%);
   border-top: 1px solid #3a4180;   /* bright top edge, Apple materials */
   border-radius: 24px 24px 0 0;
-  touch-action: none;
+  /* pan-y, NOT none: the body must scroll natively or a tall sheet hides its submit button below
+     the screen. The drag-to-dismiss lives on the handle only (which sets touch-action:none). */
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   will-change: transform;
 }
 .sheet[hidden] { display: none; }
 
+/* Full-width grab zone so drag-to-dismiss has a real target; the visible pill is centered in it. */
 .sheet__handle {
+  height: 24px;
+  margin: 0 auto 4px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: grab;
+  touch-action: none;
+  position: sticky; top: 0;
+}
+.sheet__handle::before {
+  content: '';
   width: 40px; height: 4px;
-  margin: 4px auto 8px;
   border-radius: 999px;
   background: var(--text-muted);
   opacity: 0.5;
@@ -379,7 +391,10 @@ body {
 }
 .creature-stage {
   position: relative;
-  width: 170px; height: 170px;
+  /* Scales down on short screens so Home fits without scrolling on small phones (iPhone SE), full
+     size on tall ones. */
+  width: clamp(120px, 22vh, 170px);
+  height: clamp(120px, 22vh, 170px);
   display: grid; place-items: center;
   cursor: pointer;
   transition: transform var(--t-press) var(--ease-out);
