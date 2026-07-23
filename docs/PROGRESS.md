@@ -4,6 +4,44 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-23 — Live setup + the first real-device bug
+
+### Firebase, Vercel, and the playable web build — all done and proven
+- Firebase project `habit-game-111c8` wired (`app/www/firebase-config.js`, committed on purpose — the
+  web config is a public identifier, not a secret). Anonymous auth, Firestore database, and the repo
+  rules are deployed. Verified live from a browser against the real project: sign in → write whole
+  state → write a completion → read it back (`xp=10`), own tree allowed, **another uid denied**.
+- Vercel live at `https://habit-game-67x5.vercel.app`: `/api/health` returns the Flask JSON,
+  `/privacy.html` and `/delete-account.html` serve, landing page serves. Merges to `main` auto-deploy.
+- The game is deployed at **`/play`** (`scripts/build-site.mjs` assembles `public/` = marketing at
+  `/`, game at `/play`). This exists because the user is on **iPhone** and cannot install the Android
+  APK — mobile Safari runs the same bundle the Capacitor shell wraps.
+
+### The bug worth remembering
+On the user's iPhone (iOS 17.2) the home screen rendered **empty** — only the add-quest button and
+the day-dots. It failed in Safari *and* iOS Chrome (all iOS browsers are forced onto WebKit), but
+never in this environment's browser pane (Blink), which is why every "verified" check up to now had
+missed it.
+
+- **Wrong first guess:** `height:100dvh` with no fallback. iOS 17.2 supports `dvh`, so that wasn't it
+  (the fallback shipped anyway as correct hardening — PR #15).
+- **Actual cause:** the app shell was a fixed-height grid with a **nested `minmax(0, 1fr)` track**.
+  WebKit resolves that indefinite→definite height chain differently than Blink and collapses the
+  inner track to zero; `overflow:hidden` then clipped everything to nothing.
+- **Fix (PR #16):** shell rebuilt as a **flex column** (`min-height`, `min-height:0` on the growable
+  middle) — the cross-engine-safe pattern — and made scroll-tolerant (`overflow-x:hidden` only) so a
+  future height miscompute degrades to scrolling, never a blank screen. Added a `/play/?diag` overlay
+  that dumps real layout numbers on-device for reading engine bugs off a screenshot.
+
+### The standing lesson
+**Every check in this project until now ran on Blink only** — the build environment has no WebKit
+engine. The app had never touched Safari/WebKit until it hit a real iPhone, and the first contact
+found a total-failure layout bug. Cross-engine correctness cannot be assumed from the in-session
+browser; it needs a real WebKit device (and, for the Android-only features, a real Android device).
+Same conclusion from both platforms, same reason.
+
+---
+
 ## 2026-07-22 — Gate 2 compliance drafts: privacy policy + deletion page
 
 ### Shipped (drafts, not final)
