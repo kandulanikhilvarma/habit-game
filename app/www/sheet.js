@@ -94,7 +94,9 @@ export function presentSheet(el, scrim, onClosed) {
 
   const onDown = (e) => {
     if (activePointer !== null) return;             // multi-touch guard: ignore extra fingers
-    if (e.target.closest('input, textarea, button, .glyph-grid')) return;
+    // Drag starts only on the handle. The rest of the sheet scrolls natively, so a tall sheet's
+    // submit button is always reachable — the previous whole-sheet drag blocked scroll and hid it.
+    if (!e.target.closest('.sheet__handle')) return;
     activePointer = e.pointerId;
     dragging = true;
     cancelSpring();                                  // continue from the live value, not the target

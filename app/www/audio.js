@@ -15,6 +15,22 @@ function audio() {
   return ctx;
 }
 
+/**
+ * Unlock audio from a direct tap (the sound opt-in "Sure"). iOS keeps the context suspended until a
+ * gesture resumes it; doing that here, on an explicit tap, is more reliable than waiting for the
+ * first completion beat. A silent 1-frame tone primes the pipeline without an audible blip.
+ * Note: iOS still routes WebAudio through the hardware mute switch — sound needs the ringer on.
+ */
+export function unlockAudio() {
+  const ac = audio();
+  const osc = ac.createOscillator();
+  const env = ac.createGain();
+  env.gain.value = 0;
+  osc.connect(env).connect(ac.destination);
+  osc.start();
+  osc.stop(ac.currentTime + 0.02);
+}
+
 function tone(freq, { at = 0, duration = 0.45, gain = 0.14, type = 'sine' } = {}) {
   const ac = audio();
   const t0 = ac.currentTime + at;

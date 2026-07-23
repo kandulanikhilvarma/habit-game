@@ -161,11 +161,19 @@ function askAboutSound() {
     </div>`;
   document.body.append(banner);
 
-  banner.addEventListener('click', (e) => {
+  banner.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-sound]');
     if (!btn) return;
-    state.settings.sound = btn.dataset.sound === 'yes';
+    const yes = btn.dataset.sound === 'yes';
+    state.settings.sound = yes;
     save(state);
+    // Unlock + confirm inside this tap: on iOS the audio context only resumes from a gesture, and a
+    // short chime here proves to the user that sound is on (or reveals a silent hardware switch).
+    if (yes) {
+      const { unlockAudio, playCompletion } = await import('./audio.js');
+      unlockAudio();
+      playCompletion(0);
+    }
     banner.remove();
   });
 }
