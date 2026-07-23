@@ -10,7 +10,8 @@ venv/
 *-service-account*.json
 serviceAccountKey.json
 **/google-services.json
-app/www/firebase-config.js
+# app/www/firebase-config.js is intentionally committed: the web config is a public identifier,
+# not a secret (Firestore rules are the security boundary), and the APK build needs it to sync.
 
 *.keystore
 *.jks
