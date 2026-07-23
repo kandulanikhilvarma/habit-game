@@ -16,6 +16,7 @@ const el = (id) => document.getElementById(id);
 let state = load();
 let cloud = null;
 let screen = 'home';
+let identity = { anonymous: true, email: null, name: null };
 
 // Sound only plays once the user has opted in; haptics fire freely (silent, and a no-op on iOS web).
 const soundOn = () => state.settings.sound === true;
@@ -51,7 +52,19 @@ function render() {
   randomizeBlink();
 
   if (screen === 'journey') renderJourney(el('screen-journey'), state);
-  if (screen === 'you') renderYou(el('screen-you'), state);
+  if (screen === 'you') {
+    renderYou(el('screen-you'), state, identity);
+    el('google-signin')?.addEventListener('click', async () => {
+      haptic('light');
+      const { startGoogleSignIn } = await import('./cloud.js');
+      try { await startGoogleSignIn(); } catch (err) { console.warn('sign-in start failed', err); }
+    });
+    el('sign-out')?.addEventListener('click', async () => {
+      const { signOutUser } = await import('./cloud.js');
+      await signOutUser();
+      location.reload();   // simplest correct reset: re-init as a fresh anonymous session
+    });
+  }
 }
 
 // Stages 1-2 are the shared rail; from stage 3 the name carries the lineage the user's habits chose.
@@ -333,9 +346,12 @@ async function boot() {
   // The cloud is optional and always second: the screen is already drawn from local state by now.
   // ponytail: newest-write-wins on whole state. Real per-field merge only matters once one account
   // has two devices, which is a Gate 1+ problem.
-  const { initCloud, pullState, pushCompletion, pushWholeState } = await import('./cloud.js');
+  const { initCloud, pullState, pushCompletion, pushWholeState, currentIdentity } = await import('./cloud.js');
   const ctx = await initCloud();
   if (!ctx) return;
+
+  identity = currentIdentity();
+  if (screen === 'you') render();   // reflect signed-in state if the You tab is already open
 
   const remote = await pullState(ctx, todayKey());
   if (remote && (remote.updatedAt ?? 0) > (state.updatedAt ?? 0)) {

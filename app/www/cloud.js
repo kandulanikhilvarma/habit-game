@@ -3,10 +3,13 @@
 
 import {
   initializeApp, getAuth, signInAnonymously, onAuthStateChanged, connectAuthEmulator,
+  GoogleAuthProvider, linkWithRedirect, signInWithRedirect, getRedirectResult, signOut,
   initializeFirestore, persistentLocalCache, connectFirestoreEmulator,
   doc, getDoc, getDocs, collection, writeBatch,
 } from './vendor/firebase.js';
 import { userPath, habitPath, habitsPath, dayPath, completionPath } from './paths.js';
+
+let authRef = null;   // kept so the You screen can start sign-in / sign-out without re-init
 
 /** Returns a context, or null when no Firebase config is present (the app then runs local-only). */
 export async function initCloud() {
@@ -21,17 +24,56 @@ export async function initCloud() {
   const app = initializeApp(config);
   const db = initializeFirestore(app, { localCache: persistentLocalCache() });
   const auth = getAuth(app);
+  authRef = auth;
 
   if (config.useEmulator) {
     connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
     connectFirestoreEmulator(db, '127.0.0.1', 8080);
   }
 
-  await signInAnonymously(auth);
-  const uid = await new Promise((resolve) => {
-    onAuthStateChanged(auth, (user) => user && resolve(user.uid));
+  // Finish any Google redirect that navigated us back here before deciding whether to sign in.
+  // A credential already tied to another account surfaces here; we fall back to signing into it.
+  try {
+    await getRedirectResult(auth);
+  } catch (err) {
+    if (err?.code === 'auth/credential-already-in-use') {
+      const cred = GoogleAuthProvider.credentialFromError(err);
+      if (cred) { const { signInWithCredential } = await import('./vendor/firebase.js'); await signInWithCredential(auth, cred); }
+    } else {
+      console.warn('redirect sign-in failed', err);
+    }
+  }
+
+  // Only create an anonymous session if nobody is signed in — never clobber a real Google session.
+  if (!auth.currentUser) await signInAnonymously(auth);
+  const user = auth.currentUser ?? await new Promise((resolve) => {
+    onAuthStateChanged(auth, (u) => u && resolve(u));
   });
-  return { db, uid };
+  return { db, uid: user.uid, user };
+}
+
+/** Who is signed in, for the You screen: anonymous vs a linked Google identity. */
+export function currentIdentity() {
+  const u = authRef?.currentUser;
+  if (!u) return { anonymous: true, email: null, name: null };
+  return { anonymous: u.isAnonymous, email: u.email, name: u.displayName };
+}
+
+/**
+ * Start Google sign-in. If the current user is anonymous we LINK, so their existing progress carries
+ * over onto the Google account. Redirect (not popup) — popups are unreliable on mobile Safari.
+ * The page navigates away and returns; initCloud() finishes it via getRedirectResult.
+ */
+export async function startGoogleSignIn() {
+  if (!authRef) return;
+  const provider = new GoogleAuthProvider();
+  const u = authRef.currentUser;
+  if (u && u.isAnonymous) await linkWithRedirect(u, provider);
+  else await signInWithRedirect(authRef, provider);
+}
+
+export async function signOutUser() {
+  if (authRef) await signOut(authRef);
 }
 
 /** Whole-state pull, used once at boot. Returns null for a brand-new account. */

@@ -73,7 +73,7 @@ function bestHourMarkup(insight) {
     </div>`;
 }
 
-export function renderYou(host, state) {
+export function renderYou(host, state, identity = { anonymous: true }) {
   const { level, into, need } = levelFromTotalXp(state.creature.xp);
   const stage = stageForLevel(level);
   const species = SPECIES[state.creature.species] ?? SPECIES.kumo;
@@ -112,10 +112,25 @@ export function renderYou(host, state) {
       <p class="card__meta">Press and hold a habit for a second to remove it.</p>
     </div>
 
-    <p class="screen__note">
-      Sound, reminders and account settings are still being built. Nothing here leaves your phone
-      except completion events.
-    </p>`;
+    <div class="card">
+      <p class="card__label">Account</p>
+      ${accountBlock(identity)}
+    </div>
+
+    <p class="screen__note">Nothing here leaves your phone except completion events.</p>`;
+}
+
+// Anonymous by default; signing in with Google links this account so progress carries over.
+function accountBlock(identity) {
+  if (identity.anonymous) {
+    return `
+      <p class="card__meta">You are playing as a guest. Sign in to keep your creature safe across devices.</p>
+      <button class="cta cta--google" id="google-signin">Sign in with Google</button>`;
+  }
+  return `
+    <p class="card__value">${identity.name || identity.email || 'Signed in'}</p>
+    <p class="card__meta">${identity.email || ''}</p>
+    <button class="ask__btn" id="sign-out">Sign out</button>`;
 }
 
 // The blend the creature's later form is chosen from. Bars, not numbers — the shape is the point.
