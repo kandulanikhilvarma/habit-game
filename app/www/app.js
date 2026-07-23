@@ -6,7 +6,8 @@ import { load, save, rollover, todayKey } from './store.js';
 import { creatureSvg, SPECIES, LINEAGE_STYLE } from './creature.js';
 import { renderJourney, renderYou } from './screens.js';
 import { icons } from './icons.js';
-import { celebrate, wakeUp, bindIdleLifecycle, randomizeBlink } from './fx.js';
+import { celebrate, wakeUp, haptic, bindIdleLifecycle, randomizeBlink } from './fx.js';
+import { playAdd, playRemove, playPick, playPet } from './audio.js';
 import { sheetMarkup, makeHabit, TEMPLATES, MAX_HABITS } from './habits.js';
 import { presentSheet } from './sheet.js';
 import { initReminders, ensurePermission, syncReminders } from './reminders.js';
@@ -15,6 +16,9 @@ const el = (id) => document.getElementById(id);
 let state = load();
 let cloud = null;
 let screen = 'home';
+
+// Sound only plays once the user has opted in; haptics fire freely (silent, and a no-op on iOS web).
+const soundOn = () => state.settings.sound === true;
 
 function render() {
   const { level, into, need } = levelFromTotalXp(state.creature.xp);
@@ -146,6 +150,8 @@ el('creature').addEventListener('pointerdown', () => {
     [{ transform: 'scale(1)' }, { transform: 'scale(1.04, 0.96)' }, { transform: 'scale(1)' }],
     { duration: 320, easing: 'cubic-bezier(0.22, 1.4, 0.36, 1)' },
   );
+  haptic('light');
+  if (soundOn()) playPet();
 });
 
 // Asked once, after the first completion, in the creature's voice rather than as a settings prompt
@@ -204,11 +210,13 @@ function openAddSheet() {
       glyph = pick('.glyph', sheet.querySelector(`.glyph[data-glyph="${t.glyph}"]`) ?? sheet.querySelector('.glyph'), 'glyph');
       category = pick('.segment', sheet.querySelector(`.segment[data-category="${t.category}"]`), 'category');
       sync();
+      haptic('light');
+      if (soundOn()) playPick();
     });
   });
 
-  sheet.querySelectorAll('.glyph').forEach((b) => b.addEventListener('click', () => { glyph = pick('.glyph', b, 'glyph'); }));
-  sheet.querySelectorAll('.segment').forEach((b) => b.addEventListener('click', () => { category = pick('.segment', b, 'category'); }));
+  sheet.querySelectorAll('.glyph').forEach((b) => b.addEventListener('click', () => { glyph = pick('.glyph', b, 'glyph'); haptic('light'); }));
+  sheet.querySelectorAll('.segment').forEach((b) => b.addEventListener('click', () => { category = pick('.segment', b, 'category'); haptic('light'); }));
   nameInput.addEventListener('input', sync);
 
   const close = presentSheet(sheet, el('scrim'));
@@ -224,13 +232,15 @@ function openAddSheet() {
     state.habits.push(makeHabit({ name, glyph, category, reminder }, state.habits));
     save(state);
     render();
+    haptic('success');
+    if (soundOn()) playAdd();
     syncReminders(state.habits, state.creature.name).catch((err) => console.warn('reminder sync failed', err));
     cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
     close(0);
   });
 }
 
-el('add-quest').addEventListener('click', openAddSheet);
+el('add-quest').addEventListener('click', () => { haptic('light'); openAddSheet(); });
 
 // Hold-to-delete, not a confirm dialog: deliberate where destructive, snappy on cancel
 // (DESIGN_MOTION_SPEC §5). The overlay fills over 1.2s; letting go before it completes cancels.
@@ -249,6 +259,8 @@ function bindHoldToDelete(host) {
       state.day.doneIds = state.day.doneIds.filter((id) => id !== row.dataset.delete);
       save(state);
       render();
+      haptic('medium');
+      if (soundOn()) playRemove();
       // A deleted habit must stop reminding: cancel-and-reschedule clears its pending notification.
       syncReminders(state.habits, state.creature.name).catch((err) => console.warn('reminder sync failed', err));
       cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
@@ -280,7 +292,8 @@ function showScreen(name) {
 
 document.querySelectorAll('.tab').forEach((tab) => {
   tab.innerHTML = `${icons[tab.dataset.icon]}<span>${tab.dataset.label}</span>`;
-  tab.addEventListener('pointerdown', () => showScreen(tab.dataset.screen));
+  // Navigation stays sound-free (§6) but gets a light haptic tick — satisfying without being noise.
+  tab.addEventListener('pointerdown', () => { haptic('light'); showScreen(tab.dataset.screen); });
 });
 
 // Day rollover is event-driven: no polling timer burning battery in a WebView.

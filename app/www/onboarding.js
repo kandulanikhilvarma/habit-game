@@ -2,6 +2,7 @@
 // it happens once, so the delight budget is not being spent on a daily surface.
 
 import { SPECIES, creatureSvg } from './creature.js';
+import { haptic } from './fx.js';
 
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -41,6 +42,7 @@ export function runOnboarding(host) {
         }
         cta.disabled = false;
         cta.textContent = `Begin with ${SPECIES[chosen].name}`;
+        haptic('light');   // sound stays off until the opt-in after first completion (§6)
       });
     });
 

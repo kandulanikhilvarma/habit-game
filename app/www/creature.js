@@ -21,6 +21,24 @@ export const SPECIES = {
     affinity: 'order',
     shell: '#8fd9a8', shellLight: '#c3f0d2', ink: '#16351f', trim: '#4bb37a',
   },
+  aqua: {
+    name: 'Aqua',
+    tagline: 'Cool and tidy. Loves a clean slate and an early night.',
+    affinity: 'order',
+    shell: '#7ecbe0', shellLight: '#c2ecf5', ink: '#123540', trim: '#3fa8c7',
+  },
+  sol: {
+    name: 'Sol',
+    tagline: 'Bright and restless. Up before you, already stretching.',
+    affinity: 'body',
+    shell: '#ffd27a', shellLight: '#ffe9bf', ink: '#4a3410', trim: '#f5a623',
+  },
+  nyx: {
+    name: 'Nyx',
+    tagline: 'Quiet and curious. Thinks best in the dark, notebook open.',
+    affinity: 'mind',
+    shell: '#8b8fd6', shellLight: '#c3c5f0', ink: '#1c1a3d', trim: '#5b5fc7',
+  },
 };
 
 const CRACKS = [
@@ -46,6 +64,9 @@ function egg(s, cracks) {
 function crest(species, s) {
   if (species === 'embr') return `<path d="M118 62 q16 -10 22 -24 q6 20 -6 32 q-8 6 -16 2z" fill="${s.trim}"/>`;
   if (species === 'moss') return `<path d="M100 62 q-4 -18 -20 -22 q4 18 14 24z" fill="${s.trim}"/><circle cx="100" cy="60" r="5" fill="${s.trim}"/>`;
+  if (species === 'aqua') return `<path d="M100 44 q10 14 10 24 a10 10 0 0 1 -20 0 q0 -10 10 -24z" fill="${s.trim}"/>`;
+  if (species === 'sol') return `<g fill="${s.trim}"><path d="M100 40 l4 14 -8 0z"/><path d="M126 52 l-10 10 -4 -7z"/><path d="M74 52 l10 10 4 -7z"/></g>`;
+  if (species === 'nyx') return `<g stroke="${s.trim}" stroke-width="3" fill="none" stroke-linecap="round"><path d="M92 60 q-10 -14 -20 -14"/><path d="M108 60 q10 -14 20 -14"/></g><circle cx="72" cy="46" r="3" fill="${s.trim}"/><circle cx="128" cy="46" r="3" fill="${s.trim}"/>`;
   return `<path d="M100 60 q10 -14 22 -8 q-6 12 -22 14z" fill="${s.trim}"/>`;
 }
 

@@ -72,3 +72,26 @@ export function playComeback() {
 export function playFreezeSpent() {
   tone(311.13, { duration: 0.7, gain: 0.09, type: 'triangle' });
 }
+
+/** A new quest joins the world: two notes rising — something began. */
+export function playAdd() {
+  tone(587.33, { duration: 0.28, gain: 0.11 });
+  tone(880, { at: 0.09, duration: 0.4, gain: 0.11 });
+}
+
+/** A quest let go: two soft notes falling — gentle, never a failure sound. */
+export function playRemove() {
+  tone(440, { duration: 0.26, gain: 0.09, type: 'triangle' });
+  tone(329.63, { at: 0.09, duration: 0.4, gain: 0.09, type: 'triangle' });
+}
+
+/** A quiet selection blip for picking a template, icon, or starter. Short so it never nags. */
+export function playPick() {
+  tone(659.25, { duration: 0.12, gain: 0.07 });
+}
+
+/** The creature reacts to a pet: a soft two-note coo. */
+export function playPet() {
+  tone(783.99, { duration: 0.22, gain: 0.08 });
+  tone(1046.5, { at: 0.06, duration: 0.3, gain: 0.06 });
+}
