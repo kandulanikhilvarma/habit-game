@@ -628,3 +628,25 @@ body {
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
 
 .onboard__sub { text-align: center; color: var(--text-muted); font-size: var(--size-small); margin-top: -8px; }
+
+/* ---- home guest sign-in banner ---- */
+.signin-banner {
+  flex: none;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit; font-size: var(--size-small);
+  cursor: pointer;
+  transition: transform var(--t-press) var(--ease-out);
+}
+.signin-banner[hidden] { display: none; }
+.signin-banner:active { transform: scale(0.99); }
+.signin-banner__cta {
+  flex: none; font-weight: 800;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.card__id { font-size: 0.75rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }

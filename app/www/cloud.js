@@ -5,7 +5,7 @@ import {
   initializeApp, getAuth, signInAnonymously, onAuthStateChanged, connectAuthEmulator,
   GoogleAuthProvider, linkWithRedirect, signInWithRedirect, getRedirectResult, signOut,
   initializeFirestore, persistentLocalCache, connectFirestoreEmulator,
-  doc, getDoc, getDocs, collection, writeBatch,
+  doc, getDoc, getDocs, deleteDoc, collection, writeBatch,
 } from './vendor/firebase.js';
 import { userPath, habitPath, habitsPath, dayPath, completionPath } from './paths.js';
 
@@ -57,8 +57,32 @@ export async function initCloud() {
 /** Who is signed in, for the You screen: anonymous vs a linked Google identity. */
 export function currentIdentity() {
   const u = authRef?.currentUser;
-  if (!u) return { anonymous: true, email: null, name: null };
-  return { anonymous: u.isAnonymous, email: u.email, name: u.displayName };
+  if (!u) return { anonymous: true, email: null, name: null, uid: null };
+  return { anonymous: u.isAnonymous, email: u.email, name: u.displayName, uid: u.uid };
+}
+
+/**
+ * Fire `cb(identity)` on every auth change — this is the fix for "signed in but still shows login":
+ * a redirect that completes after boot (or a link that lands late) now updates the UI live instead
+ * of being read once and forgotten.
+ */
+export function watchAuth(cb) {
+  if (!authRef) return;
+  onAuthStateChanged(authRef, () => cb(currentIdentity()));
+}
+
+/** Persist the signed-in profile (email, name) onto the user's Firestore doc, so the account is
+ *  recoverable and visible in the console — anonymous users write null and stay unidentified. */
+export async function saveProfile({ db, uid }) {
+  const u = authRef?.currentUser;
+  if (!u || u.isAnonymous) return;
+  const { setDoc } = await import('./vendor/firebase.js');
+  await setDoc(doc(db, userPath(uid)), {
+    email: u.email ?? null,
+    displayName: u.displayName ?? null,
+    isAnonymous: false,
+    updatedAt: Date.now(),
+  }, { merge: true });
 }
 
 /**
@@ -118,6 +142,12 @@ export async function pushCompletion({ db, uid }, state, { hid, xp, source = 'ma
   // Not awaited on the UI path: with persistentLocalCache this resolves after the network settles,
   // which may be tomorrow. The local write already happened.
   return batch.commit();
+}
+
+/** Remove habit docs from Firestore. Without this a deleted habit's subdoc lingers and the next
+ *  pull resurrects it — which is how duplicates came back after a delete. */
+export async function deleteHabits({ db, uid }, ids = []) {
+  await Promise.all(ids.map((id) => deleteDoc(doc(db, habitPath(uid, id)))));
 }
 
 /** First-run seed so a new account has its habits in the cloud before any completion. */

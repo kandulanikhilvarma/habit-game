@@ -2,7 +2,7 @@ import {
   xpForCompletion, levelFromTotalXp, stageForLevel, moodFor,
   streakAfterDay, attunementFrom, lineageFor, PERFECT_DAY_BONUS,
 } from './game-math.js';
-import { load, save, rollover, todayKey } from './store.js';
+import { load, save, rollover, todayKey, dedupeHabits } from './store.js';
 import { creatureSvg, SPECIES, LINEAGE_STYLE } from './creature.js';
 import { renderJourney, renderYou } from './screens.js';
 import { icons } from './icons.js';
@@ -71,25 +71,13 @@ function render() {
 
   el('quests').innerHTML = state.habits.map(questMarkup).join('');
   el('add-quest').hidden = state.habits.length >= MAX_HABITS;
+  el('home-signin').hidden = !identity.anonymous;   // guest prompt on Home, gone once signed in
   randomizeBlink();
 
   if (screen === 'journey') renderJourney(el('screen-journey'), state);
   if (screen === 'you') {
     renderYou(el('screen-you'), state, identity);
-    el('google-signin')?.addEventListener('click', async () => {
-      haptic('light');
-      const { startGoogleSignIn } = await import('./cloud.js');
-      try {
-        await startGoogleSignIn();
-      } catch (err) {
-        // Surface the real reason instead of failing silently — usually the domain isn't authorized.
-        const msg = err?.code === 'auth/unauthorized-domain'
-          ? 'This site is not authorized in Firebase yet.'
-          : `Sign-in failed: ${err?.code || err?.message || 'unknown'}`;
-        toast(msg);
-        console.warn('sign-in start failed', err);
-      }
-    });
+    el('google-signin')?.addEventListener('click', beginSignIn);
     el('sign-out')?.addEventListener('click', async () => {
       const { signOutUser } = await import('./cloud.js');
       await signOutUser();
@@ -313,6 +301,22 @@ function openAddSheet() {
 
 el('add-quest').addEventListener('click', () => { haptic('light'); openAddSheet(); });
 
+// Shared by the You button and the Home guest banner. Surfaces the real error rather than failing
+// silently — an unauthorized domain is the usual reason a redirect never completes.
+async function beginSignIn() {
+  haptic('light');
+  const { startGoogleSignIn } = await import('./cloud.js');
+  try {
+    await startGoogleSignIn();
+  } catch (err) {
+    toast(err?.code === 'auth/unauthorized-domain'
+      ? 'This site is not authorized in Firebase yet.'
+      : `Sign-in failed: ${err?.code || err?.message || 'unknown'}`);
+    console.warn('sign-in start failed', err);
+  }
+}
+el('home-signin').addEventListener('click', beginSignIn);
+
 // Hold-to-delete, not a confirm dialog: deliberate where destructive, snappy on cancel
 // (DESIGN_MOTION_SPEC §5). The overlay fills over 1.2s; letting go before it completes cancels.
 const HOLD_MS = 1200;
@@ -326,14 +330,16 @@ function bindHoldToDelete(host) {
     held = row;
     row.classList.add('holding');
     timer = setTimeout(() => {
-      state.habits = state.habits.filter((h) => h.id !== row.dataset.delete);
-      state.day.doneIds = state.day.doneIds.filter((id) => id !== row.dataset.delete);
+      const removedId = row.dataset.delete;
+      state.habits = state.habits.filter((h) => h.id !== removedId);
+      state.day.doneIds = state.day.doneIds.filter((id) => id !== removedId);
       save(state);
       render();
       haptic('medium');
       if (soundOn()) playRemove();
       // A deleted habit must stop reminding: cancel-and-reschedule clears its pending notification.
       syncReminders(state.habits, state.creature.name).catch((err) => console.warn('reminder sync failed', err));
+      cloud?.deleteHabits([removedId]).catch((err) => console.warn('cloud delete failed', err));
       cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
     }, HOLD_MS);
   };
@@ -404,32 +410,55 @@ async function boot() {
   // The cloud is optional and always second: the screen is already drawn from local state by now.
   // ponytail: newest-write-wins on whole state. Real per-field merge only matters once one account
   // has two devices, which is a Gate 1+ problem.
-  const { initCloud, pullState, pushCompletion, pushWholeState, currentIdentity } = await import('./cloud.js');
+  const {
+    initCloud, pullState, pushCompletion, pushWholeState, deleteHabits,
+    currentIdentity, watchAuth, saveProfile,
+  } = await import('./cloud.js');
   const ctx = await initCloud();
   if (!ctx) return;
+
+  cloud = {
+    push: (s, completion) => pushCompletion(ctx, s, completion),
+    pushAll: (s) => pushWholeState(ctx, s),
+    deleteHabits: (ids) => deleteHabits(ctx, ids),
+  };
 
   identity = currentIdentity();
   if (ctx.authError) {
     toast(ctx.authError === 'auth/unauthorized-domain'
-      ? 'Sign-in blocked: add this domain in Firebase authorized domains.'
+      ? 'Sign-in blocked — add this site to Firebase authorized domains.'
       : `Sign-in error: ${ctx.authError}`);
-  } else if (!identity.anonymous) {
-    toast(`Signed in as ${identity.name || identity.email}`);
   }
-  if (screen === 'you') render();   // reflect signed-in state if the You tab is already open
 
   const remote = await pullState(ctx, todayKey());
   if (remote && (remote.updatedAt ?? 0) > (state.updatedAt ?? 0)) {
     state = { ...state, ...remote };
+    const beforeIds = state.habits.map((h) => h.id);
+    state.habits = dedupeHabits(state.habits);   // the cloud copy may predate the no-duplicate rule
     save(state);
-    render();
+    const removed = beforeIds.filter((id) => !state.habits.some((h) => h.id === id));
+    if (removed.length) {
+      await deleteHabits(ctx, removed);           // delete the orphan docs or they resurrect on pull
+      await pushWholeState(ctx, state);
+    }
   } else {
     await pushWholeState(ctx, state);
   }
-  cloud = {
-    push: (s, completion) => pushCompletion(ctx, s, completion),
-    pushAll: (s) => pushWholeState(ctx, s),
-  };
+  render();
+
+  // Live auth: whenever sign-in state changes (including a redirect that completes after boot), the
+  // UI updates and the profile is saved to Firestore. This is what fixes "signed in but still shows
+  // login" and the missing email.
+  watchAuth(async (id) => {
+    identity = id;
+    render();
+    if (!id.anonymous) {
+      toast(`Signed in as ${id.name || id.email}`);
+      state.account = { email: id.email, name: id.name, uid: id.uid };
+      save(state);
+      try { await saveProfile(ctx); await pushWholeState(ctx, state); } catch (err) { console.warn('profile save failed', err); }
+    }
+  });
 }
 
 boot().catch((err) => console.warn('boot fell back to local-only', err));

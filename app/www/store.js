@@ -34,6 +34,7 @@ function seed() {
     ],
     comeback: false,
     badges: [],
+    account: null,   // { email, name, uid } once signed in; null while a guest
     settings: { sound: null, theme: 'dark' },
     day: { date: todayKey(), doneIds: [], xpEarned: 0 },
     // Local completion log — the Journey screen reads this. The cloud has the same rows, but the
@@ -51,13 +52,30 @@ function seed() {
  */
 function withDefaults(stored) {
   const base = seed();
-  return {
+  const merged = {
     ...base,
     ...stored,
     creature: { ...base.creature, ...stored.creature },
     settings: { ...base.settings, ...stored.settings },
     day: { ...base.day, ...stored.day },
   };
+  merged.habits = dedupeHabits(merged.habits || []);
+  return merged;
+}
+
+/** Drop habits that repeat a name (keep the first) and enforce the 7-habit cap — cleans up data
+ *  created before the duplicate/cap rules existed, which is why some accounts show "Workout" twice. */
+export function dedupeHabits(habits) {
+  const seen = new Set();
+  const kept = [];
+  for (const h of habits) {
+    const key = (h.name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    kept.push(h);
+    if (kept.length >= 7) break;
+  }
+  return kept;
 }
 
 export function load() {
