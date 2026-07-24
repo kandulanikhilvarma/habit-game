@@ -4,6 +4,42 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-24 — Device-driven fixes, satisfaction pack, Google login
+
+### Device bugs found and fixed (all reproduced by measuring, not screenshots)
+- **Add-quest was impossible on phones.** The sheet used `touch-action: none` for its drag, which
+  also blocked native scroll, so on any viewport where the sheet overflows the submit button sat
+  below the screen with no way to reach it. Fixed: `touch-action: pan-y` + native scroll, drag moved
+  to the handle only. (Earlier synthetic tests clicked the button directly and missed it.)
+- Creature now scales `clamp(120px, 22vh, 170px)` so Home fits better on small phones.
+- Sound: prime the audio context from the opt-in tap + confirming chime. iOS still gates WebAudio on
+  the hardware mute switch — the ringer must be on. Haptics no-op on iOS Safari (works in native).
+
+### Satisfaction pack (user request)
+- Six starters now: Aqua (order), Sol (body), Nyx (mind) join the first three — palette + crest on
+  the shared rig, no redraw cost.
+- Interaction feedback: new tones (add / remove / pick / pet) and a single `haptic()` entry point
+  wired to create, delete, pick, pet, and open. Navigation stays sound-free per §6 (light haptic only).
+
+### Google login (user request)
+- You screen Account card: guest → "Sign in with Google", signed-in → identity + Sign out. Signing
+  in **links** Google to the anonymous account so progress carries over; falls back to signing into
+  an existing Google account if the credential is already used. Redirect flow (popups fail on mobile
+  Safari); `initCloud` finishes the redirect and never overwrites a real session with an anonymous one.
+- **Requires a human step:** add `habit-game-67x5.vercel.app` to Firebase Console → Authentication →
+  Settings → Authorized domains, or the redirect fails with `auth/unauthorized-domain`. The OAuth
+  round-trip itself is only testable on-device.
+
+### Privacy pages finalized
+- Publisher "Kandula", contact kandulanikhilvarma@gmail.com (mailto), effective 23 July 2026.
+
+### Still device-only / open
+- The Google OAuth round-trip (needs the authorized domain + on-device test).
+- In-app "Delete my account" control still to build (deletion page points at the email path meanwhile).
+- Native-only: haptics, Health Connect, UsageStats, widget — all need the Android app.
+
+---
+
 ## 2026-07-23 — Live setup + the first real-device bug
 
 ### Firebase, Vercel, and the playable web build — all done and proven
