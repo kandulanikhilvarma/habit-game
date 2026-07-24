@@ -6,6 +6,35 @@ import { haptic } from './fx.js';
 
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
 
+/**
+ * First screen on the web: sign in, or continue as a guest — then the game. Sign-in is offered up
+ * front (not buried in You) but never a wall; guests play immediately. Resolves once the user picks.
+ * @param onSignIn called when they tap sign in (fires the popup); we resolve either way and the app
+ *        updates live when auth lands.
+ */
+export function runWelcome(host, { onSignIn } = {}) {
+  host.innerHTML = `
+    <div class="onboard welcome">
+      <div class="welcome__mark">${creatureSvg('kumo', 2)}</div>
+      <h1 class="onboard__title">Kumo</h1>
+      <p class="onboard__sub">A creature that grows from the habits you actually keep.</p>
+      <div class="welcome__actions">
+        <button class="cta cta--google" id="welcome-signin">Sign in with Google</button>
+        <button class="ask__btn" id="welcome-guest">Continue as guest</button>
+      </div>
+    </div>`;
+
+  return new Promise((resolve) => {
+    const done = () => { host.innerHTML = ''; resolve(); };
+    host.querySelector('#welcome-signin').addEventListener('click', () => {
+      haptic('light');
+      onSignIn?.();
+      done();
+    });
+    host.querySelector('#welcome-guest').addEventListener('click', () => { haptic('light'); done(); });
+  });
+}
+
 /** Resolves with the chosen species key. Renders into `host` and removes itself when done. */
 export function runOnboarding(host, { change = false } = {}) {
   const verb = change ? 'Switch to' : 'Begin with';
