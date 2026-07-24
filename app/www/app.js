@@ -386,14 +386,6 @@ window.addEventListener('focus', checkRollover);
 document.addEventListener('resume', checkRollover);   // Capacitor app resume
 
 async function boot() {
-  if (!state.creature.species) {
-    const { runOnboarding } = await import('./onboarding.js');
-    const species = await runOnboarding(el('overlay'));
-    state.creature.species = species;
-    state.creature.name = SPECIES[species].name;
-    save(state);
-  }
-
   checkRollover();
   render();
   bindIdleLifecycle();
@@ -407,29 +399,51 @@ async function boot() {
     if (ready) syncReminders(state.habits, state.creature.name);
   }).catch((err) => console.warn('reminders unavailable', err));
 
-  // The cloud is optional and always second: the screen is already drawn from local state by now.
-  // ponytail: newest-write-wins on whole state. Real per-field merge only matters once one account
-  // has two devices, which is a Gate 1+ problem.
+  // Cloud/auth is set up BEFORE the welcome screen so sign-in works there and identity is known.
   const {
     initCloud, pullState, pushCompletion, pushWholeState, deleteHabits,
     currentIdentity, watchAuth, saveProfile, startGoogleSignIn,
   } = await import('./cloud.js');
   const ctx = await initCloud();
-  if (!ctx) return;
-  signInFn = startGoogleSignIn;   // now the sign-in buttons work with no async gap before the popup
-
-  cloud = {
-    push: (s, completion) => pushCompletion(ctx, s, completion),
-    pushAll: (s) => pushWholeState(ctx, s),
-    deleteHabits: (ids) => deleteHabits(ctx, ids),
-  };
-
-  identity = currentIdentity();
-  if (ctx.authError) {
-    toast(ctx.authError === 'auth/unauthorized-domain'
-      ? 'Sign-in blocked — add this site to Firebase authorized domains.'
-      : `Sign-in error: ${ctx.authError}`);
+  if (ctx) {
+    signInFn = startGoogleSignIn;   // sign-in buttons now work with no async gap before the popup
+    cloud = {
+      push: (s, completion) => pushCompletion(ctx, s, completion),
+      pushAll: (s) => pushWholeState(ctx, s),
+      deleteHabits: (ids) => deleteHabits(ctx, ids),
+    };
+    identity = currentIdentity();
+    if (ctx.authError) {
+      toast(ctx.authError === 'auth/unauthorized-domain'
+        ? 'Sign-in blocked — add this site to Firebase authorized domains.'
+        : `Sign-in error: ${ctx.authError}`);
+    }
+    // Live auth: whenever sign-in state changes (popup completes, or a redirect lands), the UI
+    // updates and the profile is saved. Fixes "signed in but still shows login" and the missing email.
+    watchAuth(async (id) => {
+      identity = id;
+      render();
+      if (!id.anonymous) {
+        toast(`Signed in as ${id.name || id.email}`);
+        state.account = { email: id.email, name: id.name, uid: id.uid };
+        save(state);
+        try { await saveProfile(ctx); await pushWholeState(ctx, state); } catch (err) { console.warn('profile save failed', err); }
+      }
+    });
   }
+
+  // First run on the web: the welcome screen (sign in or continue as guest) THEN the starter pick.
+  if (!state.creature.species) {
+    const { runWelcome, runOnboarding } = await import('./onboarding.js');
+    await runWelcome(el('overlay'), { onSignIn: beginSignIn });
+    const species = await runOnboarding(el('overlay'));
+    state.creature.species = species;
+    state.creature.name = SPECIES[species].name;
+    save(state);
+    render();
+  }
+
+  if (!ctx) return;
 
   const remote = await pullState(ctx, todayKey());
   if (remote && (remote.updatedAt ?? 0) > (state.updatedAt ?? 0)) {
@@ -446,20 +460,6 @@ async function boot() {
     await pushWholeState(ctx, state);
   }
   render();
-
-  // Live auth: whenever sign-in state changes (including a redirect that completes after boot), the
-  // UI updates and the profile is saved to Firestore. This is what fixes "signed in but still shows
-  // login" and the missing email.
-  watchAuth(async (id) => {
-    identity = id;
-    render();
-    if (!id.anonymous) {
-      toast(`Signed in as ${id.name || id.email}`);
-      state.account = { email: id.email, name: id.name, uid: id.uid };
-      save(state);
-      try { await saveProfile(ctx); await pushWholeState(ctx, state); } catch (err) { console.warn('profile save failed', err); }
-    }
-  });
 }
 
 boot().catch((err) => console.warn('boot fell back to local-only', err));
