@@ -160,10 +160,10 @@ body {
   overscroll-behavior: contain;
   display: grid; gap: 10px;
   padding: 8px 16px calc(20px + env(safe-area-inset-bottom));
-  background: rgba(19, 23, 53, 0.72);
+  background: var(--sheet-bg);
   -webkit-backdrop-filter: blur(20px) saturate(160%);   /* iOS needs the prefix or the glass is clear */
   backdrop-filter: blur(20px) saturate(160%);
-  border-top: 1px solid #3a4180;   /* bright top edge, Apple materials */
+  border-top: 1px solid var(--sheet-edge);   /* bright top edge, Apple materials */
   border-radius: 24px 24px 0 0;
   /* pan-y, NOT none: the body must scroll natively or a tall sheet hides its submit button below
      the screen. The drag-to-dismiss lives on the handle only (which sets touch-action:none). */
@@ -542,8 +542,7 @@ body {
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .glade { background: #161b3a; }
-  .sheet { background: #131735; backdrop-filter: none; }
+  .sheet { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
 .badge {
