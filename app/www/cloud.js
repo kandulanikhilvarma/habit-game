@@ -3,7 +3,8 @@
 
 import {
   initializeApp, getAuth, signInAnonymously, onAuthStateChanged, connectAuthEmulator,
-  GoogleAuthProvider, linkWithRedirect, signInWithRedirect, getRedirectResult, signOut,
+  GoogleAuthProvider, linkWithRedirect, signInWithRedirect, getRedirectResult,
+  signInWithPopup, linkWithPopup, signInWithCredential, signOut,
   initializeFirestore, persistentLocalCache, connectFirestoreEmulator,
   doc, getDoc, getDocs, deleteDoc, collection, writeBatch,
 } from './vendor/firebase.js';
@@ -86,16 +87,33 @@ export async function saveProfile({ db, uid }) {
 }
 
 /**
- * Start Google sign-in. If the current user is anonymous we LINK, so their existing progress carries
- * over onto the Google account. Redirect (not popup) — popups are unreliable on mobile Safari.
- * The page navigates away and returns; initCloud() finishes it via getRedirectResult.
+ * Start Google sign-in. Popup FIRST: on iOS Safari the redirect flow loses its state to tracking
+ * prevention and getRedirectResult returns empty, leaving the user a guest — a popup keeps auth in
+ * the same page and avoids that. Falls back to redirect only if the popup is blocked.
+ * Anonymous users are LINKED so their progress carries onto the Google account; if that Google
+ * identity already owns an account, we sign into it instead.
  */
 export async function startGoogleSignIn() {
   if (!authRef) return;
   const provider = new GoogleAuthProvider();
   const u = authRef.currentUser;
-  if (u && u.isAnonymous) await linkWithRedirect(u, provider);
-  else await signInWithRedirect(authRef, provider);
+  try {
+    if (u && u.isAnonymous) await linkWithPopup(u, provider);
+    else await signInWithPopup(authRef, provider);
+  } catch (err) {
+    if (err?.code === 'auth/credential-already-in-use') {
+      const cred = GoogleAuthProvider.credentialFromError(err);
+      if (cred) await signInWithCredential(authRef, cred);
+      return;
+    }
+    if (err?.code === 'auth/popup-blocked' || err?.code === 'auth/operation-not-supported-in-this-environment'
+        || err?.code === 'auth/cancelled-popup-request') {
+      if (u && u.isAnonymous) await linkWithRedirect(u, provider);
+      else await signInWithRedirect(authRef, provider);
+      return;
+    }
+    throw err;   // popup-closed-by-user and real errors bubble to the caller's toast
+  }
 }
 
 export async function signOutUser() {
