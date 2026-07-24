@@ -34,7 +34,7 @@ function seed() {
     ],
     comeback: false,
     badges: [],
-    settings: { sound: null },
+    settings: { sound: null, theme: 'dark' },
     day: { date: todayKey(), doneIds: [], xpEarned: 0 },
     // Local completion log — the Journey screen reads this. The cloud has the same rows, but the
     // app is offline-first, so analytics must work with no network and no Firebase project.

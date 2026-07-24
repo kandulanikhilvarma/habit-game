@@ -18,6 +18,12 @@ let cloud = null;
 let screen = 'home';
 let identity = { anonymous: true, email: null, name: null };
 
+// Theme: dark by default, light when chosen. Applied to <html> so tokens.css can override surfaces.
+function applyTheme() {
+  document.documentElement.dataset.theme = state.settings.theme || 'dark';
+}
+applyTheme();
+
 // Sound only plays once the user has opted in; haptics fire freely (silent, and a no-op on iOS web).
 const soundOn = () => state.settings.sound === true;
 
@@ -90,6 +96,15 @@ function render() {
       location.reload();   // simplest correct reset: re-init as a fresh anonymous session
     });
     el('change-creature')?.addEventListener('click', changeCreature);
+    el('theme')?.querySelectorAll('[data-theme-choice]').forEach((b) => {
+      b.addEventListener('click', () => {
+        state.settings.theme = b.dataset.themeChoice;
+        save(state);
+        applyTheme();
+        haptic('light');
+        render();
+      });
+    });
   }
 }
 

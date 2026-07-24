@@ -114,6 +114,14 @@ export function renderYou(host, state, identity = { anonymous: true }) {
     </div>
 
     <div class="card">
+      <p class="card__label">Appearance</p>
+      <div class="segmented" id="theme">
+        <button type="button" class="segment${(state.settings.theme || 'dark') === 'dark' ? ' on' : ''}" data-theme-choice="dark" aria-pressed="${(state.settings.theme || 'dark') === 'dark'}">Dark</button>
+        <button type="button" class="segment${state.settings.theme === 'light' ? ' on' : ''}" data-theme-choice="light" aria-pressed="${state.settings.theme === 'light'}">Light</button>
+      </div>
+    </div>
+
+    <div class="card">
       <p class="card__label">Account</p>
       ${accountBlock(identity)}
     </div>
