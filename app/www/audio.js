@@ -31,22 +31,45 @@ export function unlockAudio() {
   osc.stop(ac.currentTime + 0.02);
 }
 
+// One shared low-pass so nothing is harsh — the "soft" in the Apple-ish softness comes from rolling
+// off the top end and layering a quiet octave-up shimmer rather than a bare oscillator.
+let lp = null;
+function lowpass() {
+  const ac = audio();
+  if (!lp || lp.context !== ac) {
+    lp = ac.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 2600;
+    lp.Q.value = 0.4;
+    lp.connect(ac.destination);
+  }
+  return lp;
+}
+
 function tone(freq, { at = 0, duration = 0.45, gain = 0.14, type = 'sine' } = {}) {
   const ac = audio();
   const t0 = ac.currentTime + at;
-  const osc = ac.createOscillator();
-  const env = ac.createGain();
+  const out = lowpass();
 
-  osc.type = type;
-  osc.frequency.value = freq;
-  // Soft attack and a long tail: a marimba-ish ping rather than a casino blip.
-  env.gain.setValueAtTime(0.0001, t0);
-  env.gain.exponentialRampToValueAtTime(gain, t0 + 0.012);
-  env.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
-
-  osc.connect(env).connect(ac.destination);
-  osc.start(t0);
-  osc.stop(t0 + duration + 0.02);
+  // A gentle bell: fundamental + a quiet triangle octave for body + a faint fifth shimmer. The soft
+  // 8ms attack and long exponential tail keep it a warm ping, never a click or a casino blip.
+  const partials = [
+    { f: freq, g: gain, wave: type },
+    { f: freq * 2, g: gain * 0.18, wave: 'triangle' },
+    { f: freq * 3, g: gain * 0.06, wave: 'sine' },
+  ];
+  for (const p of partials) {
+    const osc = ac.createOscillator();
+    const env = ac.createGain();
+    osc.type = p.wave;
+    osc.frequency.value = p.f;
+    env.gain.setValueAtTime(0.0001, t0);
+    env.gain.exponentialRampToValueAtTime(p.g, t0 + 0.008);
+    env.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    osc.connect(env).connect(out);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.02);
+  }
 }
 
 /** Nth completion of the day climbs the chime; past the fourth it holds at the top note. */

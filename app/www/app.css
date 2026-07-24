@@ -403,13 +403,16 @@ body {
 .creature-stage:active { transform: scale(0.98); }
 
 /* One clock: body and shadow share duration and easing, so they can never drift apart. */
-#body-group { animation: bob 3.2s var(--ease-in-out) infinite; }
-#shadow { animation: bob-shadow 3.2s var(--ease-in-out) infinite; transform-origin: 100px 164px; }
+#body-group { animation: bob 3.6s var(--ease-in-out) infinite; transform-origin: 100px 150px; }
+#shadow { animation: bob-shadow 3.6s var(--ease-in-out) infinite; transform-origin: 100px 164px; }
 #eyes { transform-origin: 100px 102px; }
 
+/* Not just a bob: a gentle rock and breathe so a still creature reads as alive, not asleep. */
 @keyframes bob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-7px); }
+  0%, 100% { transform: translateY(0) rotate(-1.3deg) scale(1); }
+  25%      { transform: translateY(-4px) rotate(0deg) scale(1.012); }
+  50%      { transform: translateY(-7px) rotate(1.3deg) scale(1.02); }
+  75%      { transform: translateY(-4px) rotate(0deg) scale(1.012); }
 }
 @keyframes bob-shadow {
   0%, 100% { transform: scale(1); opacity: 0.55; }
