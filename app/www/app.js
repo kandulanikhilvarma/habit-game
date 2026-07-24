@@ -8,7 +8,7 @@ import { renderJourney, renderYou } from './screens.js';
 import { icons } from './icons.js';
 import { celebrate, wakeUp, haptic, bindIdleLifecycle, randomizeBlink } from './fx.js';
 import { playAdd, playRemove, playPick, playPet } from './audio.js';
-import { sheetMarkup, makeHabit, TEMPLATES, MAX_HABITS } from './habits.js';
+import { sheetMarkup, makeHabit, isDuplicateName, TEMPLATES, MAX_HABITS } from './habits.js';
 import { presentSheet } from './sheet.js';
 import { initReminders, ensurePermission, syncReminders } from './reminders.js';
 
@@ -20,6 +20,22 @@ let identity = { anonymous: true, email: null, name: null };
 
 // Sound only plays once the user has opted in; haptics fire freely (silent, and a no-op on iOS web).
 const soundOn = () => state.settings.sound === true;
+
+// One transient message, for errors and blocked actions that would otherwise fail silently.
+let toastTimer = null;
+function toast(message) {
+  let t = el('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    document.body.append(t);
+  }
+  t.textContent = message;
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 3200);
+}
 
 function render() {
   const { level, into, need } = levelFromTotalXp(state.creature.xp);
@@ -57,13 +73,23 @@ function render() {
     el('google-signin')?.addEventListener('click', async () => {
       haptic('light');
       const { startGoogleSignIn } = await import('./cloud.js');
-      try { await startGoogleSignIn(); } catch (err) { console.warn('sign-in start failed', err); }
+      try {
+        await startGoogleSignIn();
+      } catch (err) {
+        // Surface the real reason instead of failing silently — usually the domain isn't authorized.
+        const msg = err?.code === 'auth/unauthorized-domain'
+          ? 'This site is not authorized in Firebase yet.'
+          : `Sign-in failed: ${err?.code || err?.message || 'unknown'}`;
+        toast(msg);
+        console.warn('sign-in start failed', err);
+      }
     });
     el('sign-out')?.addEventListener('click', async () => {
       const { signOutUser } = await import('./cloud.js');
       await signOutUser();
       location.reload();   // simplest correct reset: re-init as a fresh anonymous session
     });
+    el('change-creature')?.addEventListener('click', changeCreature);
   }
 }
 
@@ -197,6 +223,19 @@ function askAboutSound() {
   });
 }
 
+// Change creature any time — keeps all progress (XP, level, streaks, world); only the species look
+// and its affinity change. Reuses the onboarding picker, which just resolves a species key.
+async function changeCreature() {
+  haptic('light');
+  const { runOnboarding } = await import('./onboarding.js');
+  const species = await runOnboarding(el('overlay'), { change: true });
+  state.creature.species = species;
+  state.creature.name = SPECIES[species].name;
+  save(state);
+  showScreen('home');
+  cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
+}
+
 function openAddSheet() {
   const sheet = el('sheet');
   sheet.innerHTML = sheetMarkup(state.habits.length);
@@ -237,6 +276,10 @@ function openAddSheet() {
   submit.addEventListener('click', async () => {
     const name = nameInput.value.trim();
     if (!name || state.habits.length >= MAX_HABITS) return;
+    if (isDuplicateName(name, state.habits)) {
+      toast(`You already have a "${name}" quest.`);
+      return;
+    }
     const reminder = sheet.querySelector('#habit-reminder').value || null;
 
     // Permission is asked here, at the moment it is actually needed, rather than on first launch.
@@ -351,6 +394,13 @@ async function boot() {
   if (!ctx) return;
 
   identity = currentIdentity();
+  if (ctx.authError) {
+    toast(ctx.authError === 'auth/unauthorized-domain'
+      ? 'Sign-in blocked: add this domain in Firebase authorized domains.'
+      : `Sign-in error: ${ctx.authError}`);
+  } else if (!identity.anonymous) {
+    toast(`Signed in as ${identity.name || identity.email}`);
+  }
   if (screen === 'you') render();   // reflect signed-in state if the You tab is already open
 
   const remote = await pullState(ctx, todayKey());

@@ -60,6 +60,13 @@ export function sheetMarkup(habitCount) {
     <button class="cta" id="add-habit" disabled>Add quest</button>`;
 }
 
+/** True when a habit with this name already exists (case- and space-insensitive). */
+export function isDuplicateName(name, existing) {
+  const norm = (s) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+  const target = norm(name);
+  return existing.some((h) => norm(h.name) === target);
+}
+
 /** Slug that stays stable and unique against the habits already stored. */
 export function habitId(name, existing) {
   const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'habit';

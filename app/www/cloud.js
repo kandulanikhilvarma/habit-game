@@ -33,6 +33,7 @@ export async function initCloud() {
 
   // Finish any Google redirect that navigated us back here before deciding whether to sign in.
   // A credential already tied to another account surfaces here; we fall back to signing into it.
+  let authError = null;
   try {
     await getRedirectResult(auth);
   } catch (err) {
@@ -40,6 +41,7 @@ export async function initCloud() {
       const cred = GoogleAuthProvider.credentialFromError(err);
       if (cred) { const { signInWithCredential } = await import('./vendor/firebase.js'); await signInWithCredential(auth, cred); }
     } else {
+      authError = err?.code || err?.message || 'sign-in failed';
       console.warn('redirect sign-in failed', err);
     }
   }
@@ -49,7 +51,7 @@ export async function initCloud() {
   const user = auth.currentUser ?? await new Promise((resolve) => {
     onAuthStateChanged(auth, (u) => u && resolve(u));
   });
-  return { db, uid: user.uid, user };
+  return { db, uid: user.uid, user, authError };
 }
 
 /** Who is signed in, for the You screen: anonymous vs a linked Google identity. */
