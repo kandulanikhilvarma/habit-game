@@ -134,11 +134,13 @@ function accountBlock(identity) {
   if (identity.anonymous) {
     return `
       <p class="card__meta">You are playing as a guest. Sign in to keep your creature safe across devices.</p>
-      <button class="cta cta--google" id="google-signin">Sign in with Google</button>`;
+      <button class="cta cta--google" id="google-signin">Sign in with Google</button>
+      <p class="card__id">Guest id: ${(identity.uid || '').slice(0, 10) || '—'}</p>`;
   }
   return `
     <p class="card__value">${identity.name || identity.email || 'Signed in'}</p>
     <p class="card__meta">${identity.email || ''}</p>
+    <p class="card__id">Account id: ${(identity.uid || '').slice(0, 10)}</p>
     <button class="ask__btn" id="sign-out">Sign out</button>`;
 }
 
