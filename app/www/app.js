@@ -17,6 +17,7 @@ let state = load();
 let cloud = null;
 let screen = 'home';
 let identity = { anonymous: true, email: null, name: null };
+let signInFn = null;   // set once cloud init resolves; called directly so the popup opens in-gesture
 
 // Theme: dark by default, light when chosen. Applied to <html> so tokens.css can override surfaces.
 function applyTheme() {
@@ -301,19 +302,18 @@ function openAddSheet() {
 
 el('add-quest').addEventListener('click', () => { haptic('light'); openAddSheet(); });
 
-// Shared by the You button and the Home guest banner. Surfaces the real error rather than failing
-// silently — an unauthorized domain is the usual reason a redirect never completes.
-async function beginSignIn() {
+// Shared by the You button and the Home guest banner. Calls the cached fn directly (no await before
+// it) so the Google popup opens inside the tap gesture — an await here gets the popup blocked on iOS.
+function beginSignIn() {
   haptic('light');
-  const { startGoogleSignIn } = await import('./cloud.js');
-  try {
-    await startGoogleSignIn();
-  } catch (err) {
+  if (!signInFn) { toast('Still loading — try again in a moment.'); return; }
+  Promise.resolve(signInFn()).catch((err) => {
+    if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') return;
     toast(err?.code === 'auth/unauthorized-domain'
       ? 'This site is not authorized in Firebase yet.'
       : `Sign-in failed: ${err?.code || err?.message || 'unknown'}`);
-    console.warn('sign-in start failed', err);
-  }
+    console.warn('sign-in failed', err);
+  });
 }
 el('home-signin').addEventListener('click', beginSignIn);
 
@@ -412,10 +412,11 @@ async function boot() {
   // has two devices, which is a Gate 1+ problem.
   const {
     initCloud, pullState, pushCompletion, pushWholeState, deleteHabits,
-    currentIdentity, watchAuth, saveProfile,
+    currentIdentity, watchAuth, saveProfile, startGoogleSignIn,
   } = await import('./cloud.js');
   const ctx = await initCloud();
   if (!ctx) return;
+  signInFn = startGoogleSignIn;   // now the sign-in buttons work with no async gap before the popup
 
   cloud = {
     push: (s, completion) => pushCompletion(ctx, s, completion),
