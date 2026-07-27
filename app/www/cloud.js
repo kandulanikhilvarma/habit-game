@@ -4,16 +4,20 @@
 import {
   initializeApp, getAuth, signInAnonymously, onAuthStateChanged, connectAuthEmulator,
   GoogleAuthProvider, linkWithRedirect, signInWithRedirect, getRedirectResult,
-  signInWithPopup, linkWithPopup, signInWithCredential, signOut,
+  signInWithPopup, linkWithPopup, signInWithCredential, signOut, deleteUser,
   initializeFirestore, persistentLocalCache, connectFirestoreEmulator,
   doc, getDoc, getDocs, deleteDoc, collection, writeBatch,
 } from './vendor/firebase.js';
-import { userPath, habitPath, habitsPath, dayPath, completionPath } from './paths.js';
+import {
+  userPath, habitPath, habitsPath, daysPath, completionsPath, dayPath, completionPath,
+} from './paths.js';
 
 let authRef = null;   // kept so the You screen can start sign-in / sign-out without re-init
+let ctxCache = null;  // initializeFirestore throws if called twice, so init runs at most once
 
 /** Returns a context, or null when no Firebase config is present (the app then runs local-only). */
 export async function initCloud() {
+  if (ctxCache) return ctxCache;
   let config;
   try {
     ({ firebaseConfig: config } = await import('./firebase-config.js'));
@@ -52,7 +56,8 @@ export async function initCloud() {
   const user = auth.currentUser ?? await new Promise((resolve) => {
     onAuthStateChanged(auth, (u) => u && resolve(u));
   });
-  return { db, uid: user.uid, user, authError };
+  ctxCache = { db, uid: user.uid, user, authError };
+  return ctxCache;
 }
 
 /** Who is signed in, for the You screen: anonymous vs a linked Google identity. */
@@ -118,6 +123,31 @@ export async function startGoogleSignIn() {
 
 export async function signOutUser() {
   if (authRef) await signOut(authRef);
+}
+
+/**
+ * Delete everything under the account: every habit, completion, and day rollup, then the user doc,
+ * then the auth account itself. Play requires an in-app deletion path; this is it. If deleting the
+ * auth user needs a fresh sign-in (Google, older session), the cloud data is already gone and we
+ * fall back to signing out — the caller then clears local storage.
+ */
+export async function deleteAccount({ db, uid }) {
+  const wipe = async (collPath) => {
+    const snap = await getDocs(collection(db, collPath));
+    await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
+  };
+  await wipe(habitsPath(uid));
+  await wipe(completionsPath(uid));
+  await wipe(daysPath(uid));
+  await deleteDoc(doc(db, userPath(uid)));
+
+  const u = authRef?.currentUser;
+  try {
+    if (u) await deleteUser(u);
+  } catch (err) {
+    if (err?.code === 'auth/requires-recent-login') await signOut(authRef);
+    else throw err;
+  }
 }
 
 /** Whole-state pull, used once at boot. Returns null for a brand-new account. */

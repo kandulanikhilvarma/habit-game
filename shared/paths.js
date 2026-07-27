@@ -4,5 +4,7 @@
 export const userPath = (uid) => `users/${uid}`;
 export const habitPath = (uid, hid) => `users/${uid}/habits/${hid}`;
 export const habitsPath = (uid) => `users/${uid}/habits`;
+export const daysPath = (uid) => `users/${uid}/days`;
 export const dayPath = (uid, date) => `users/${uid}/days/${date}`;
+export const completionsPath = (uid) => `users/${uid}/completions`;
 export const completionPath = (uid, date, hid) => `users/${uid}/completions/${date}_${hid}`;

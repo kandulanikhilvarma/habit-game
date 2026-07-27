@@ -5,7 +5,7 @@ export { initializeApp } from 'firebase/app';
 export {
   getAuth, signInAnonymously, onAuthStateChanged, connectAuthEmulator,
   GoogleAuthProvider, signInWithRedirect, linkWithRedirect, getRedirectResult,
-  signInWithPopup, linkWithPopup, signInWithCredential, signOut,
+  signInWithPopup, linkWithPopup, signInWithCredential, signOut, deleteUser,
 } from 'firebase/auth';
 export {
   initializeFirestore, persistentLocalCache, connectFirestoreEmulator,

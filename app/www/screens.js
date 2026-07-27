@@ -124,6 +124,7 @@ export function renderYou(host, state, identity = { anonymous: true }) {
     <div class="card">
       <p class="card__label">Account</p>
       ${accountBlock(identity)}
+      <button class="danger-btn" id="delete-account">Delete my account</button>
     </div>
 
     <p class="screen__note">Nothing here leaves your phone except completion events.</p>`;
