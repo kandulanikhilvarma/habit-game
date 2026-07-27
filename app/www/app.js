@@ -18,6 +18,7 @@ let cloud = null;
 let screen = 'home';
 let identity = { anonymous: true, email: null, name: null };
 let signInFn = null;   // set once cloud init resolves; called directly so the popup opens in-gesture
+let cloudCtx = null;   // { db, uid } once cloud init resolves; needed for account deletion
 
 // Theme: dark by default, light when chosen. Applied to <html> so tokens.css can override surfaces.
 function applyTheme() {
@@ -85,6 +86,7 @@ function render() {
       location.reload();   // simplest correct reset: re-init as a fresh anonymous session
     });
     el('change-creature')?.addEventListener('click', changeCreature);
+    bindDeleteAccount(el('delete-account'));
     el('theme')?.querySelectorAll('[data-theme-choice]').forEach((b) => {
       b.addEventListener('click', () => {
         state.settings.theme = b.dataset.themeChoice;
@@ -317,6 +319,40 @@ function beginSignIn() {
 }
 el('home-signin').addEventListener('click', beginSignIn);
 
+// Two-tap delete so a stray tap can't wipe an account: first tap arms + warns, second within 4s
+// wipes local + cloud and reloads to a fresh guest.
+function bindDeleteAccount(btn) {
+  if (!btn) return;
+  let armed = false;
+  let armTimer = null;
+  btn.addEventListener('click', async () => {
+    if (!armed) {
+      armed = true;
+      btn.textContent = 'Tap again to delete everything';
+      btn.classList.add('danger-btn--armed');
+      armTimer = setTimeout(() => {
+        armed = false;
+        btn.textContent = 'Delete my account';
+        btn.classList.remove('danger-btn--armed');
+      }, 4000);
+      return;
+    }
+    clearTimeout(armTimer);
+    btn.disabled = true;
+    btn.textContent = 'Deleting…';
+    try {
+      if (cloudCtx) {
+        const { deleteAccount } = await import('./cloud.js');
+        await deleteAccount(cloudCtx);
+      }
+    } catch (err) {
+      console.warn('account delete failed', err);
+    }
+    localStorage.removeItem('habitgame.state.v1');
+    location.reload();
+  });
+}
+
 // Hold-to-delete, not a confirm dialog: deliberate where destructive, snappy on cancel
 // (DESIGN_MOTION_SPEC §5). The overlay fills over 1.2s; letting go before it completes cancels.
 const HOLD_MS = 1200;
@@ -406,6 +442,7 @@ async function boot() {
   } = await import('./cloud.js');
   const ctx = await initCloud();
   if (ctx) {
+    cloudCtx = ctx;
     signInFn = startGoogleSignIn;   // sign-in buttons now work with no async gap before the popup
     cloud = {
       push: (s, completion) => pushCompletion(ctx, s, completion),
