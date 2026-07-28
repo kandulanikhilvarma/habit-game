@@ -2,7 +2,7 @@
 // time-of-day curve, per-habit trends) is Gate 2 and needs completion history to say anything true.
 
 import { levelFromTotalXp, stageForLevel, attunementFrom, lineageFor } from './game-math.js';
-import { heatmap, successRate, trend, bestHourInsight, hourLabel } from './analytics.js';
+import { heatmap, successRate, trend, bestHourInsight, weekdayWeekendSplit, hourLabel } from './analytics.js';
 import { weeklyLetter } from './letter.js';
 import { SPECIES, LINEAGE_STYLE } from './creature.js';
 
@@ -37,6 +37,7 @@ export function renderJourney(host, state) {
     ${heatmapMarkup(heatmap(log, { days: 150 }))}
 
     ${bestHourMarkup(bestHourInsight(log))}
+    ${weekdayMarkup(weekdayWeekendSplit(log), log.length)}
 
     <h3 class="screen__sub">Per habit</h3>
     <ul class="habit-stats">
@@ -65,6 +66,23 @@ function heatmapMarkup(cells) {
     return `<span class="heat heat--${level}" title="${c.date}: ${c.count}"></span>`;
   }).join('');
   return `<div class="heatmap" role="img" aria-label="Completion history, last 150 days">${dots}</div>`;
+}
+
+// Weekday vs weekend: a simple "best conditions" read (§4.4 item 4). Per-day averages so a 5:2
+// day split doesn't fake a weekday bias. Needs a little history to say anything.
+function weekdayMarkup(split, logLen) {
+  if (logLen < 8) return '';
+  const wdAvg = split.weekday / 5;
+  const weAvg = split.weekend / 2;
+  let line;
+  if (wdAvg >= weAvg * 1.3) line = 'Weekdays are your strong stretch — routine is working for you.';
+  else if (weAvg >= wdAvg * 1.3) line = 'Weekends carry you. Weekdays are where the next win is.';
+  else line = 'You keep an even rhythm across the whole week.';
+  return `
+    <div class="card">
+      <p class="card__label">Weekdays vs weekends</p>
+      <p class="card__meta">${line}</p>
+    </div>`;
 }
 
 function bestHourMarkup(insight) {
@@ -137,6 +155,9 @@ export function renderYou(host, state, identity = { anonymous: true }) {
     <div class="card">
       <p class="card__label">Account</p>
       ${accountBlock(identity)}
+      <div class="btn-row">
+        <button class="ask__btn" id="export-data">Download my data</button>
+      </div>
       <button class="danger-btn" id="delete-account">Delete my account</button>
     </div>
 
