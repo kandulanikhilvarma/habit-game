@@ -679,3 +679,8 @@ body {
 .letter { border-color: #9d7bff44; background: linear-gradient(180deg, #9d7bff11, var(--surface)); }
 .letter__line { font-size: var(--size-body); line-height: 1.5; }
 .letter__line + .letter__line { margin-top: 6px; color: var(--text-muted); }
+
+/* ---- button row + rename input ---- */
+.btn-row { display: flex; gap: 8px; margin-top: 4px; }
+.btn-row .ask__btn { flex: 1; }
+.rename-input { font-size: 1.125rem; font-weight: 700; }

@@ -101,7 +101,10 @@ export function renderYou(host, state, identity = { anonymous: true }) {
       ${(state.badges ?? []).includes('rekindled')
         ? '<p class="badge">Rekindled — you came back</p>'
         : ''}
-      <button class="ask__btn" id="change-creature">Change creature</button>
+      <div class="btn-row">
+        <button class="ask__btn" id="rename-creature">Rename</button>
+        <button class="ask__btn" id="change-creature">Change creature</button>
+      </div>
     </div>
 
     <div class="card">
@@ -120,7 +123,7 @@ export function renderYou(host, state, identity = { anonymous: true }) {
             ${h.reminder ? `<span class="habit-row__time">${h.reminder}</span>` : ''}
           </li>`).join('')}
       </ul>
-      <p class="card__meta">Press and hold a habit for a second to remove it.</p>
+      <p class="card__meta">Tap a habit to edit it, or press and hold to remove it.</p>
     </div>
 
     <div class="card">

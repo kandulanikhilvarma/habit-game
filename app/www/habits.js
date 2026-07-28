@@ -22,42 +22,52 @@ const CATEGORIES = [
   ['order', 'Order'],
 ];
 
-export function sheetMarkup(habitCount) {
+// Doubles as the add and edit sheet: pass an existing habit to pre-fill and switch to edit copy.
+export function sheetMarkup(habitCount, habit = null) {
+  const editing = !!habit;
   const remaining = MAX_HABITS - habitCount;
+  const glyph = habit?.glyph ?? GLYPHS[0];
+  const category = habit?.category ?? CATEGORIES[0][0];
   return `
     <div class="sheet__handle" aria-hidden="true"></div>
-    <h2 class="sheet__title">New habit quest</h2>
-    <p class="sheet__note">${remaining} of ${MAX_HABITS} slots left. Fewer habits, kept longer, beats more habits dropped.</p>
-
+    <h2 class="sheet__title">${editing ? 'Edit quest' : 'New habit quest'}</h2>
+    ${editing
+      ? ''
+      : `<p class="sheet__note">${remaining} of ${MAX_HABITS} slots left. Fewer habits, kept longer, beats more habits dropped.</p>
     <p class="field__label">Start from a template</p>
     <div class="chips">
       ${TEMPLATES.map((t, i) => `
         <button type="button" class="chip-btn" data-template="${i}">${t.glyph} ${t.name}</button>`).join('')}
-    </div>
+    </div>`}
 
     <label class="field">
-      <span class="field__label">Or name your own</span>
-      <input class="field__input" id="habit-name" type="text" maxlength="40" placeholder="Walk the dog" autocomplete="off">
+      <span class="field__label">${editing ? 'Name' : 'Or name your own'}</span>
+      <input class="field__input" id="habit-name" type="text" maxlength="40" placeholder="Walk the dog"
+             value="${habit ? escapeAttr(habit.name) : ''}" autocomplete="off">
     </label>
 
     <p class="field__label">Icon</p>
     <div class="glyph-grid" id="glyph-grid">
-      ${GLYPHS.map((g, i) => `
-        <button type="button" class="glyph${i === 0 ? ' on' : ''}" data-glyph="${g}" aria-pressed="${i === 0}">${g}</button>`).join('')}
+      ${GLYPHS.map((g) => `
+        <button type="button" class="glyph${g === glyph ? ' on' : ''}" data-glyph="${g}" aria-pressed="${g === glyph}">${g}</button>`).join('')}
     </div>
 
     <p class="field__label">Category</p>
     <div class="segmented" id="category">
-      ${CATEGORIES.map(([key, label], i) => `
-        <button type="button" class="segment${i === 0 ? ' on' : ''}" data-category="${key}" aria-pressed="${i === 0}">${label}</button>`).join('')}
+      ${CATEGORIES.map(([key, label]) => `
+        <button type="button" class="segment${key === category ? ' on' : ''}" data-category="${key}" aria-pressed="${key === category}">${label}</button>`).join('')}
     </div>
 
     <label class="field">
       <span class="field__label">Remind me (optional)</span>
-      <input class="field__input" id="habit-reminder" type="time" autocomplete="off">
+      <input class="field__input" id="habit-reminder" type="time" value="${habit?.reminder ?? ''}" autocomplete="off">
     </label>
 
-    <button class="cta" id="add-habit" disabled>Add quest</button>`;
+    <button class="cta" id="add-habit"${editing ? '' : ' disabled'}>${editing ? 'Save changes' : 'Add quest'}</button>`;
+}
+
+function escapeAttr(s) {
+  return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
 /** True when a habit with this name already exists (case- and space-insensitive). */
