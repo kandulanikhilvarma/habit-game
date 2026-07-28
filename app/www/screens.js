@@ -137,7 +137,10 @@ export function renderYou(host, state, identity = { anonymous: true }) {
         ${state.habits.map((h) => `
           <li class="habit-row" data-delete="${h.id}">
             <span class="habit-row__fill" aria-hidden="true"></span>
-            <span class="habit-row__text">${h.glyph} ${h.name}</span>
+            <span class="habit-row__text">
+              ${h.glyph} ${h.name}
+              ${h.goal ? `<span class="habit-row__goal">Why: ${h.goal} · ${h.total} day${h.total === 1 ? '' : 's'} in</span>` : ''}
+            </span>
             ${h.reminder ? `<span class="habit-row__time">${h.reminder}</span>` : ''}
           </li>`).join('')}
       </ul>

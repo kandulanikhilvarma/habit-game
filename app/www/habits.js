@@ -63,6 +63,12 @@ export function sheetMarkup(habitCount, habit = null) {
       <input class="field__input" id="habit-reminder" type="time" value="${habit?.reminder ?? ''}" autocomplete="off">
     </label>
 
+    <label class="field">
+      <span class="field__label">Why this matters (optional)</span>
+      <input class="field__input" id="habit-goal" type="text" maxlength="60" placeholder="e.g. sleep better, pass the exam"
+             value="${habit ? escapeAttr(habit.goal ?? '') : ''}" autocomplete="off">
+    </label>
+
     <button class="cta" id="add-habit"${editing ? '' : ' disabled'}>${editing ? 'Save changes' : 'Add quest'}</button>`;
 }
 
@@ -86,13 +92,14 @@ export function habitId(name, existing) {
   return `${base}-${n}`;
 }
 
-export function makeHabit({ name, glyph, category, reminder = null }, existing) {
+export function makeHabit({ name, glyph, category, reminder = null, goal = null }, existing) {
   return {
     id: habitId(name, existing),
     name: name.trim(),
     glyph,
     category,
     reminder: reminder || null,
+    goal: goal || null,
     streak: 0,
     best: 0,
     total: 0,
