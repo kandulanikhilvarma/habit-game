@@ -4,6 +4,36 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-24 — Web/backend feature build-out (everything buildable without art or Android)
+
+With the account layer done, built out the rest of the verifiable backlog (PRs #31–#35, all merged):
+
+- **Weekly letter** (§3.2): `shared/letter.js`, rule-based and warm — days shown up + a genuinely
+  hard weekday (only with enough history), we-framing, never a scorecard. Top of Journey.
+- **Edit habits + rename creature**: the sheet doubles as add/edit (tap a habit to edit, hold to
+  delete); inline creature rename (name is the attachment, §3.2).
+- **Data export + weekday insight**: "Download my data" JSON from You; a weekday-vs-weekend read on
+  Journey using per-day averages.
+- **Goal linkage** (§4.4 item 6): an optional "why" per habit, shown with days invested.
+- **Webhook** (§5 #5): `POST /api/v1/complete` — Pydantic-validated Flask route mapping a per-account
+  token to the user (pytest 6/6); You generates + shows the token and a ready-to-paste snippet.
+
+Test totals now: 55 JS unit + 6 pytest + 8 Firestore-rules.
+
+### What is deliberately NOT built (and why)
+- **Motion polish** (freeze-at-risk flame, perfect-day fireflies, §3.6/§3.10): skipped, not deferred
+  by oversight — this environment cannot composite frames, so animation quality can't be judged. Not
+  worth shipping blind. Do it once a real device or a working preview is in the loop.
+- **Creature art**: needs claude.ai/design (the brief) — the one thing that can't be judged here.
+- **Android-native** (Health Connect, UsageStats, widget, FCM push, Play listing): needs a real
+  Android device. The user is on iPhone; the web build is the testbed.
+- **"Continue to Kumo"** on the Google sign-in page: Google Cloud OAuth consent app name — user setting.
+
+The web + backend app is now feature-complete for everything a browser and a mocked/real Firebase can
+prove. The frontier is hardware (Android) and art, both owned by the user, both explicitly next-phase.
+
+---
+
 ## 2026-07-24 — Account layer complete and confirmed on-device
 
 The web app's account system is done end to end, and the user confirmed **Google sign-in works on
