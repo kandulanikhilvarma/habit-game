@@ -87,6 +87,16 @@ function render() {
     });
     el('change-creature')?.addEventListener('click', changeCreature);
     el('rename-creature')?.addEventListener('click', renameCreature);
+    el('share-dna')?.addEventListener('click', async () => {
+      haptic('light');
+      try {
+        const { shareCard } = await import('./dna.js');
+        const how = await shareCard(state);
+        if (how === 'downloaded') toast('Your creature card was saved.');
+      } catch (err) {
+        if (err?.name !== 'AbortError') { toast('Could not make the card.'); console.warn('share failed', err); }
+      }
+    });
     el('export-data')?.addEventListener('click', exportData);
     el('gen-token')?.addEventListener('click', generateWebhookToken);
     el('regen-token')?.addEventListener('click', generateWebhookToken);
