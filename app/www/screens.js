@@ -123,6 +123,7 @@ export function renderYou(host, state, identity = { anonymous: true }) {
         <button class="ask__btn" id="rename-creature">Rename</button>
         <button class="ask__btn" id="change-creature">Change creature</button>
       </div>
+      <button class="cta share-btn" id="share-dna">Share your creature</button>
     </div>
 
     <div class="card">

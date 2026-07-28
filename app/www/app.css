@@ -695,3 +695,6 @@ body {
   background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
   padding: 10px; margin: 4px 0; overflow-x: auto; white-space: pre; color: var(--text-muted);
 }
+
+/* ---- share button ---- */
+.share-btn { width: 100%; margin-top: 8px; }
