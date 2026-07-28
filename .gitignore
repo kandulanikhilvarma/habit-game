@@ -43,3 +43,4 @@ app/www/gesture-math.js
 app/www/reminder-math.js
 app/www/analytics.js
 public/
+app/www/letter.js

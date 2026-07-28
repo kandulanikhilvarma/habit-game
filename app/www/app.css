@@ -674,3 +674,8 @@ body {
 .danger-btn:active { transform: scale(0.98); }
 .danger-btn--armed { background: #ff8fb122; border-color: var(--blush); color: var(--blush); }
 .danger-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* ---- weekly letter card ---- */
+.letter { border-color: #9d7bff44; background: linear-gradient(180deg, #9d7bff11, var(--surface)); }
+.letter__line { font-size: var(--size-body); line-height: 1.5; }
+.letter__line + .letter__line { margin-top: 6px; color: var(--text-muted); }
