@@ -3,6 +3,7 @@
 
 import { levelFromTotalXp, stageForLevel, attunementFrom, lineageFor } from './game-math.js';
 import { heatmap, successRate, trend, bestHourInsight, hourLabel } from './analytics.js';
+import { weeklyLetter } from './letter.js';
 import { SPECIES, LINEAGE_STYLE } from './creature.js';
 
 const TREND_ICON = { up: '↗', down: '↘', flat: '→' };
@@ -14,8 +15,17 @@ export function renderJourney(host, state) {
   const log = state.log ?? [];
   const totalDone = state.habits.reduce((sum, h) => sum + h.total, 0);
 
+  const letter = weeklyLetter(log, state.creature.name);
+
   host.innerHTML = `
     <h2 class="screen__title">Journey</h2>
+
+    ${letter ? `
+    <div class="card letter">
+      <p class="card__label">${letter.title}</p>
+      ${letter.lines.map((l) => `<p class="letter__line">${l}</p>`).join('')}
+    </div>` : ''}
+
     <div class="stats">
       ${stat('Current streak', `${state.gStreak}`, state.gStreak === 1 ? 'day' : 'days')}
       ${stat('Best streak', `${state.gBest}`, state.gBest === 1 ? 'day' : 'days')}
