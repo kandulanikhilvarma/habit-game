@@ -88,6 +88,8 @@ function render() {
     el('change-creature')?.addEventListener('click', changeCreature);
     el('rename-creature')?.addEventListener('click', renameCreature);
     el('export-data')?.addEventListener('click', exportData);
+    el('gen-token')?.addEventListener('click', generateWebhookToken);
+    el('regen-token')?.addEventListener('click', generateWebhookToken);
     bindDeleteAccount(el('delete-account'));
     el('theme')?.querySelectorAll('[data-theme-choice]').forEach((b) => {
       b.addEventListener('click', () => {
@@ -242,6 +244,18 @@ async function changeCreature() {
   save(state);
   showScreen('home');
   cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
+}
+
+// A per-account webhook token, stored on the user doc so the backend can map an incoming call to
+// this account (services/webhook_service.py queries users by webhookToken).
+function generateWebhookToken() {
+  haptic('light');
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  state.webhookToken = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+  save(state);
+  render();
+  cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
+  toast('Webhook token generated.');
 }
 
 // Download everything as JSON — GDPR-friendly, and it is just the local state (which mirrors the

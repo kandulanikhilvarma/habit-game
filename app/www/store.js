@@ -34,7 +34,8 @@ function seed() {
     ],
     comeback: false,
     badges: [],
-    account: null,   // { email, name, uid } once signed in; null while a guest
+    account: null,       // { email, name, uid } once signed in; null while a guest
+    webhookToken: null,  // per-account token for POST /api/v1/complete; generated on demand
     settings: { sound: null, theme: 'dark' },
     day: { date: todayKey(), doneIds: [], xpEarned: 0 },
     // Local completion log — the Journey screen reads this. The cloud has the same rows, but the
