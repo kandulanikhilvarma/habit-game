@@ -4,6 +4,35 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-24 — Account layer complete and confirmed on-device
+
+The web app's account system is done end to end, and the user confirmed **Google sign-in works on
+their iPhone**. Shipped across PRs #23–#29 (all merged and deployed):
+
+- **Google sign-in via popup**, not redirect. Redirect silently failed on iOS Safari (tracking
+  prevention wipes the hand-back state, `getRedirectResult` returns empty, user stays a guest even
+  with the domain authorized). `signInWithPopup`/`linkWithPopup` keeps auth in-page and fixed it. The
+  sign-in fn is cached and called with no `await` before it so the popup opens inside the tap gesture.
+- **Live auth** via `onAuthStateChanged`: UI flips guest → signed-in when auth lands; email +
+  displayName written to the user doc.
+- **Login-first web entry**: `/` → `/play`; a welcome screen (Sign in / guest) precedes the starter
+  pick; marketing moved to `/about`.
+- **In-app account deletion** (Play requirement): two-tap Delete wipes habits, completions, days, the
+  user doc, then the auth account. Verified against live Firebase.
+- **Duplicate habits fixed at the root**: deleting a habit deletes its Firestore subdoc (an orphan
+  used to resurrect on the next pull); old dupes cleaned on load and in the cloud.
+- Six starters, dark/light theme, change-creature-anytime, richer sounds + livelier idle, visible
+  auth errors.
+
+### Still open (owner: user, not code)
+- **Creature art quality** — can't be judged blind here. Path: claude.ai/design from
+  `docs/DESIGN_BRIEF_FOR_CLAUDE_DESIGN.md` → export SVGs → wire into `creature.js`.
+- **"Continue to Kumo"** on the Google page — Google Cloud → OAuth consent screen → App name.
+- **Android-native** (Health Connect, UsageStats, widget, Play) — needs a real Android device; the
+  user is on iPhone and the web build is the current testbed.
+
+---
+
 ## 2026-07-23 — Live setup + the first real-device bug
 
 ### Firebase, Vercel, and the playable web build — all done and proven
