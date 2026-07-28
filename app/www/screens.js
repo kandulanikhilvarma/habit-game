@@ -175,21 +175,22 @@ export function renderYou(host, state, identity = { anonymous: true }) {
            <div class="btn-row"><button class="ask__btn" id="gen-token">Generate webhook token</button></div>`}
     </div>
 
-    <p class="screen__note">Nothing here leaves your phone except completion events.</p>`;
+    `;
 }
 
 // Anonymous by default; signing in with Google links this account so progress carries over.
 function accountBlock(identity) {
   if (identity.anonymous) {
     return `
-      <p class="card__meta">You are playing as a guest. Sign in to keep your creature safe across devices.</p>
-      <button class="cta cta--google" id="google-signin">Sign in with Google</button>
-      <p class="card__id">Guest id: ${(identity.uid || '').slice(0, 10) || '—'}</p>`;
+      <p class="card__meta">Sign in to keep your creature safe across devices.</p>
+      <button class="cta cta--google" id="google-signin">Sign in with Google</button>`;
   }
+  // Show the name as the heading; only add the email underneath when it is a distinct second line.
+  const heading = identity.name || identity.email || 'Signed in';
+  const sub = identity.name && identity.email ? identity.email : '';
   return `
-    <p class="card__value">${identity.name || identity.email || 'Signed in'}</p>
-    <p class="card__meta">${identity.email || ''}</p>
-    <p class="card__id">Account id: ${(identity.uid || '').slice(0, 10)}</p>
+    <p class="card__value">${heading}</p>
+    ${sub ? `<p class="card__meta">${sub}</p>` : ''}
     <button class="ask__btn" id="sign-out">Sign out</button>`;
 }
 
