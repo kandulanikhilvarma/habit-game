@@ -4,6 +4,30 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-29 — Habit DNA share card + world scene (the last two web features)
+
+### Shipped
+- **Habit DNA share card** (PR #38, VALIDATION_REPORT §6 upgrade 3 / DESIGN_BRIEF #5). `app/www/dna.js`: `dnaCardSvg(state)` builds a self-contained 9:16 SVG — creature portrait, lineage/stage tag, day-N streak flame, level, quests done, and a heat ring of the last 84 days. `shareCard(state)` rasterises it to a PNG and offers the OS share sheet with a download fallback. "Share your creature" button on the You screen. This is the referral loop.
+- **World scene in the glade** (PR #39, MASTER_PLAN §3.3). `app/www/world.js`: `worldSvg(state, {now})` grows the creature's world from lifetime progress — each habit kept ≥7 days plants a permanent tree (mind) / lantern (body) / spring (order), cap 10; sky and hills tint to the local clock; lanterns glow at night; a perfect day adds fireflies; neglect (no live global streak) dims the light and pauses growth without ruining the scene. Rendered into `#glade` each frame.
+- Both are covered by node tests (`dna.test.js`, `world.test.js`); a `pretest` sync now runs before `npm test` so the generated `app/www/*.js` copies exist when the new tests import them in CI.
+
+### Verified in this session
+- `npm test` → 64/64 pass (was 55; +4 card, +5 world).
+- DNA card renders the real data live: name, `Lv 7`, `42` streak, `135` quests, `Sprite · Moth-sage line`, `viewBox 0 0 1080 1920`. Heat ring reflects the log (57 lit + 27 dim of 84 with a dense log; 0 with an empty log). SVG→canvas→PNG produces a valid 1.78 MB `image/png` blob — no canvas taint, so `navigator.share({files})` will have a real file on iOS/Android.
+- World logic live: 4 habits ≥7 days → 4 plantings, a 3-day habit plants nothing, capped at 10; lantern lit at 23:00 and dark at noon; perfect day → 6 fireflies vs 0 ordinary; neglected → scene at 0.55 opacity, plantings intact, no fireflies.
+- CI green on both PRs (js · python · rules), squash-merged to main.
+
+### Not verified — visual, not logic (the standing rule)
+- How either actually *looks*, and the firefly drift motion: the Browser pane isn't compositing frames this session, so I confirmed SVG structure + data + day/night/planting logic, not the render. Both need an eyeball on a phone.
+- DESIGN_BRIEF #5 lists a "world silhouette" as a card element. Left off the card deliberately — placing the world band under the creature well needs eyes I don't have here; do it in the on-device visual pass rather than tune it blind.
+- Creature art is still the Gate 0 placeholder SVG (owner: user, via claude.ai/design). The card and world are only as strong as the creature in them.
+
+### Next
+- On-device visual pass on the card and glade (positioning, the silhouette-on-card, firefly feel).
+- Everything else remaining is Android-native / next-phase: Health Connect + UsageStats auto-verification (the actual differentiator), the home-screen widget, FCM, Play listing.
+
+---
+
 ## 2026-07-24 — Web/backend feature build-out (everything buildable without art or Android)
 
 With the account layer done, built out the rest of the verifiable backlog (PRs #31–#35, all merged):
