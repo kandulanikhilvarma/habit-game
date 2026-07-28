@@ -684,3 +684,7 @@ body {
 .btn-row { display: flex; gap: 8px; margin-top: 4px; }
 .btn-row .ask__btn { flex: 1; }
 .rename-input { font-size: 1.125rem; font-weight: 700; }
+
+/* ---- habit goal line ---- */
+.habit-row__text { display: flex; flex-direction: column; gap: 1px; }
+.habit-row__goal { font-size: 0.75rem; color: var(--text-muted); }

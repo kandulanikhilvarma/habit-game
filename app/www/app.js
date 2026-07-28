@@ -334,13 +334,14 @@ function openAddSheet(editHabit = null) {
       return;
     }
     const reminder = sheet.querySelector('#habit-reminder').value || null;
+    const goal = sheet.querySelector('#habit-goal').value.trim() || null;
     if (reminder) await ensurePermission();   // asked at the moment it is needed, not on first launch
 
     if (editHabit) {
-      Object.assign(editHabit, { name, glyph, category, reminder });
+      Object.assign(editHabit, { name, glyph, category, reminder, goal });
     } else {
       if (state.habits.length >= MAX_HABITS) return;
-      state.habits.push(makeHabit({ name, glyph, category, reminder }, state.habits));
+      state.habits.push(makeHabit({ name, glyph, category, reminder, goal }, state.habits));
     }
     save(state);
     render();
