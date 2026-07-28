@@ -4,6 +4,7 @@ import {
 } from './game-math.js';
 import { load, save, rollover, todayKey, dedupeHabits } from './store.js';
 import { creatureSvg, SPECIES, LINEAGE_STYLE } from './creature.js';
+import { worldSvg } from './world.js';
 import { renderJourney, renderYou } from './screens.js';
 import { icons } from './icons.js';
 import { celebrate, wakeUp, haptic, bindIdleLifecycle, randomizeBlink } from './fx.js';
@@ -61,6 +62,7 @@ function render() {
   el('creature').innerHTML = creatureSvg(state.creature.species, stage, {
     cracks, asleep: state.comeback, lineage,
   });
+  el('glade').innerHTML = worldSvg(state);
   el('creature-name').textContent = state.creature.name;
   el('creature-stage-tag').textContent = state.comeback
     ? 'Asleep · waiting for you'

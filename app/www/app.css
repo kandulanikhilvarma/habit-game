@@ -698,3 +698,19 @@ body {
 
 /* ---- share button ---- */
 .share-btn { width: 100%; margin-top: 8px; }
+
+/* ---- world fireflies (perfect-day garnish, §3.3). Transform/opacity only; motion off on request. */
+.firefly {
+  animation: firefly-drift 4.2s var(--ease-in-out, ease-in-out) infinite;
+  animation-delay: var(--fd, 0s);
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+@keyframes firefly-drift {
+  0%, 100% { transform: translate(0, 0); opacity: 0.35; }
+  50%      { transform: translate(4px, -6px); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .firefly { animation: none; opacity: 0.8; }
+}
