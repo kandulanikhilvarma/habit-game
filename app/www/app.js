@@ -87,6 +87,7 @@ function render() {
     });
     el('change-creature')?.addEventListener('click', changeCreature);
     el('rename-creature')?.addEventListener('click', renameCreature);
+    el('export-data')?.addEventListener('click', exportData);
     bindDeleteAccount(el('delete-account'));
     el('theme')?.querySelectorAll('[data-theme-choice]').forEach((b) => {
       b.addEventListener('click', () => {
@@ -241,6 +242,22 @@ async function changeCreature() {
   save(state);
   showScreen('home');
   cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
+}
+
+// Download everything as JSON — GDPR-friendly, and it is just the local state (which mirrors the
+// cloud). No server round-trip needed.
+function exportData() {
+  haptic('light');
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `kumo-data-${todayKey()}.json`;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('Your data is downloading.');
 }
 
 // Rename the creature inline — the name is the attachment (MASTER_PLAN §3.2). Swaps the value line
