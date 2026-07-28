@@ -164,6 +164,17 @@ export function renderYou(host, state, identity = { anonymous: true }) {
       <button class="danger-btn" id="delete-account">Delete my account</button>
     </div>
 
+    <div class="card">
+      <p class="card__label">Automation (advanced)</p>
+      ${state.webhookToken
+        ? `<p class="card__meta">Complete a habit from IFTTT, Tasker or a script:</p>
+           <pre class="code">POST /api/v1/complete
+{"token":"${state.webhookToken}","habit_id":"${state.habits[0]?.id ?? 'read'}"}</pre>
+           <div class="btn-row"><button class="ask__btn" id="regen-token">Regenerate token</button></div>`
+        : `<p class="card__meta">Generate a token to complete habits from IFTTT, Tasker, or your own scripts.</p>
+           <div class="btn-row"><button class="ask__btn" id="gen-token">Generate webhook token</button></div>`}
+    </div>
+
     <p class="screen__note">Nothing here leaves your phone except completion events.</p>`;
 }
 

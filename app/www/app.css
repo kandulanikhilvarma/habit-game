@@ -688,3 +688,10 @@ body {
 /* ---- habit goal line ---- */
 .habit-row__text { display: flex; flex-direction: column; gap: 1px; }
 .habit-row__goal { font-size: 0.75rem; color: var(--text-muted); }
+
+/* ---- webhook code block ---- */
+.code {
+  font: 12px/1.5 ui-monospace, monospace;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 10px; margin: 4px 0; overflow-x: auto; white-space: pre; color: var(--text-muted);
+}
