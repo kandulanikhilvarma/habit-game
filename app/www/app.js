@@ -86,6 +86,7 @@ function render() {
       location.reload();   // simplest correct reset: re-init as a fresh anonymous session
     });
     el('change-creature')?.addEventListener('click', changeCreature);
+    el('rename-creature')?.addEventListener('click', renameCreature);
     bindDeleteAccount(el('delete-account'));
     el('theme')?.querySelectorAll('[data-theme-choice]').forEach((b) => {
       b.addEventListener('click', () => {
@@ -242,12 +243,39 @@ async function changeCreature() {
   cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
 }
 
-function openAddSheet() {
-  const sheet = el('sheet');
-  sheet.innerHTML = sheetMarkup(state.habits.length);
+// Rename the creature inline — the name is the attachment (MASTER_PLAN §3.2). Swaps the value line
+// for an input; Enter or blur saves a non-empty trimmed name.
+function renameCreature() {
+  haptic('light');
+  const valueEl = el('screen-you').querySelector('.card__value');
+  if (!valueEl || valueEl.querySelector('input')) return;
+  const current = state.creature.name ?? '';
+  valueEl.innerHTML = `<input class="field__input rename-input" id="rename-input" maxlength="20" value="${current.replace(/"/g, '&quot;')}">`;
+  const input = el('rename-input');
+  input.focus();
+  input.select();
+  let done = false;
+  const commit = () => {
+    if (done) return;
+    done = true;
+    const name = input.value.trim().slice(0, 20);
+    if (name && name !== current) {
+      state.creature.name = name;
+      save(state);
+      cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
+    }
+    render();
+  };
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); } });
+  input.addEventListener('blur', commit);
+}
 
-  let glyph = sheet.querySelector('.glyph').dataset.glyph;
-  let category = sheet.querySelector('.segment').dataset.category;
+function openAddSheet(editHabit = null) {
+  const sheet = el('sheet');
+  sheet.innerHTML = sheetMarkup(state.habits.length, editHabit);
+
+  let glyph = (sheet.querySelector('.glyph.on') ?? sheet.querySelector('.glyph')).dataset.glyph;
+  let category = (sheet.querySelector('.segment.on') ?? sheet.querySelector('.segment')).dataset.category;
   const nameInput = sheet.querySelector('#habit-name');
   const submit = sheet.querySelector('#add-habit');
   const sync = () => { submit.disabled = nameInput.value.trim().length === 0; };
@@ -281,17 +309,22 @@ function openAddSheet() {
 
   submit.addEventListener('click', async () => {
     const name = nameInput.value.trim();
-    if (!name || state.habits.length >= MAX_HABITS) return;
-    if (isDuplicateName(name, state.habits)) {
+    if (!name) return;
+    // A duplicate is only a duplicate against OTHER habits, not the one being edited.
+    const others = editHabit ? state.habits.filter((h) => h.id !== editHabit.id) : state.habits;
+    if (isDuplicateName(name, others)) {
       toast(`You already have a "${name}" quest.`);
       return;
     }
     const reminder = sheet.querySelector('#habit-reminder').value || null;
+    if (reminder) await ensurePermission();   // asked at the moment it is needed, not on first launch
 
-    // Permission is asked here, at the moment it is actually needed, rather than on first launch.
-    if (reminder) await ensurePermission();
-
-    state.habits.push(makeHabit({ name, glyph, category, reminder }, state.habits));
+    if (editHabit) {
+      Object.assign(editHabit, { name, glyph, category, reminder });
+    } else {
+      if (state.habits.length >= MAX_HABITS) return;
+      state.habits.push(makeHabit({ name, glyph, category, reminder }, state.habits));
+    }
     save(state);
     render();
     haptic('success');
@@ -353,19 +386,25 @@ function bindDeleteAccount(btn) {
   });
 }
 
-// Hold-to-delete, not a confirm dialog: deliberate where destructive, snappy on cancel
-// (DESIGN_MOTION_SPEC §5). The overlay fills over 1.2s; letting go before it completes cancels.
+// A habit row: quick tap edits, press-and-hold deletes. Hold is deliberate where destructive, the
+// fill animates over 1.2s and letting go early cancels (DESIGN_MOTION_SPEC §5).
 const HOLD_MS = 1200;
-function bindHoldToDelete(host) {
+const TAP_MS = 300;
+function bindHabitRow(host) {
   let timer = null;
   let held = null;
+  let downAt = 0;
+  let fired = false;
 
   const start = (e) => {
     const row = e.target.closest('[data-delete]');
     if (!row) return;
     held = row;
+    fired = false;
+    downAt = performance.now();
     row.classList.add('holding');
     timer = setTimeout(() => {
+      fired = true;
       const removedId = row.dataset.delete;
       state.habits = state.habits.filter((h) => h.id !== removedId);
       state.day.doneIds = state.day.doneIds.filter((id) => id !== removedId);
@@ -373,24 +412,30 @@ function bindHoldToDelete(host) {
       render();
       haptic('medium');
       if (soundOn()) playRemove();
-      // A deleted habit must stop reminding: cancel-and-reschedule clears its pending notification.
       syncReminders(state.habits, state.creature.name).catch((err) => console.warn('reminder sync failed', err));
       cloud?.deleteHabits([removedId]).catch((err) => console.warn('cloud delete failed', err));
       cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
     }, HOLD_MS);
   };
-  const cancel = () => {
+  const up = () => {
     clearTimeout(timer);
+    const row = held;
     held?.classList.remove('holding');
     held = null;
+    // A short press that didn't trigger a delete opens the edit sheet for that habit.
+    if (row && !fired && performance.now() - downAt < TAP_MS) {
+      const h = state.habits.find((x) => x.id === row.dataset.delete);
+      if (h) { haptic('light'); openAddSheet(h); }
+    }
   };
+  const cancel = () => { clearTimeout(timer); held?.classList.remove('holding'); held = null; };
 
   host.addEventListener('pointerdown', start);
-  host.addEventListener('pointerup', cancel);
+  host.addEventListener('pointerup', up);
   host.addEventListener('pointercancel', cancel);
   host.addEventListener('pointerleave', cancel);
 }
-bindHoldToDelete(el('screen-you'));
+bindHabitRow(el('screen-you'));
 
 // Navigation is instant by design (DESIGN_MOTION_SPEC §3 part 2): tabs are hit dozens of times a
 // day, so the screens swap with a 120ms opacity fade and nothing slides.
