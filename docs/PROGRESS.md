@@ -4,6 +4,38 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-30 — The creatures got real art
+
+### Shipped (PR #40)
+- Hand-made character art for all six starters (kumo, embr, moss, aqua, sol, nyx), replacing the placeholder procedural blobs. This was the weakest thing in the demo.
+- `creatureArt(species)` in `app/www/creature.js` returns an `<img>`; the **awake, hatched** creature (stage 2+) uses it on Home, in the starter picker, the welcome mark, and the share card.
+- The **egg** (stage 1) and the **asleep/wake ceremony** deliberately stay procedural SVG — `fx.js` animates their inner parts (egg cracks, blanket slide-off), which an image can't do.
+- Idle **bob** and the check-in **hop** retarget to `.creature-art` (fx.js falls back from `#body-group`); `prefers-reduced-motion` stills it.
+- Share card inlines the art as a **base64 data URL** — an external `href` in an SVG `<image>` taints the canvas and kills the PNG export.
+
+### Art pipeline (repeatable — worth remembering)
+The user generated art from two tools with two different problems. Both were fixed with a throwaway PIL script (in the session scratchpad, not committed):
+- 4 ChatGPT images sat on a smooth dark radial gradient → **region-growing flood** from the border. It follows the gradient (and the stage glow, which is just more gradient) and stops at the creature's hard outline. embr initially got eaten because the flood walked along its dark outline into its dark-but-coloured belly; fixed with a **saturation guard** (`sat <= 45`) so coloured pixels can't join the background.
+- 2 Gemini images had a **fake, opaque checkerboard** background (not real alpha). A gradient flood can't bridge the two checker greys, so alternating squares survived. Fixed with a **neutral-membership key**, border-connected: a pixel is background if it is light and unsaturated. Border-connected matters — it keeps the creature's own eye-white highlights, which are islands.
+- Then trimmed to content, padded to a centered square with 7% headroom, resized to 512px. All six: ~1.1 MB total (down from 2.4 MB at 768px).
+
+### Verified in this session (these I could actually see)
+- Rendered the finished share card with embr's art embedded and looked at it: creature sits inside the heat ring, "Sprite · Ember-beast line" in ember-orange, stats right. Rasterises to a valid ~2 MB PNG, **no canvas taint**.
+- Contact sheet of all six composited on the app background (`#0d1022`): clean keys, no halos, no leftover boxes, reads as one family. Caught and fixed the embr and aqua/nyx failures this way — the dark composite is what exposed them.
+- Starter picker: 6/6 art images load with the right `src`.
+- `npm test` 64/64. CI green on #40 (js · python · rules), squash-merged.
+
+### Not verified — motion and device
+- The bob/hop on the image, and how the art sits at real phone sizes. The pane doesn't composite frames, so structure and load are proven; motion is not.
+- Still open from before: on-device pass on the glade, and the card's "world silhouette" (DESIGN_BRIEF #5) left off deliberately rather than positioned blind.
+
+### Next
+- On-device visual pass: Home with art + glade, the share card in the OS share sheet, motion feel.
+- Everything else remaining is Android-native / next-phase: Health Connect + UsageStats auto-verification (the actual differentiator), the widget, FCM, Play listing.
+- Art gap: only stage 2+ has art. Stages 3–5 (Sprite/Guardian/Radiant) still reuse the stage-2 image, so evolution changes the *label* but not the picture. Branching evolution is a GO-condition — per-stage art is the next art ask.
+
+---
+
 ## 2026-07-29 — Habit DNA share card + world scene (the last two web features)
 
 ### Shipped
