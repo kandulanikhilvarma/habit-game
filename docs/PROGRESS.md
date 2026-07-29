@@ -4,6 +4,46 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-30 (later) — Glade fixed, evolution made visible, brand mark chosen
+
+### The glade bug (PR #41)
+Reported from a phone screenshot: a hard navy block behind the creature, on every creature. Two separate causes, both mine:
+- `world.js` hardcoded dark hex, so in **light theme** the ground was a slab. Colours now come from themed CSS variables (`--world-ground`, `--world-rim`, `--world-leaf*`, `--world-shade`). The SVG is injected inline, so `var()` resolves against the page and the scene re-tints on the theme toggle with **no JS**.
+- `.glade` was anchored to the bottom of the **scene**, so it sat behind the *name text* instead of under the creature's feet. New `.creature-plot` wrapper anchors it to the creature's own box.
+
+Also: the full-width hill band became a soft island with a **radial fade on every side**, and the stray pale dot (a day/night orb) became a low horizon glow. Plantings are larger with contact shadows.
+
+**Lesson worth keeping:** my first fix replaced the slab with a solid ellipse and it read as a *plate* the creature stood in front of. Fading only downward isn't enough — ground needs to fade on every side. I only caught it by rendering and looking, which is the whole argument for the render-and-decode loop below.
+
+### Evolved forms (PR #42)
+Stage 3+ was still showing the stage-2 picture, so evolving changed the label and nothing else — and branching evolution is a GO-condition. Now, via one `artKeyFor(species, stage, lineage)`:
+- stage 1 → procedural egg SVG (unchanged; `fx.js` animates the cracks)
+- stage 2 → the starter you picked
+- stage 3–4 → the lineage the habits chose (ember-beast · moth-sage · sentinel · prismatic)
+- stage 5 → a shared **Radiant guardian** every branch grows into
+
+Home, the starter picker and the share card all read that one function so they can't disagree. The user supplied 5 images for 4 branches; the extra (a mossy grove guardian) became the universal Radiant form — **their call, chosen over adding a 5th branch, specifically to avoid changing the tested game math**.
+
+### Brand mark
+The **ember-beast** is the logo (user's pick over prismatic). Favicon on the app shell and all four marketing pages — there was **no favicon at all** before — plus the welcome-screen mark and a hero mark on `/about`. Single `LOGO_CREATURE` constant in `creature.js`, so swapping it is one line.
+
+### Verified in this session (rendered and looked at)
+- Light and dark glade: soft ground, no slab, name and stage tag legible. New user (no plantings, no streak): clean dimmed ground, reads as "waiting", not broken.
+- Stage-3 Home with an order-dominant habit set: the crystal sentinel in the glade, labelled "Sentinel Sprite" — starter was **Sol**, so the branch genuinely overrode the species.
+- Share card for the same state: sentinel inside the heat ring, cyan "Sprite · Sentinel line".
+- XP→art progression: 60/300/700→`sol`, 1600/3000→`sentinel`; every referenced file 200.
+- No horizontal overflow at 375px, no console errors. `npm test` 73/73. CI green on both PRs.
+
+### How to see anything in this environment (the workaround that made the above possible)
+`computer screenshot` fails — the Browser pane doesn't composite frames. The way around it: build the thing on a canvas in the page (rasterise the inline SVG with `var()` substituted from `getComputedStyle`, `drawImage` the creature PNG at its measured `getBoundingClientRect()`, draw the text with its computed font), `toDataURL`, then let the oversized tool result spill to a file and decode that file to a PNG with Python and Read it. Keep the canvas under ~400×700 or the base64 is too big even for the file path. This is the only visual feedback loop that works here — use it instead of claiming motion/looks are verified.
+
+### Next
+- On-device pass: Home with the evolved forms, the glade, the share sheet, motion feel.
+- Optional art: stage 4 (Guardian) reuses the stage-3 lineage picture — 4 more images would make stage 4 distinct.
+- Everything else remaining is Android-native / next-phase: Health Connect + UsageStats auto-verification (the actual differentiator), the widget, FCM, Play listing.
+
+---
+
 ## 2026-07-30 — The creatures got real art
 
 ### Shipped (PR #40)
