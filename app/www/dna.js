@@ -32,7 +32,7 @@ function heatRing(log) {
   }).join('');
 }
 
-export function dnaCardSvg(state) {
+export function dnaCardSvg(state, { creatureHref = null } = {}) {
   const { level } = levelFromTotalXp(state.creature.xp);
   const stage = stageForLevel(level);
   const lineage = lineageFor(attunementFrom(state.habits));
@@ -61,9 +61,9 @@ export function dnaCardSvg(state) {
 
     ${heatRing(state.log ?? [])}
 
-    <g transform="translate(${W / 2 - 260}, 560) scale(2.6)">
-      ${creatureInner(state.creature.species, stage, lineage)}
-    </g>
+    ${creatureHref
+      ? `<image x="270" y="540" width="540" height="540" href="${creatureHref}" preserveAspectRatio="xMidYMid meet"/>`
+      : `<g transform="translate(${W / 2 - 260}, 560) scale(2.6)">${creatureInner(state.creature.species, stage, lineage)}</g>`}
 
     <text x="${W / 2}" y="1180" text-anchor="middle" fill="#eef0ff" font-family="Nunito, sans-serif"
           font-size="96" font-weight="800">${escapeText(state.creature.name || 'Kumo')}</text>
@@ -107,9 +107,26 @@ async function toPng(svg) {
   }
 }
 
+// The card rasterises through a canvas, which taints on any cross-resource SVG <image> with an
+// external href. So the creature art is inlined as a base64 data URL — same picture, no taint.
+async function artDataUrl(species) {
+  const key = species in SPECIES ? species : 'kumo';
+  const blob = await (await fetch(`assets/creatures/${key}.png`)).blob();
+  return await new Promise((res) => {
+    const fr = new FileReader();
+    fr.onload = () => res(fr.result);
+    fr.readAsDataURL(blob);
+  });
+}
+
 /** Share the card via the OS share sheet, or fall back to a download. */
 export async function shareCard(state) {
-  const png = await toPng(dnaCardSvg(state));
+  const { level } = levelFromTotalXp(state.creature.xp);
+  // Egg (stage 1) keeps the procedural drawing; a hatched creature shows its art.
+  const creatureHref = stageForLevel(level) >= 2
+    ? await artDataUrl(state.creature.species).catch(() => null)
+    : null;
+  const png = await toPng(dnaCardSvg(state, { creatureHref }));
   const file = new File([png], 'kumo-dna.png', { type: 'image/png' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     await navigator.share({ files: [file], title: 'My Kumo', text: 'What did your habits become?' });

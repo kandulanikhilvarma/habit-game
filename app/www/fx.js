@@ -47,7 +47,7 @@ export function floatXp(amount, x, y) {
 /** Creature hop — overshoot is allowed here because the moment carries momentum. */
 export function hop(stageEl) {
   if (reduced.matches) return;
-  const body = stageEl.querySelector('#body-group');
+  const body = stageEl.querySelector('#body-group') || stageEl.querySelector('.creature-art');
   if (!body) return;
   body.animate(
     [{ transform: 'translateY(0) scaleY(1)' },
