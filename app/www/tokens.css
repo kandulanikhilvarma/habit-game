@@ -41,6 +41,15 @@
   --sheet-bg: rgba(19, 23, 53, 0.72);
   --sheet-edge: #3a4180;
 
+  /* The glade (world.js). Themed, or the ground renders as a dark slab in light mode. */
+  --world-ground: #2b3873;
+  --world-rim: #4bb37a;
+  --world-post: #4a3b2f;
+  --world-leaf: #3f7d5a;
+  --world-leaf-dark: #356b4d;
+  --world-leaf-light: #4a8f66;
+  --world-shade: #050718;
+
   /* Type — 3 sizes only */
   --font: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --size-title: 1.5rem;
@@ -64,4 +73,11 @@
   --text-muted: #5b6288;
   --sheet-bg: rgba(255, 255, 255, 0.82);
   --sheet-edge: #d7dbf0;
+  --world-ground: #aab6e4;
+  --world-rim: #5aa87a;
+  --world-post: #7a6552;
+  --world-leaf: #6bb388;
+  --world-leaf-dark: #57a074;
+  --world-leaf-light: #83c79c;
+  --world-shade: #6b74a8;
 }

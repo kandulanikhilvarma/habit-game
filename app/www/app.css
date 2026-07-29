@@ -384,9 +384,15 @@ body {
   min-height: 0;
 }
 .today, .quests, .add-quest { flex: none; }
+/* The ground belongs under the creature's feet, not behind the name text — so the glade is
+   anchored to the creature's own box, and the island's top arc lands just above its base. */
+.creature-plot { position: relative; display: grid; place-items: center; }
 .glade {
-  position: absolute; inset: auto -16px -8px; height: 55%;
-  background: radial-gradient(78% 100% at 50% 100%, #2b3168aa 0%, #1a1f3d55 45%, transparent 72%);
+  position: absolute;
+  top: 73%; left: 50%;
+  width: 210%;
+  aspect-ratio: 400 / 120;
+  transform: translateX(-50%);
   pointer-events: none;
 }
 .creature-stage {
