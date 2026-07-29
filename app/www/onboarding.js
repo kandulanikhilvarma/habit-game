@@ -1,7 +1,7 @@
 // First run only. Per DESIGN_MOTION_SPEC §3 item 9 this is the one screen allowed to be generous:
 // it happens once, so the delight budget is not being spent on a daily surface.
 
-import { SPECIES, creatureSvg } from './creature.js';
+import { SPECIES, creatureArt } from './creature.js';
 import { haptic } from './fx.js';
 
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -15,7 +15,7 @@ const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
 export function runWelcome(host, { onSignIn } = {}) {
   host.innerHTML = `
     <div class="onboard welcome">
-      <div class="welcome__mark">${creatureSvg('kumo', 2)}</div>
+      <div class="welcome__mark">${creatureArt('kumo')}</div>
       <h1 class="onboard__title">Kumo</h1>
       <p class="onboard__sub">A creature that grows from the habits you actually keep.</p>
       <div class="welcome__actions">
@@ -45,7 +45,7 @@ export function runOnboarding(host, { change = false } = {}) {
       <div class="onboard__cards">
         ${Object.entries(SPECIES).map(([key, s], i) => `
           <button class="starter" data-species="${key}" aria-pressed="false">
-            <span class="starter__art">${creatureSvg(key, change ? 2 : 1)}</span>
+            <span class="starter__art">${creatureArt(key)}</span>
             <span class="starter__name">${s.name}</span>
             <span class="starter__line">${s.tagline}</span>
           </button>`).join('')}

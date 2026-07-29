@@ -41,6 +41,14 @@ export const SPECIES = {
   },
 };
 
+// Hand-made art for the awake, hatched creature (stage 2+). The egg and the sleep/wake ceremony
+// stay procedural SVG (creatureSvg) so fx.js can still animate their parts. `bob`/`hop` in fx.js
+// target `.creature-art` too, so the image keeps the idle life and the check-in hop.
+export function creatureArt(species) {
+  const key = species in SPECIES ? species : 'kumo';
+  return `<img class="creature-art" src="assets/creatures/${key}.png" alt="${SPECIES[key].name}" draggable="false">`;
+}
+
 const CRACKS = [
   'M92 62 l7 9 -9 7 8 10',
   'M112 92 l-8 7 9 8 -7 9',
