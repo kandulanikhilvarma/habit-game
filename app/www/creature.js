@@ -44,9 +44,29 @@ export const SPECIES = {
 // Hand-made art for the awake, hatched creature (stage 2+). The egg and the sleep/wake ceremony
 // stay procedural SVG (creatureSvg) so fx.js can still animate their parts. `bob`/`hop` in fx.js
 // target `.creature-art` too, so the image keeps the idle life and the check-in hop.
-export function creatureArt(species) {
-  const key = species in SPECIES ? species : 'kumo';
-  return `<img class="creature-art" src="assets/creatures/${key}.png" alt="${SPECIES[key].name}" draggable="false">`;
+const ART_NAMES = {
+  kumo: 'Kumo', embr: 'Embr', moss: 'Moss', aqua: 'Aqua', sol: 'Sol', nyx: 'Nyx',
+  ember: 'Ember-beast', moth: 'Moth-sage', sentinel: 'Sentinel', prismatic: 'Prismatic',
+  radiant: 'Radiant guardian',
+};
+
+/**
+ * Which art the creature wears. Stage 2 is still the starter you picked; from stage 3 it wears the
+ * lineage your habits chose (the branching-evolution payoff has to be *visible*, not just a label);
+ * stage 5 is the shared Radiant form — the endgame every branch grows into.
+ */
+export function artKeyFor(species, stage, lineage) {
+  if (stage >= 5) return 'radiant';
+  if (stage >= 3) return lineage in LINEAGE_STYLE ? lineage : 'prismatic';
+  return species in SPECIES ? species : 'kumo';
+}
+
+/** The face of the app: welcome screen, favicon, marketing. One place to change the brand mark. */
+export const LOGO_CREATURE = 'ember';
+
+export function creatureArt(key) {
+  const k = key in ART_NAMES ? key : 'kumo';
+  return `<img class="creature-art" src="assets/creatures/${k}.png" alt="${ART_NAMES[k]}" draggable="false">`;
 }
 
 const CRACKS = [

@@ -3,7 +3,7 @@ import {
   streakAfterDay, attunementFrom, lineageFor, PERFECT_DAY_BONUS,
 } from './game-math.js';
 import { load, save, rollover, todayKey, dedupeHabits } from './store.js';
-import { creatureSvg, creatureArt, SPECIES, LINEAGE_STYLE } from './creature.js';
+import { creatureSvg, creatureArt, artKeyFor, SPECIES, LINEAGE_STYLE } from './creature.js';
 import { worldSvg } from './world.js';
 import { renderJourney, renderYou } from './screens.js';
 import { icons } from './icons.js';
@@ -62,7 +62,7 @@ function render() {
   // Awake, hatched creature = the hand-made art. Egg and the asleep/wake ceremony stay procedural
   // SVG so fx.js can animate their parts (cracks, blanket slide-off).
   el('creature').innerHTML = (!state.comeback && stage >= 2)
-    ? creatureArt(state.creature.species)
+    ? creatureArt(artKeyFor(state.creature.species, stage, lineage))
     : creatureSvg(state.creature.species, stage, { cracks, asleep: state.comeback, lineage });
   el('glade').innerHTML = worldSvg(state);
   el('creature-name').textContent = state.creature.name;

@@ -2,7 +2,7 @@
 // creature, its lineage, the streak flame, and a heatmap ring. "What did YOUR creature become?" is
 // the referral loop (Wordle proved a daily shareable state beats any invite button).
 
-import { creatureSvg, SPECIES, LINEAGE_STYLE } from './creature.js';
+import { creatureSvg, artKeyFor, SPECIES, LINEAGE_STYLE } from './creature.js';
 import { levelFromTotalXp, stageForLevel, attunementFrom, lineageFor } from './game-math.js';
 import { heatmap } from './analytics.js';
 
@@ -109,8 +109,7 @@ async function toPng(svg) {
 
 // The card rasterises through a canvas, which taints on any cross-resource SVG <image> with an
 // external href. So the creature art is inlined as a base64 data URL — same picture, no taint.
-async function artDataUrl(species) {
-  const key = species in SPECIES ? species : 'kumo';
+async function artDataUrl(key) {
   const blob = await (await fetch(`assets/creatures/${key}.png`)).blob();
   return await new Promise((res) => {
     const fr = new FileReader();
@@ -122,9 +121,11 @@ async function artDataUrl(species) {
 /** Share the card via the OS share sheet, or fall back to a download. */
 export async function shareCard(state) {
   const { level } = levelFromTotalXp(state.creature.xp);
-  // Egg (stage 1) keeps the procedural drawing; a hatched creature shows its art.
-  const creatureHref = stageForLevel(level) >= 2
-    ? await artDataUrl(state.creature.species).catch(() => null)
+  const stage = stageForLevel(level);
+  // Egg (stage 1) keeps the procedural drawing; a hatched creature shows its art — the starter at
+  // stage 2, then whatever its habits evolved it into. The card is the brag, so it shows the form.
+  const creatureHref = stage >= 2
+    ? await artDataUrl(artKeyFor(state.creature.species, stage, lineageFor(attunementFrom(state.habits)))).catch(() => null)
     : null;
   const png = await toPng(dnaCardSvg(state, { creatureHref }));
   const file = new File([png], 'kumo-dna.png', { type: 'image/png' });
