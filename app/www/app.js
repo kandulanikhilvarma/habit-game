@@ -87,15 +87,28 @@ function render() {
   if (screen === 'journey') {
     renderJourney(el('screen-journey'), state);
     const memory = el('memory');
-    // Saved on blur, not per keystroke: a journal that writes to disk on every letter is noise.
-    memory?.addEventListener('change', () => {
-      const text = memory.value.trim();
-      state.notes = (state.notes ?? []).filter((n) => n.date !== state.day.date);
-      if (text) state.notes.push({ date: state.day.date, text });
-      save(state);
-      haptic('light');
-      cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
-    });
+    // `change` only fires on blur, and on a phone you often type a note and then background the app
+    // or tap straight to another tab — the keystrokes were being thrown away. Persist as they type.
+    if (memory) {
+      let noteTimer = null;
+      const writeNote = () => {
+        const text = memory.value.trim();
+        state.notes = (state.notes ?? []).filter((n) => n.date !== state.day.date);
+        if (text) state.notes.push({ date: state.day.date, text });
+        save(state);
+      };
+      memory.addEventListener('input', () => {
+        clearTimeout(noteTimer);
+        noteTimer = setTimeout(writeNote, 400);
+      });
+      // Belt and braces for the ways a phone can take the page away mid-sentence.
+      memory.addEventListener('blur', () => {
+        clearTimeout(noteTimer);
+        writeNote();
+        cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
+      });
+      window.addEventListener('pagehide', writeNote, { once: true });
+    }
   }
   if (screen === 'you') {
     renderYou(el('screen-you'), state, identity);
@@ -117,6 +130,7 @@ function render() {
         if (err?.name !== 'AbortError') { toast('Could not make the card.'); console.warn('share failed', err); }
       }
     });
+    el('send-feedback')?.addEventListener('click', sendFeedback);
     el('export-data')?.addEventListener('click', exportData);
     el('gen-token')?.addEventListener('click', generateWebhookToken);
     el('regen-token')?.addEventListener('click', generateWebhookToken);
@@ -365,13 +379,88 @@ function generateWebhookToken() {
 
 // Download everything as JSON — GDPR-friendly, and it is just the local state (which mirrors the
 // cloud). No server round-trip needed.
+// A bare mailto: link opens nothing on plenty of phones — no mail client configured, or an
+// in-app browser that refuses the scheme — and a button that silently does nothing is worse than
+// no button. Try to open the composer, and always leave the address on the clipboard as a fallback.
+const FEEDBACK_EMAIL = 'kandulanikhilvarma@gmail.com';
+
+async function sendFeedback() {
+  haptic('light');
+  const { level } = levelFromTotalXp(state.creature.xp);
+  const body = `
+
+---
+Level ${level} · ${state.habits.length} habits · ${state.gStreak} day streak`;
+  const href = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Kumo feedback')}&body=${encodeURIComponent(body)}`;
+  try {
+    await navigator.clipboard?.writeText(FEEDBACK_EMAIL);
+    toast(`Opening mail. Address copied: ${FEEDBACK_EMAIL}`);
+  } catch {
+    toast(`Email: ${FEEDBACK_EMAIL}`);
+  }
+  window.location.href = href;
+}
+
 function exportData() {
   haptic('light');
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  // A data export nobody can read is not really an export. Plain text is what a person opens; the
+  // JSON stays in the file underneath it for anyone who wants to move the data somewhere.
+  const { level } = levelFromTotalXp(state.creature.xp);
+  const line = (s = '') => `${s}
+`;
+  let out = '';
+  out += line(`KUMO — your data, exported ${todayKey()}`);
+  out += line('='.repeat(48));
+  out += line();
+  out += line(`Creature:      ${state.creature.name} (${SPECIES[state.creature.species]?.name ?? state.creature.species})`);
+  out += line(`Level:         ${level}  (${state.creature.xp} XP total)`);
+  out += line(`Current streak: ${state.gStreak} days   Best: ${state.gBest} days`);
+  out += line(`Freezes banked: ${state.freezes}`);
+  if (state.account?.email) out += line(`Account:       ${state.account.email}`);
+  out += line();
+
+  out += line('YOUR HABITS');
+  out += line('-'.repeat(48));
+  for (const h of state.habits) {
+    out += line(`${h.name}`);
+    out += line(`   category ${h.category} · runs ${scheduleLabel(h.days)}`);
+    out += line(`   ${h.total} completions · streak ${h.streak} · best ${h.best}`);
+    if (h.goal) out += line(`   why: ${h.goal}`);
+    if (h.reminder) out += line(`   reminder at ${h.reminder}`);
+    out += line();
+  }
+
+  const notes = (state.notes ?? []).slice().sort((a, b) => (a.date < b.date ? 1 : -1));
+  if (notes.length) {
+    out += line('MEMORIES');
+    out += line('-'.repeat(48));
+    for (const n of notes) out += line(`${n.date}  ${n.text}`);
+    out += line();
+  }
+
+  const log = state.log ?? [];
+  out += line(`COMPLETION HISTORY (${log.length} entries)`);
+  out += line('-'.repeat(48));
+  const byDate = new Map();
+  for (const e of log) {
+    const names = byDate.get(e.date) ?? [];
+    names.push(state.habits.find((h) => h.id === e.hid)?.name ?? e.hid);
+    byDate.set(e.date, names);
+  }
+  for (const [date, names] of [...byDate].sort((a, b) => (a[0] < b[0] ? 1 : -1))) {
+    out += line(`${date}  ${names.join(', ')}`);
+  }
+  out += line();
+  out += line('-'.repeat(48));
+  out += line('Raw data (JSON), for moving this somewhere else:');
+  out += line();
+  out += line(JSON.stringify(state, null, 2));
+
+  const blob = new Blob([out], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `kumo-data-${todayKey()}.json`;
+  a.download = `kumo-data-${todayKey()}.txt`;
   document.body.append(a);
   a.click();
   a.remove();

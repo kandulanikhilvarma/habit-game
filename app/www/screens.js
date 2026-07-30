@@ -35,10 +35,13 @@ export function renderJourney(host, state) {
       ${stat('Freezes banked', `${state.freezes}`, 'of 2')}
     </div>
 
+    <h3 class="screen__sub">Last two weeks</h3>
+    ${barsMarkup(heatmap(log, { days: 14 }))}
+    ${weekOverWeekMarkup(heatmap(log, { days: 14 }))}
+
     ${memoriesMarkup(notes, state.day.date)}
 
-    <h3 class="screen__sub">Last 5 months</h3>
-    ${heatmapMarkup(heatmap(log, { days: 150 }))}
+    ${log.length >= 21 ? `<h3 class="screen__sub">The long view</h3>${heatmapMarkup(heatmap(log, { days: 84 }))}` : ''}
 
     ${bestHourMarkup(bestHourInsight(log))}
     ${weekdayMarkup(weekdayWeekendSplit(log), log.length)}
@@ -75,6 +78,53 @@ function escapeAttr(t) {
   return escapeHtml(t).replace(/"/g, '&quot;');
 }
 
+// The graph the numbers alone never gave: fourteen days, one bar each, so a good run or a dip is
+// visible at a glance instead of inferred from a grid of squares.
+function barsMarkup(cells) {
+  const max = Math.max(1, ...cells.map((c) => c.count));
+  const W = 320;
+  const H = 76;
+  const gap = 5;
+  const bw = (W - gap * (cells.length - 1)) / cells.length;
+  const bars = cells.map((c, i) => {
+    const h = c.count === 0 ? 3 : Math.max(6, Math.round((c.count / max) * H));
+    const x = i * (bw + gap);
+    const today = i === cells.length - 1;
+    return `<rect x="${x.toFixed(1)}" y="${H - h}" width="${bw.toFixed(1)}" height="${h}" rx="3"
+      fill="${c.count === 0 ? 'var(--border)' : 'var(--mint)'}" opacity="${today ? 1 : c.count === 0 ? 0.7 : 0.85}">
+      <title>${c.date}: ${c.count}</title></rect>`;
+  }).join('');
+  const label = (i) => new Date(`${cells[i].date}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short' });
+  return `
+    <div class="card chart">
+      <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img"
+           aria-label="Completions per day for the last fourteen days">${bars}</svg>
+      <div class="chart__axis"><span>${label(0)}</span><span>${label(cells.length - 1)} (today)</span></div>
+    </div>`;
+}
+
+// A number only means something next to another number. This is the one comparison that answers
+// "am I actually doing better?", which is the question that brings someone back tomorrow.
+function weekOverWeekMarkup(cells) {
+  const half = Math.floor(cells.length / 2);
+  const before = cells.slice(0, half).reduce((n, c) => n + c.count, 0);
+  const now = cells.slice(half).reduce((n, c) => n + c.count, 0);
+  if (before + now === 0) {
+    return `<p class="screen__note">Complete a quest and your first week starts here.</p>`;
+  }
+  const diff = now - before;
+  const word = diff > 0 ? 'up' : diff < 0 ? 'down' : 'level';
+  const line = diff === 0
+    ? `Same as the week before. Holding steady counts.`
+    : `${Math.abs(diff)} ${Math.abs(diff) === 1 ? 'completion' : 'completions'} ${word} on the week before.`;
+  return `
+    <div class="card">
+      <p class="card__label">This week</p>
+      <p class="card__value">${now} completed <span class="trend--${diff >= 0 ? 'up' : 'down'}">${diff > 0 ? '↗' : diff < 0 ? '↘' : '→'}</span></p>
+      <p class="card__meta">${line}</p>
+    </div>`;
+}
+
 function habitStatMarkup(h, log) {
   const r = successRate(log, h, { windowDays: 30 });
   const t = trend(log, h, { windowDays: 14 });
@@ -101,11 +151,11 @@ function heatmapMarkup(cells) {
 // Weekday vs weekend: a simple "best conditions" read (§4.4 item 4). Per-day averages so a 5:2
 // day split doesn't fake a weekday bias. Needs a little history to say anything.
 function weekdayMarkup(split, logLen) {
-  if (logLen < 8) return '';
+  if (logLen < 21) return '';   // under three weeks this is a coin flip with a sentence attached
   const wdAvg = split.weekday / 5;
   const weAvg = split.weekend / 2;
   let line;
-  if (wdAvg >= weAvg * 1.3) line = 'Weekdays are your strong stretch — routine is working for you.';
+  if (wdAvg >= weAvg * 1.3) line = 'Weekdays are your strong stretch. Routine is working for you.';
   else if (weAvg >= wdAvg * 1.3) line = 'Weekends carry you. Weekdays are where the next win is.';
   else line = 'You keep an even rhythm across the whole week.';
   return `
@@ -117,12 +167,14 @@ function weekdayMarkup(split, logLen) {
 
 function bestHourMarkup(insight) {
   if (!insight) {
-    return `<p class="screen__note">A few more days of completions and your best-hour insight appears here.</p>`;
+    return `<p class="screen__note">Keep going. Once there are a couple of weeks of history, your best time of day appears here.</p>`;
   }
-  const share = Math.round(insight.morningShare * 100);
-  const line = share >= 50
-    ? `You win mornings — ${share}% of your wins land before 9am.`
-    : `Your peak hour is ${hourLabel(insight.peakHour)}. Only ${share}% of wins are before 9am.`;
+  const morning = Math.round(insight.morningShare * 100);
+  const evening = Math.round(insight.eveningShare * 100);
+  let line;
+  if (morning >= 50) line = `Mornings are when you win. ${morning}% of your completions land before 11am.`;
+  else if (evening >= 50) line = `Evenings are when you win. ${evening}% of your completions land after 5pm.`;
+  else line = `Your completions are spread through the day, with ${hourLabel(insight.peakHour)} slightly ahead.`;
   return `
     <div class="card">
       <p class="card__label">Best hour</p>
@@ -147,7 +199,7 @@ export function renderYou(host, state, identity = { anonymous: true }) {
       <p class="card__value">${escapeHtml(state.creature.name)} · ${stageLabel}</p>
       <p class="card__meta">Level ${level} · ${into}/${need} XP · affinity for ${species.affinity} habits</p>
       ${(state.badges ?? []).includes('rekindled')
-        ? '<p class="badge">Rekindled — you came back</p>'
+        ? '<p class="badge">Rekindled. You came back.</p>'
         : ''}
       <div class="btn-row">
         <button class="ask__btn" id="rename-creature">Rename</button>
@@ -199,9 +251,7 @@ export function renderYou(host, state, identity = { anonymous: true }) {
     <div class="card">
       <p class="card__label">Feedback</p>
       <p class="card__meta">Something broken, or an idea? It goes straight to the person who builds this.</p>
-      <div class="btn-row">
-        <a class="ask__btn" href="mailto:kandulanikhilvarma@gmail.com?subject=Kumo%20feedback">Send feedback</a>
-      </div>
+      <button class="cta cta--quiet" id="send-feedback">Send feedback</button>
     </div>
 
     <div class="card">
@@ -256,7 +306,7 @@ function lineageBlurb(stage, lineageName, att) {
       ? `Your ${region} is leading. Which habits you keep shapes what your creature becomes at stage 3.`
       : 'Keep habits in different categories and the blend will choose your creature’s branch at stage 3.';
   }
-  return `Your habits chose the ${lineageName} branch — no two lives make the same creature.`;
+  return `Your habits chose the ${lineageName} branch. No two lives make the same creature.`;
 }
 
 function stat(label, value, unit) {

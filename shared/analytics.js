@@ -90,15 +90,20 @@ export function hourHistogram(log = []) {
  * The single most behaviour-changing insight: when the user actually gets things done. Returns the
  * peak hour and the morning share, or null when there is not enough data to claim anything.
  */
-export function bestHourInsight(log = []) {
+export function bestHourInsight(log = [], { minCompletions = 12, minDays = 5 } = {}) {
   const hours = hourHistogram(log);
   const total = hours.reduce((a, b) => a + b, 0);
-  if (total < 5) return null;   // below this, "your best hour" is noise, not a finding
+  const days = new Set(log.map((e) => e.date)).size;
+  // A "best hour" drawn from a handful of taps on one evening is a coincidence with a chart around
+  // it. Needs both enough completions and enough separate days before it means anything.
+  if (total < minCompletions || days < minDays) return null;
 
   let peak = 0;
   for (let h = 1; h < 24; h += 1) if (hours[h] > hours[peak]) peak = h;
-  const beforeNine = hours.slice(0, 9).reduce((a, b) => a + b, 0);
-  return { peakHour: peak, morningShare: beforeNine / total, total };
+  // Morning is 5am to 11am. "Before 9am" counted 1am as a morning win, which nobody believes.
+  const morning = hours.slice(5, 11).reduce((a, b) => a + b, 0);
+  const evening = hours.slice(17, 23).reduce((a, b) => a + b, 0);
+  return { peakHour: peak, morningShare: morning / total, eveningShare: evening / total, total, days };
 }
 
 /** Weekday vs weekend completion split — the simplest "best conditions" insight (§4.4 item 4). */

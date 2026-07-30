@@ -761,3 +761,18 @@ a.ask__btn { display: inline-flex; align-items: center; justify-content: center;
 .day:active { transform: scale(0.95); }
 .day.on { color: #0d1022; background: var(--accent-gradient); border-color: transparent; }
 .habit-row__goal + .habit-row__days, .habit-row__days { display: block; }
+
+/* A secondary call to action: reads as a real button, without competing with the primary one. */
+.cta--quiet {
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* ---- fourteen-day chart ---- */
+.chart { gap: 8px; }
+.chart svg { display: block; width: 100%; overflow: visible; }
+.chart__axis {
+  display: flex; justify-content: space-between;
+  font-size: var(--size-small); color: var(--text-muted);
+}

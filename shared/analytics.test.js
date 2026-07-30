@@ -65,10 +65,32 @@ test('hourHistogram: buckets by local hour', () => {
 test('bestHourInsight: null below the evidence floor, real above it', () => {
   assert.equal(bestHourInsight([entry('a', 0), entry('a', 1)]), null);
   const morning = [];
-  for (let d = 0; d < 6; d += 1) morning.push(entry('a', d, 7));
+  for (let d = 0; d < 14; d += 1) morning.push(entry('a', d, 7));
   const insight = bestHourInsight(morning);
   assert.equal(insight.peakHour, 7);
   assert.equal(insight.morningShare, 1);
+});
+
+test('bestHourInsight: a burst on one day is not a finding', () => {
+  // 14 completions, all on the same evening. Plenty of taps, no evidence of a pattern.
+  const burst = Array.from({ length: 14 }, () => entry('a', 0, 21));
+  assert.equal(bestHourInsight(burst), null, 'needs several separate days, not one busy night');
+});
+
+test('bestHourInsight: 1am is not a morning', () => {
+  const lateNight = [];
+  for (let d = 0; d < 14; d += 1) lateNight.push(entry('a', d, 1));
+  const insight = bestHourInsight(lateNight);
+  assert.equal(insight.peakHour, 1);
+  assert.equal(insight.morningShare, 0, 'the old "before 9am" test counted 1am as a morning win');
+});
+
+test('bestHourInsight: evenings are recognised too', () => {
+  const evening = [];
+  for (let d = 0; d < 14; d += 1) evening.push(entry('a', d, 19));
+  const insight = bestHourInsight(evening);
+  assert.equal(insight.eveningShare, 1);
+  assert.equal(insight.morningShare, 0);
 });
 
 test('weekdayWeekendSplit: partitions by day of week', () => {
