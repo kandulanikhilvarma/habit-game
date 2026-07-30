@@ -1,5 +1,7 @@
 // Habit creation and removal. The sheet surface itself is sheet.js — this is only its contents.
 
+import { DAY_LABELS, DAY_NAMES } from './schedule.js';
+
 export const MAX_HABITS = 7;          // MASTER_PLAN §3.5: cap total at 7, "master these first"
 
 // Templates keep adding a habit to ≤3 taps. Glyphs are user content, which is the one place
@@ -28,6 +30,7 @@ export function sheetMarkup(habitCount, habit = null) {
   const remaining = MAX_HABITS - habitCount;
   const glyph = habit?.glyph ?? GLYPHS[0];
   const category = habit?.category ?? CATEGORIES[0][0];
+  const days = Array.isArray(habit?.days) ? habit.days : [];
   return `
     <div class="sheet__handle" aria-hidden="true"></div>
     <h2 class="sheet__title">${editing ? 'Edit quest' : 'New habit quest'}</h2>
@@ -56,6 +59,17 @@ export function sheetMarkup(habitCount, habit = null) {
     <div class="segmented" id="category">
       ${CATEGORIES.map(([key, label]) => `
         <button type="button" class="segment${key === category ? ' on' : ''}" data-category="${key}" aria-pressed="${key === category}">${label}</button>`).join('')}
+    </div>
+
+    <div class="field">
+      <span class="field__label">Which days</span>
+      <div class="days" id="habit-days" role="group" aria-label="Days this habit runs">
+        ${DAY_LABELS.map((label, i) => {
+          const on = !days.length || days.includes(i);
+          return `<button type="button" class="day${on ? ' on' : ''}" data-day="${i}"
+                    aria-pressed="${on}" aria-label="${DAY_NAMES[i]}">${label}</button>`;
+        }).join('')}
+      </div>
     </div>
 
     <label class="field">
@@ -92,7 +106,7 @@ export function habitId(name, existing) {
   return `${base}-${n}`;
 }
 
-export function makeHabit({ name, glyph, category, reminder = null, goal = null }, existing) {
+export function makeHabit({ name, glyph, category, reminder = null, goal = null, days = [] }, existing) {
   return {
     id: habitId(name, existing),
     name: name.trim(),
@@ -100,6 +114,8 @@ export function makeHabit({ name, glyph, category, reminder = null, goal = null 
     category,
     reminder: reminder || null,
     goal: goal || null,
+    // Empty means every day — the shape every habit had before schedules existed.
+    days: days.length === 7 ? [] : days,
     streak: 0,
     best: 0,
     total: 0,

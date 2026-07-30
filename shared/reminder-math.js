@@ -35,3 +35,13 @@ export function notificationId(habitId) {
   }
   return Math.abs(hash) % 100000;
 }
+
+/**
+ * A distinct id per habit *and* weekday. Capacitor's `schedule.on.weekday` takes one weekday, so a
+ * Mon/Wed/Fri habit needs three notifications, and they must not overwrite each other.
+ * Multiplying by 10 keeps every weekday in its own slot, so two ids can only collide when the
+ * underlying habit ids already did.
+ */
+export function notificationIdFor(habitId, weekday) {
+  return notificationId(habitId) * 10 + weekday;
+}

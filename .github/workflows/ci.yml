@@ -37,6 +37,7 @@ jobs:
           diff shared/reminder-math.js app/www/reminder-math.js
           diff shared/analytics.js app/www/analytics.js
           diff shared/letter.js app/www/letter.js
+          diff shared/schedule.js app/www/schedule.js
       - name: firebase bundle built
         run: test -s app/www/vendor/firebase.js
 

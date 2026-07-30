@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseTime, nextTriggerAt, notificationId } from './reminder-math.js';
+import { parseTime, nextTriggerAt, notificationId, notificationIdFor } from './reminder-math.js';
 
 test('parseTime accepts real times, including single-digit hours', () => {
   assert.deepEqual(parseTime('07:30'), { hours: 7, minutes: 30 });
@@ -60,4 +60,14 @@ test('notification ids are stable, non-negative and distinct per habit', () => {
   assert.notEqual(notificationId('read'), notificationId('workout'));
   assert.ok(notificationId('a-very-long-habit-id-name-here') >= 0);
   assert.ok(Number.isInteger(notificationId('read')));
+});
+
+test('each weekday of a habit gets its own notification id', () => {
+  const ids = [1, 3, 5].map((d) => notificationIdFor('gym', d));
+  assert.equal(new Set(ids).size, 3, 'three days must not overwrite each other');
+  for (const id of ids) assert.ok(Number.isSafeInteger(id) && id >= 0);
+});
+
+test('the same weekday of different habits stays distinct', () => {
+  assert.notEqual(notificationIdFor('gym', 1), notificationIdFor('read', 1));
 });

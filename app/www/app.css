@@ -743,3 +743,21 @@ body {
 
 /* An anchor styled as a button still needs to sit on the same baseline as real buttons. */
 a.ask__btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+
+/* ---- weekday picker ---- */
+.days { display: flex; gap: 6px; }
+.day {
+  flex: 1 1 0;
+  min-height: var(--tap);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font: inherit; font-size: var(--size-small); font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--t-press) var(--ease-out), color var(--t-ui) var(--ease-out),
+              border-color var(--t-ui) var(--ease-out);
+}
+.day:active { transform: scale(0.95); }
+.day.on { color: #0d1022; background: var(--accent-gradient); border-color: transparent; }
+.habit-row__goal + .habit-row__days, .habit-row__days { display: block; }

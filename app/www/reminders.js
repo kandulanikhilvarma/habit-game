@@ -5,7 +5,7 @@
 // Kotlin BroadcastReceiver, which is deferred to Gate 2 alongside the widget's native work.
 // The user still only taps once and never has to find the habit themselves.
 
-import { nextTriggerAt, notificationId } from './reminder-math.js';
+import { nextTriggerAt, notificationId, notificationIdFor } from './reminder-math.js';
 
 const ACTION_TYPE = 'HABIT_REMINDER';
 const DONE_ACTION = 'COMPLETE_HABIT';
@@ -58,18 +58,33 @@ export async function syncReminders(habits, creatureName) {
 
   const toSchedule = habits
     .filter((h) => h.reminder)
-    .map((h) => {
+    .flatMap((h) => {
       const at = nextTriggerAt(h.reminder);
-      if (!at) return null;
-      return {
-        id: notificationId(h.id),
+      if (!at) return [];
+      const body = {
         title: `${h.glyph} ${h.name}`,
         // The creature asks, the app does not nag (VALIDATION_REPORT §4 notification ethics).
         body: `${creatureName} is ready when you are.`,
-        schedule: { at, repeats: true, every: 'day', allowWhileIdle: true },
         actionTypeId: ACTION_TYPE,
         extra: { habitId: h.id },
       };
+      // A reminder on a rest day is exactly the nagging this app promises not to do. Capacitor
+      // takes one weekday per schedule, so a Mon/Wed/Fri habit becomes three notifications.
+      if (Array.isArray(h.days) && h.days.length && h.days.length < 7) {
+        return h.days.map((d) => ({
+          ...body,
+          id: notificationIdFor(h.id, d),
+          schedule: {
+            on: { weekday: d + 1, hour: at.getHours(), minute: at.getMinutes() },
+            allowWhileIdle: true,
+          },
+        }));
+      }
+      return [{
+        ...body,
+        id: notificationId(h.id),
+        schedule: { at, repeats: true, every: 'day', allowWhileIdle: true },
+      }];
     })
     .filter(Boolean);
 
