@@ -61,13 +61,8 @@ function render() {
   const lineage = lineageFor(attunementFrom(state.habits));
   // Awake, hatched creature = the hand-made art. Egg and the asleep/wake ceremony stay procedural
   // SVG so fx.js can animate their parts (cracks, blanket slide-off).
-  // Stage 4 shares the lineage art with stage 3, so the Guardian tier earns its own aura — the
-  // promotion has to be visible on the day it happens. Replaced when real Guardian art exists.
-  const aura = (!state.comeback && stage === 4)
-    ? `<span class="aura" style="--aura:${LINEAGE_STYLE[lineage]?.glow ?? '#9d7bff'}"></span>`
-    : '';
   el('creature').innerHTML = (!state.comeback && stage >= 2)
-    ? aura + creatureArt(artKeyFor(state.creature.species, stage, lineage))
+    ? creatureArt(artKeyFor(state.creature.species, stage, lineage))
     : creatureSvg(state.creature.species, stage, { cracks, asleep: state.comeback, lineage });
   el('glade').innerHTML = worldSvg(state);
   el('creature-name').textContent = state.creature.name;

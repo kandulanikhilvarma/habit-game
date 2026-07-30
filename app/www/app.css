@@ -738,22 +738,5 @@ body {
   .firefly { animation: none; opacity: 0.8; }
 }
 
-/* Guardian tier (stage 4): the lineage's own light gathering behind the creature. Sits under the
-   art because .creature-stage lays both in the same grid cell and the aura comes first. */
-.aura {
-  grid-area: 1 / 1;
-  width: 100%; height: 100%;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 52%, var(--aura) 0%, transparent 62%);
-  opacity: 0.34;
-  animation: aura-breathe 4.8s var(--ease-in-out) infinite;
-  will-change: transform, opacity;
-}
-.creature-stage .creature-art { grid-area: 1 / 1; }
-@keyframes aura-breathe {
-  0%, 100% { transform: scale(1); opacity: 0.28; }
-  50%      { transform: scale(1.08); opacity: 0.42; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .aura { animation: none; opacity: 0.32; }
+
 }
