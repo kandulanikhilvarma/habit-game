@@ -85,3 +85,35 @@ test('hourLabel: 12-hour clock', () => {
   assert.equal(hourLabel(14), '2pm');
   assert.equal(hourLabel(23), '11pm');
 });
+
+test('a habit is only judged on the days it was scheduled for', () => {
+  // Four weeks ending Wed 2026-07-29. Gym runs Mon/Wed/Fri and never missed one.
+  const now = Date.parse('2026-07-29T12:00:00');
+  const gym = { id: 'gym', days: [1, 3, 5], createdAt: now - 27 * 86400000 };
+  const log = [];
+  for (let i = 0; i < 28; i += 1) {
+    const d = new Date(now - i * 86400000);
+    if ([1, 3, 5].includes(d.getDay())) {
+      log.push({ hid: 'gym', date: d.toISOString().slice(0, 10) });
+    }
+  }
+  const r = successRate(log, gym, { windowDays: 28, now });
+  assert.equal(r.rate, 1, `a perfect record must read 100%, got ${Math.round(r.rate * 100)}%`);
+  assert.ok(r.due < 20, `only scheduled days are due, got ${r.due} of 28`);
+});
+
+test('a daily habit is still judged on every day', () => {
+  const now = Date.parse('2026-07-29T12:00:00');
+  const daily = { id: 'a', createdAt: now - 9 * 86400000 };
+  const r = successRate([], daily, { windowDays: 10, now });
+  assert.equal(r.due, 10);
+  assert.equal(r.rate, 0);
+});
+
+test('missing a scheduled day still shows below 100%', () => {
+  const now = Date.parse('2026-07-29T12:00:00');
+  const gym = { id: 'gym', days: [1, 3, 5], createdAt: now - 13 * 86400000 };
+  const log = [{ hid: 'gym', date: '2026-07-27' }];   // one Monday only
+  const r = successRate(log, gym, { windowDays: 14, now });
+  assert.ok(r.rate > 0 && r.rate < 1, `partial record, got ${r.rate}`);
+});
