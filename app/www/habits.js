@@ -1,6 +1,6 @@
 // Habit creation and removal. The sheet surface itself is sheet.js — this is only its contents.
 
-import { DAY_LABELS, DAY_NAMES } from './schedule.js';
+import { DAY_LABELS, DAY_NAMES, scheduleLabel } from './schedule.js';
 import { habitIcons, habitGlyph } from './icons.js';
 
 export const MAX_HABITS = 7;          // MASTER_PLAN §3.5: cap total at 7, "master these first"
@@ -71,6 +71,7 @@ export function sheetMarkup(habitCount, habit = null) {
                     aria-pressed="${on}" aria-label="${DAY_NAMES[i]}">${label}</button>`;
         }).join('')}
       </div>
+      <p class="days-summary" id="days-summary">${scheduleLabel(days)}</p>
     </div>
 
     <label class="field">

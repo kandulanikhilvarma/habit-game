@@ -528,10 +528,16 @@ function openAddSheet(editHabit = null) {
 
   sheet.querySelectorAll('.glyph').forEach((b) => b.addEventListener('click', () => { glyph = pick('.glyph', b, 'glyph'); haptic('light'); }));
   sheet.querySelectorAll('.segment').forEach((b) => b.addEventListener('click', () => { category = pick('.segment', b, 'category'); haptic('light'); }));
+  const daysSummary = () => {
+    const picked = [...sheet.querySelectorAll('.day.on')].map((d) => Number(d.dataset.day));
+    const out = sheet.querySelector('#days-summary');
+    if (out) out.textContent = picked.length ? scheduleLabel(picked) : 'Pick at least one day';
+  };
   sheet.querySelectorAll('.day').forEach((b) => b.addEventListener('click', () => {
     const on = !b.classList.contains('on');
     b.classList.toggle('on', on);
     b.setAttribute('aria-pressed', String(on));
+    daysSummary();
     haptic('light');
   }));
   nameInput.addEventListener('input', sync);

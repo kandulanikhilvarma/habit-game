@@ -37,6 +37,13 @@
   --flame: #ffd166;
   --blush: #ff8fb1;
 
+  /* Selected states for things that repeat. The gradient is for one hero element at a time; used
+     as a fill on seven day chips or six checkboxes it stops meaning "this one" and just means
+     "colour". These read as chosen while staying quiet enough to have siblings. */
+  --accent-soft: rgba(94, 240, 192, 0.2);
+  --accent-line: rgba(94, 240, 192, 0.62);
+  --accent-ink: #7ef7cf;
+
   /* Translucent sheet material, themed so light mode gets a light glass instead of a dark slab */
   --sheet-bg: rgba(19, 23, 53, 0.72);
   --sheet-edge: #3a4180;
@@ -80,4 +87,9 @@
   --world-leaf-dark: #57a074;
   --world-leaf-light: #83c79c;
   --world-shade: #6b74a8;
+  /* Light mode needs a darker ink: mint on white fails contrast badly, and #0c7a61 only
+     cleared 4.5:1 on pure white, dropping to 4.07 on the raised surface the glyph picker uses. */
+  --accent-soft: rgba(13, 148, 118, 0.19);
+  --accent-line: rgba(13, 148, 118, 0.58);
+  --accent-ink: #0a6b55;
 }
