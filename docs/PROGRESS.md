@@ -38,6 +38,12 @@ Constraint that still holds: raw health and usage data never leaves the device. 
 - Nothing has been run on a phone at all. The Gate 0 exit criterion (install the APK, complete a habit, prove offline to sync) is still open.
 - Deliberate simplifications are marked `ponytail:` in the source: no undo on a completed habit, unbounded local log, lineage art as overlay rather than per-species redraws.
 
+### Device knowledge worth keeping (salvaged from an abandoned log branch)
+Hard-won on a real phone; none of it is obvious from the code:
+- **`touch-action: none` on the sheet blocked native scroll**, so on any viewport where the sheet overflowed, the submit button sat below the screen with no way to reach it. Fix was `touch-action: pan-y` with the drag moved to the handle only. Synthetic tests missed this because they clicked the button directly.
+- **iOS gates WebAudio on the hardware mute switch** — the ringer must be physically on or there is no sound, no matter what the app does. The audio context also has to be primed from a real user tap.
+- **Haptics are a no-op in iOS Safari.** They only work in the native shell, so anything relying on them needs a visual fallback on web.
+
 ### If picking this up again
 Start by reading this entry, then `docs/HABITGAME_MVP_MASTER_PLAN.md` section 5 for the integration design. The web app is not a prototype to throw away — it is the shipping frontend; the Android work adds native verification underneath it.
 
