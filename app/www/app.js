@@ -5,6 +5,7 @@ import {
 import { load, save, rollover, todayKey, dedupeHabits } from './store.js';
 import { creatureSvg, creatureArt, artKeyFor, SPECIES, LINEAGE_STYLE } from './creature.js';
 import { worldSvg } from './world.js';
+import { scheduledOn, scheduleLabel } from './schedule.js';
 import { renderJourney, renderYou } from './screens.js';
 import { icons } from './icons.js';
 import { celebrate, wakeUp, haptic, bindIdleLifecycle, randomizeBlink } from './fx.js';
@@ -50,7 +51,9 @@ function render() {
   const { level, into, need } = levelFromTotalXp(state.creature.xp);
   const stage = stageForLevel(level);
   const done = state.day.doneIds.length;
-  const total = state.habits.length;
+  // Only today's habits count. A rest day should not read as an unfinished day.
+  const todays = scheduledOn(state.habits, state.day.date);
+  const total = todays.length;
 
   el('level').innerHTML = `${icons.star}<span>Lv ${level}</span>`;
   el('streak').innerHTML =
@@ -71,11 +74,11 @@ function render() {
     : `${stageName(stage, lineage)} · ${moodFor(done, total)}`;
 
   el('today-label').textContent = `Today ${done}/${total}`;
-  el('today-dots').innerHTML = state.habits
+  el('today-dots').innerHTML = todays
     .map((h) => `<span class="dot${state.day.doneIds.includes(h.id) ? ' on' : ''}"></span>`)
     .join('');
 
-  el('quests').innerHTML = state.habits.map(questMarkup).join('');
+  el('quests').innerHTML = todays.map(questMarkup).join('');
   el('add-quest').hidden = state.habits.length >= MAX_HABITS;
   el('home-signin').hidden = !identity.anonymous;   // guest prompt on Home, gone once signed in
   randomizeBlink();
@@ -222,7 +225,7 @@ function complete(habitId, at) {
     state.freezes = rolled.freezes;
     state.gBest = Math.max(state.gBest, state.gStreak);
   }
-  const perfect = state.day.doneIds.length === state.habits.length;
+  const perfect = state.day.doneIds.length === scheduledOn(state.habits, state.day.date).length;
   if (perfect) xp += PERFECT_DAY_BONUS;
   const wasAsleep = state.comeback;
 
@@ -406,6 +409,12 @@ function openAddSheet(editHabit = null) {
 
   sheet.querySelectorAll('.glyph').forEach((b) => b.addEventListener('click', () => { glyph = pick('.glyph', b, 'glyph'); haptic('light'); }));
   sheet.querySelectorAll('.segment').forEach((b) => b.addEventListener('click', () => { category = pick('.segment', b, 'category'); haptic('light'); }));
+  sheet.querySelectorAll('.day').forEach((b) => b.addEventListener('click', () => {
+    const on = !b.classList.contains('on');
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', String(on));
+    haptic('light');
+  }));
   nameInput.addEventListener('input', sync);
 
   const close = presentSheet(sheet, el('scrim'));
@@ -421,13 +430,20 @@ function openAddSheet(editHabit = null) {
     }
     const reminder = sheet.querySelector('#habit-reminder').value || null;
     const goal = sheet.querySelector('#habit-goal').value.trim() || null;
+    const picked = [...sheet.querySelectorAll('.day.on')].map((b) => Number(b.dataset.day));
+    // All seven selected is the same thing as no schedule; store it as "every day".
+    const days = picked.length === 7 ? [] : picked;
+    if (picked.length === 0) {
+      toast('Pick at least one day.');
+      return;
+    }
     if (reminder) await ensurePermission();   // asked at the moment it is needed, not on first launch
 
     if (editHabit) {
-      Object.assign(editHabit, { name, glyph, category, reminder, goal });
+      Object.assign(editHabit, { name, glyph, category, reminder, goal, days });
     } else {
       if (state.habits.length >= MAX_HABITS) return;
-      state.habits.push(makeHabit({ name, glyph, category, reminder, goal }, state.habits));
+      state.habits.push(makeHabit({ name, glyph, category, reminder, goal, days }, state.habits));
     }
     save(state);
     render();

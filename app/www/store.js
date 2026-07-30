@@ -4,6 +4,7 @@
 // replaces this wholesale in Gate 1, so anything cleverer here would be written twice.
 
 import { applyMissedDays, isComeback } from './game-math.js';
+import { missedScheduledDay } from './schedule.js';
 
 const KEY = 'habitgame.state.v1';
 const DAY_MS = 86400000;
@@ -121,8 +122,10 @@ export function rollover(state, today = todayKey()) {
 
   state.gStreak = next.streak;
   state.freezes = next.freezes;
+  // A per-habit streak breaks only on a day that habit was actually scheduled for. Resetting a
+  // Mon/Wed/Fri habit because the user rested on Sunday punishes them for following their own plan.
   state.habits.forEach((h) => {
-    if (missed > 0) h.streak = 0;
+    if (missedScheduledDay(h, state.log, last, today)) h.streak = 0;
   });
   // The creature sleeps through a long absence and wakes on the next completion — a paused world
   // reads as "waiting for you", where a punished one reads as "delete the app" (MASTER_PLAN §3.3).

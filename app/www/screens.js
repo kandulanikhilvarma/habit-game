@@ -5,6 +5,7 @@ import { levelFromTotalXp, stageForLevel, attunementFrom, lineageFor } from './g
 import { heatmap, successRate, trend, bestHourInsight, weekdayWeekendSplit, hourLabel } from './analytics.js';
 import { weeklyLetter } from './letter.js';
 import { SPECIES, LINEAGE_STYLE } from './creature.js';
+import { scheduleLabel } from './schedule.js';
 
 const TREND_ICON = { up: '↗', down: '↘', flat: '→' };
 
@@ -141,6 +142,7 @@ export function renderYou(host, state, identity = { anonymous: true }) {
             <span class="habit-row__text">
               ${h.glyph} ${h.name}
               ${h.goal ? `<span class="habit-row__goal">Why: ${h.goal} · ${h.total} day${h.total === 1 ? '' : 's'} in</span>` : ''}
+              <span class="habit-row__goal">${scheduleLabel(h.days)}</span>
             </span>
             ${h.reminder ? `<span class="habit-row__time">${h.reminder}</span>` : ''}
           </li>`).join('')}
