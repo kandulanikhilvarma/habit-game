@@ -203,10 +203,10 @@ export function renderYou(host, state, identity = { anonymous: true }) {
         ? '<p class="badge">Rekindled. You came back.</p>'
         : ''}
       <div class="btn-row">
-        <button class="ask__btn" id="rename-creature">Rename</button>
-        <button class="ask__btn" id="change-creature">Change creature</button>
+        <button class="btn btn--secondary" id="rename-creature">Rename</button>
+        <button class="btn btn--secondary" id="change-creature">Change creature</button>
       </div>
-      <button class="cta share-btn" id="share-dna">Share your creature</button>
+      <button class="btn btn--primary share-btn" id="share-dna">Share your creature</button>
     </div>
 
     <div class="card">
@@ -244,27 +244,31 @@ export function renderYou(host, state, identity = { anonymous: true }) {
       <p class="card__label">Account</p>
       ${accountBlock(identity)}
       <div class="btn-row">
-        <button class="ask__btn" id="export-data">Download my data</button>
+        <button class="btn btn--secondary" id="export-data">Download my data</button>
       </div>
-      <button class="danger-btn" id="delete-account">Delete my account</button>
+      ${identity.anonymous
+        ? `<button class="btn btn--danger" id="start-over">Start over</button>
+           <p class="card__meta">Erases this creature and every habit on this device. There is no
+              account to delete yet, because you are playing as a guest.</p>`
+        : `<button class="btn btn--danger" id="delete-account">Delete my account</button>`}
     </div>
 
     <div class="card">
       <p class="card__label">Feedback</p>
       <p class="card__meta">Something broken, or an idea? It goes straight to the person who builds this.</p>
-      <button class="cta cta--quiet" id="send-feedback">Send feedback</button>
+      <button class="btn btn--secondary" id="send-feedback">Send feedback</button>
     </div>
 
-    <div class="card">
-      <p class="card__label">Automation (advanced)</p>
+    <details class="card card--fold">
+      <summary class="card__label">Automation for advanced users</summary>
       ${state.webhookToken
         ? `<p class="card__meta">Complete a habit from IFTTT, Tasker or a script:</p>
            <pre class="code">POST /api/v1/complete
 {"token":"${state.webhookToken}","habit_id":"${state.habits[0]?.id ?? 'read'}"}</pre>
-           <div class="btn-row"><button class="ask__btn" id="regen-token">Regenerate token</button></div>`
+           <div class="btn-row"><button class="btn btn--secondary" id="regen-token">Regenerate token</button></div>`
         : `<p class="card__meta">Generate a token to complete habits from IFTTT, Tasker, or your own scripts.</p>
-           <div class="btn-row"><button class="ask__btn" id="gen-token">Generate webhook token</button></div>`}
-    </div>
+           <div class="btn-row"><button class="btn btn--secondary" id="gen-token">Generate webhook token</button></div>`}
+    </details>
 
     `;
 }
@@ -274,7 +278,7 @@ function accountBlock(identity) {
   if (identity.anonymous) {
     return `
       <p class="card__meta">Sign in to keep your creature safe across devices.</p>
-      <button class="cta cta--google" id="google-signin">Sign in with Google</button>`;
+      <button class="btn btn--primary btn--google" id="google-signin">Sign in with Google</button>`;
   }
   // Show the name as the heading; only add the email underneath when it is a distinct second line.
   const heading = identity.name || identity.email || 'Signed in';
@@ -282,7 +286,7 @@ function accountBlock(identity) {
   return `
     <p class="card__value">${heading}</p>
     ${sub ? `<p class="card__meta">${sub}</p>` : ''}
-    <button class="ask__btn" id="sign-out">Sign out</button>`;
+    <button class="btn btn--secondary" id="sign-out">Sign out</button>`;
 }
 
 // The blend the creature's later form is chosen from. Bars, not numbers — the shape is the point.

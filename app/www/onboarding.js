@@ -41,7 +41,7 @@ export function runOnboarding(host, { change = false } = {}) {
   host.innerHTML = `
     <div class="onboard">
       <h1 class="onboard__title">${change ? 'Choose a new creature' : 'Who will grow with you?'}</h1>
-      ${change ? '<p class="onboard__sub">Your progress stays — only the look and affinity change.</p>' : ''}
+      ${change ? '<p class="onboard__sub">Your progress stays. Only the look and affinity change.</p>' : ''}
       <div class="onboard__cards">
         ${Object.entries(SPECIES).map(([key, s], i) => `
           <button class="starter" data-species="${key}" aria-pressed="false">
