@@ -9,6 +9,9 @@ venv/
 !.env.example
 *-service-account*.json
 serviceAccountKey.json
+# Firebase hands these out named "<project>-firebase-adminsdk-<hash>.json", which the pattern
+# above does not match — it is a private key and blocking it by name is the whole point.
+*firebase-adminsdk*.json
 **/google-services.json
 # app/www/firebase-config.js is intentionally committed: the web config is a public identifier,
 # not a secret (Firestore rules are the security boundary), and the APK build needs it to sync.
