@@ -295,7 +295,7 @@ function attunementBars(att) {
   ];
   return `<div class="attune">${rows.map(([label, val, color]) => `
     <span class="attune__label">${label}</span>
-    <span class="attune__track"><span class="attune__fill" style="width:${Math.round((val / total) * 100)}%;background:${color}"></span></span>
+    <span class="attune__track"><span class="attune__fill" style="transform:scaleX(${(val / total).toFixed(3)});background:${color}"></span></span>
     <span class="attune__val">${val}</span>`).join('')}</div>`;
 }
 

@@ -117,7 +117,7 @@ body {
   transition: transform var(--t-press) var(--ease-out);
 }
 .ask__btn:active { transform: scale(0.96); }
-.ask__btn--yes { background: var(--accent-gradient); border-color: transparent; color: #0d1022; }
+.ask__btn--yes { background: var(--brand); border-color: transparent; color: #fff; }
 
 /* ---- add-quest button ---- */
 .add-quest {
@@ -328,8 +328,8 @@ body {
   padding: 0 20px;
   border: none;
   border-radius: 999px;
-  background: var(--accent-gradient);
-  color: #0d1022;
+  background: var(--brand);
+  color: #fff;
   font: inherit; font-weight: 800;
   cursor: pointer;
   transition: transform var(--t-press) var(--ease-out), opacity var(--t-ui) var(--ease-out);
@@ -367,7 +367,7 @@ body {
 .xp__fill {
   height: 100%;
   width: 100%;
-  background: var(--accent-gradient);
+  background: var(--brand);
   transform: scaleX(0);
   transform-origin: left center;
   transition: transform var(--t-beat) linear;
@@ -587,7 +587,7 @@ body {
   padding: 4px 12px;
   border-radius: 999px;
   background: #ff8fb122;
-  border: 1px solid #ff8fb155;
+  border: 1px solid var(--danger-line);
   color: var(--blush);
   font-size: var(--size-small);
   font-weight: 700;
@@ -605,7 +605,11 @@ body {
 .attune { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 6px 10px; padding: 4px 0; }
 .attune__label { font-size: var(--size-small); color: var(--text-muted); }
 .attune__track { height: 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); overflow: hidden; }
-.attune__fill { display: block; height: 100%; border-radius: 999px; transition: width var(--t-ui) var(--ease-out); }
+.attune__fill {
+  display: block; height: 100%; width: 100%; border-radius: 999px;
+  transform-origin: left center;
+  transition: transform var(--t-ui) var(--ease-out);
+}
 .attune__val { font-size: var(--size-small); font-variant-numeric: tabular-nums; color: var(--text-muted); min-width: 2ch; text-align: right; }
 
 /* ---- journey: heatmap + trends ---- */
@@ -679,8 +683,7 @@ body {
 .signin-banner:active { transform: scale(0.99); }
 .signin-banner__cta {
   flex: none; font-weight: 800;
-  background: var(--accent-gradient);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
+  color: var(--brand-ink);
 }
 .card__id { font-size: 0.75rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 
@@ -697,15 +700,15 @@ body {
   margin-top: 4px;
   padding: 0 16px;
   background: none;
-  border: 1px solid #ff8fb155;
+  border: 1px solid var(--danger-line);
   border-radius: 999px;
-  color: var(--blush);
+  color: var(--danger);
   font: inherit; font-size: var(--size-small); font-weight: 700;
   cursor: pointer;
   transition: transform var(--t-press) var(--ease-out), background var(--t-ui) var(--ease-out);
 }
 .danger-btn:active { transform: scale(0.98); }
-.danger-btn--armed { background: #ff8fb122; border-color: var(--blush); color: var(--blush); }
+.danger-btn--armed { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
 .danger-btn:disabled { opacity: 0.6; cursor: default; }
 
 /* ---- weekly letter card ---- */

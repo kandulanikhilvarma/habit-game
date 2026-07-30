@@ -19,43 +19,58 @@
   --z-banner: 30;
   --z-toast: 40;
 
-  /* Surfaces */
-  --bg: #0d1022;
-  --bg-glow: #1c2150;
-  --surface: #1a1f3d;
-  --surface-raised: #222850;
-  --border: #2b3163;
+  /* Surfaces — warm neutral, not navy. Navy is the colour every habit and AI app already ships,
+     and it tinted eleven creatures that span orange, violet, cyan, green and iridescent. A neutral
+     ground is the only one that lets all of them read as lit rather than as competing accents. */
+  --bg: #141519;
+  --bg-glow: #1e1f27;
+  --surface: #1c1d23;
+  --surface-raised: #26272f;
+  --border: #34353f;
 
-  /* Text — muted is #a7adcf, not the prototype's #8b91b8 (that was ~4.2:1) */
-  --text: #eef0ff;
-  --text-muted: #a7adcf;
+  --text: #f3f2f4;
+  --text-muted: #a5a3ad;      /* 6.76:1 on surface */
 
-  /* Accent — progress and rewards only; scarcity keeps it meaningful */
-  --mint: #5ef0c0;
-  --violet: #9d7bff;
-  --accent-gradient: linear-gradient(135deg, var(--mint), var(--violet));
-  --flame: #ffd166;
-  --blush: #ff8fb1;
+  /* One brand colour, used solid. A gradient spread over every control is what made the old
+     palette read as a template rather than as an identity. Deep indigo is the one hue the
+     creature cast does not already occupy, and its depth separates it from all of them. */
+  --brand: #4c5bd4;
+  --brand-strong: #5b69e0;
+  --brand-ink: #a5aeff;       /* 8.08:1 on surface */
+  --brand-soft: rgba(124, 138, 255, 0.16);
+  --brand-line: rgba(124, 138, 255, 0.5);
 
-  /* Selected states for things that repeat. The gradient is for one hero element at a time; used
-     as a fill on seven day chips or six checkboxes it stops meaning "this one" and just means
-     "colour". These read as chosen while staying quiet enough to have siblings. */
-  --accent-soft: rgba(94, 240, 192, 0.2);
-  --accent-line: rgba(94, 240, 192, 0.62);
-  --accent-ink: #7ef7cf;
+  /* Kept for the components that already read them. Solid, not a gradient. */
+  --accent-gradient: var(--brand);
+  --accent-soft: var(--brand-soft);
+  --accent-line: var(--brand-line);
+  --accent-ink: var(--brand-ink);
+
+  /* Data colours. These carry meaning, never decoration: mind, body, order, streak.
+     They are the only saturated things allowed beside the creature. */
+  --violet: #8b7cf0;          /* mind */
+  --flame: #f0a63c;           /* the streak flame, and body */
+  --mint: #3fb98f;            /* order, and anything that means "kept" */
+  --blush: #f2764b;
+
+  /* Destructive actions get their own token. Borrowing a data colour meant the delete button
+     inherited whatever the palette needed for decor, and in light mode that landed at 4.09:1. */
+  --danger: #f2764b;        /* 5.98:1 on surface */
+  --danger-soft: rgba(242, 118, 75, 0.14);
+  --danger-line: rgba(242, 118, 75, 0.45);
 
   /* Translucent sheet material, themed so light mode gets a light glass instead of a dark slab */
-  --sheet-bg: rgba(19, 23, 53, 0.72);
-  --sheet-edge: #3a4180;
+  --sheet-bg: rgba(22, 23, 28, 0.78);
+  --sheet-edge: #3d3e49;
 
-  /* The glade (world.js). Themed, or the ground renders as a dark slab in light mode. */
-  --world-ground: #2b3873;
-  --world-rim: #4bb37a;
-  --world-post: #4a3b2f;
-  --world-leaf: #3f7d5a;
-  --world-leaf-dark: #356b4d;
-  --world-leaf-light: #4a8f66;
-  --world-shade: #050718;
+  /* The glade (world.js). Themed, or the ground renders as a slab in light mode. */
+  --world-ground: #2f313d;
+  --world-rim: #4e9b7c;
+  --world-post: #55483c;
+  --world-leaf: #487f61;
+  --world-leaf-dark: #3d6e53;
+  --world-leaf-light: #55916d;
+  --world-shade: #08080a;
 
   /* Type — 3 sizes only */
   --font: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -68,28 +83,38 @@
   --tap: 44px;          /* minimum touch target */
 }
 
-/* Light theme — set by data-theme on <html>. Accents (mint/violet/flame/blush) stay; only the
-   surfaces and text invert, so the brand and the reward colours read the same in both modes. */
+/* Light theme — set by data-theme on <html>. Only the ground and text invert; the brand and the
+   data colours hold their meaning across both, which is what makes them read as a system. */
 :root[data-theme='light'] {
-  --bg: #f3f4fb;
-  --bg-glow: #e6e9fb;
+  --bg: #faf9f8;
+  --bg-glow: #f2f1f0;
   --surface: #ffffff;
-  --surface-raised: #eef0fa;
-  --border: #d7dbf0;
-  --text: #1a1f3d;
-  --text-muted: #5b6288;
-  --sheet-bg: rgba(255, 255, 255, 0.82);
-  --sheet-edge: #d7dbf0;
-  --world-ground: #aab6e4;
-  --world-rim: #5aa87a;
-  --world-post: #7a6552;
-  --world-leaf: #6bb388;
-  --world-leaf-dark: #57a074;
-  --world-leaf-light: #83c79c;
-  --world-shade: #6b74a8;
-  /* Light mode needs a darker ink: mint on white fails contrast badly, and #0c7a61 only
-     cleared 4.5:1 on pure white, dropping to 4.07 on the raised surface the glyph picker uses. */
-  --accent-soft: rgba(13, 148, 118, 0.19);
-  --accent-line: rgba(13, 148, 118, 0.58);
-  --accent-ink: #0a6b55;
+  --surface-raised: #f2f1f0;
+  --border: #e2e0de;
+  --text: #1a1a20;
+  --text-muted: #5e5c66;      /* 6.57:1 on surface */
+
+  /* The indigo has to darken to stay legible as text on white: the dark-mode ink is 1.9:1 here. */
+  --brand-ink: #4450bf;       /* 6.68:1 on white, 5.92:1 on the raised surface */
+  --brand-soft: rgba(76, 91, 212, 0.12);
+  --brand-line: rgba(76, 91, 212, 0.45);
+
+  --violet: #6d5bd0;
+  --flame: #c47e18;
+  --mint: #1f8f68;
+  --blush: #d4552b;
+  --danger: #b53d18;        /* 5.76:1 on white, 5.11:1 on the raised surface */
+  --danger-soft: rgba(181, 61, 24, 0.1);
+  --danger-line: rgba(181, 61, 24, 0.42);
+
+  --sheet-bg: rgba(255, 255, 255, 0.85);
+  --sheet-edge: #e2e0de;
+
+  --world-ground: #cfccc6;
+  --world-rim: #5f9c7f;
+  --world-post: #8a7a68;
+  --world-leaf: #6fa587;
+  --world-leaf-dark: #5c9174;
+  --world-leaf-light: #86b89b;
+  --world-shade: #8a8780;
 }
