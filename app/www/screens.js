@@ -16,15 +16,16 @@ export function renderJourney(host, state) {
   const log = state.log ?? [];
   const totalDone = state.habits.reduce((sum, h) => sum + h.total, 0);
 
-  const letter = weeklyLetter(log, state.creature.name);
+  const notes = state.notes ?? [];
+  const letter = weeklyLetter(log, state.creature.name, Date.now(), notes);
 
   host.innerHTML = `
     <h2 class="screen__title">Journey</h2>
 
     ${letter ? `
     <div class="card letter">
-      <p class="card__label">${letter.title}</p>
-      ${letter.lines.map((l) => `<p class="letter__line">${l}</p>`).join('')}
+      <p class="card__label">${escapeHtml(letter.title)}</p>
+      ${letter.lines.map((l) => `<p class="letter__line">${escapeHtml(l)}</p>`).join('')}
     </div>` : ''}
 
     <div class="stats">
@@ -33,6 +34,8 @@ export function renderJourney(host, state) {
       ${stat('Completions', `${totalDone}`, 'all time')}
       ${stat('Freezes banked', `${state.freezes}`, 'of 2')}
     </div>
+
+    ${memoriesMarkup(notes, state.day.date)}
 
     <h3 class="screen__sub">Last 5 months</h3>
     ${heatmapMarkup(heatmap(log, { days: 150 }))}
@@ -46,6 +49,32 @@ export function renderJourney(host, state) {
     </ul>`;
 }
 
+// A private journal (§3.5). One entry per day, kept on the device with everything else, and read
+// back by the creature in the weekly letter — a diary nothing ever quotes is just typing.
+function memoriesMarkup(notes, today) {
+  const todayNote = notes.find((n) => n.date === today)?.text ?? '';
+  const past = notes.filter((n) => n.date !== today && n.text?.trim())
+    .sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 5);
+  return `
+    <div class="card">
+      <p class="card__label">Memories</p>
+      <label class="field">
+        <span class="field__label">Anything worth remembering about today?</span>
+        <input class="field__input" id="memory" type="text" maxlength="140"
+               placeholder="Ran in the rain and liked it" value="${escapeAttr(todayNote)}" autocomplete="off">
+      </label>
+      ${past.length ? `<ul class="plain-list">${past.map((n) => `
+        <li class="card__meta">${n.date} · ${escapeHtml(n.text)}</li>`).join('')}</ul>` : ''}
+    </div>`;
+}
+
+function escapeHtml(t) {
+  return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function escapeAttr(t) {
+  return escapeHtml(t).replace(/"/g, '&quot;');
+}
+
 function habitStatMarkup(h, log) {
   const r = successRate(log, h, { windowDays: 30 });
   const t = trend(log, h, { windowDays: 14 });
@@ -53,7 +82,7 @@ function habitStatMarkup(h, log) {
   return `
     <li class="habit-stat">
       <span class="habit-stat__glyph">${h.glyph}</span>
-      <span class="habit-stat__name">${h.name}</span>
+      <span class="habit-stat__name">${escapeHtml(h.name)}</span>
       <span class="habit-stat__num">${pct}%<small> 30d</small></span>
       <span class="habit-stat__trend trend--${t}">${TREND_ICON[t]}</span>
     </li>`;
@@ -115,7 +144,7 @@ export function renderYou(host, state, identity = { anonymous: true }) {
     <h2 class="screen__title">You</h2>
     <div class="card">
       <p class="card__label">Your creature</p>
-      <p class="card__value">${state.creature.name} · ${stageLabel}</p>
+      <p class="card__value">${escapeHtml(state.creature.name)} · ${stageLabel}</p>
       <p class="card__meta">Level ${level} · ${into}/${need} XP · affinity for ${species.affinity} habits</p>
       ${(state.badges ?? []).includes('rekindled')
         ? '<p class="badge">Rekindled — you came back</p>'
@@ -140,8 +169,8 @@ export function renderYou(host, state, identity = { anonymous: true }) {
           <li class="habit-row" data-delete="${h.id}">
             <span class="habit-row__fill" aria-hidden="true"></span>
             <span class="habit-row__text">
-              ${h.glyph} ${h.name}
-              ${h.goal ? `<span class="habit-row__goal">Why: ${h.goal} · ${h.total} day${h.total === 1 ? '' : 's'} in</span>` : ''}
+              ${h.glyph} ${escapeHtml(h.name)}
+              ${h.goal ? `<span class="habit-row__goal">Why: ${escapeHtml(h.goal)} · ${h.total} day${h.total === 1 ? '' : 's'} in</span>` : ''}
               <span class="habit-row__goal">${scheduleLabel(h.days)}</span>
             </span>
             ${h.reminder ? `<span class="habit-row__time">${h.reminder}</span>` : ''}

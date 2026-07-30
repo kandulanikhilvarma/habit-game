@@ -15,7 +15,7 @@ function dayKey(ms) {
  * @param creatureName the creature's name, for the voice
  * @returns { title, lines: string[] } — a short letter, or null when there is nothing to say yet
  */
-export function weeklyLetter(log = [], creatureName = 'Your creature', now = Date.now()) {
+export function weeklyLetter(log = [], creatureName = 'Your creature', now = Date.now(), notes = []) {
   // Distinct days shown up in the last 7.
   const windowDays = [];
   for (let i = 6; i >= 0; i -= 1) windowDays.push(dayKey(now - i * DAY_MS));
@@ -52,6 +52,13 @@ export function weeklyLetter(log = [], creatureName = 'Your creature', now = Dat
       lines.push(`${WEEKDAY[worst]}s are hard for us. Want to make ${WEEKDAY[worst]}'s quest a little smaller?`);
     }
   }
+
+  // 3. A memory from the week, in the creature's voice. The point of writing something down is
+  // that it comes back to you later — a journal nobody reads back is just typing.
+  const recent = notes
+    .filter((n) => windowSet.has(n.date) && n.text?.trim())
+    .sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+  if (recent) lines.push(`You wrote: “${recent.text.trim()}” I kept it.`);
 
   return { title: `A note from ${creatureName}`, lines };
 }

@@ -49,3 +49,26 @@ test('too little data: no weekday claim invented', () => {
   const l = weeklyLetter([entry(0), entry(1)], 'Kumo', NOW);
   assert.doesNotMatch(l.lines.join(' '), /hard for us/);
 });
+
+test('a note from this week comes back in the letter', () => {
+  const now = Date.parse('2026-07-29T12:00:00');
+  const log = [{ date: '2026-07-29', hid: 'a', ts: now }];
+  const notes = [{ date: '2026-07-29', text: 'ran in the rain and liked it' }];
+  const { lines } = weeklyLetter(log, 'Kumo', now, notes);
+  assert.ok(lines.some((l) => l.includes('ran in the rain and liked it')), lines.join(' | '));
+});
+
+test('an old note is not dredged up', () => {
+  const now = Date.parse('2026-07-29T12:00:00');
+  const log = [{ date: '2026-07-29', hid: 'a', ts: now }];
+  const notes = [{ date: '2026-01-01', text: 'ancient history' }];
+  const { lines } = weeklyLetter(log, 'Kumo', now, notes);
+  assert.ok(!lines.some((l) => l.includes('ancient history')));
+});
+
+test('blank notes are ignored', () => {
+  const now = Date.parse('2026-07-29T12:00:00');
+  const log = [{ date: '2026-07-29', hid: 'a', ts: now }];
+  const { lines } = weeklyLetter(log, 'Kumo', now, [{ date: '2026-07-29', text: '   ' }]);
+  assert.ok(!lines.some((l) => l.includes('You wrote')));
+});

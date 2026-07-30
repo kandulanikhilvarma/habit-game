@@ -84,7 +84,19 @@ function render() {
   el('home-signin').hidden = !identity.anonymous;   // guest prompt on Home, gone once signed in
   randomizeBlink();
 
-  if (screen === 'journey') renderJourney(el('screen-journey'), state);
+  if (screen === 'journey') {
+    renderJourney(el('screen-journey'), state);
+    const memory = el('memory');
+    // Saved on blur, not per keystroke: a journal that writes to disk on every letter is noise.
+    memory?.addEventListener('change', () => {
+      const text = memory.value.trim();
+      state.notes = (state.notes ?? []).filter((n) => n.date !== state.day.date);
+      if (text) state.notes.push({ date: state.day.date, text });
+      save(state);
+      haptic('light');
+      cloud?.pushAll(state).catch((err) => console.warn('cloud write queued/failed', err));
+    });
+  }
   if (screen === 'you') {
     renderYou(el('screen-you'), state, identity);
     el('google-signin')?.addEventListener('click', beginSignIn);
@@ -129,6 +141,13 @@ function stageName(stage, lineage) {
   return `${LINEAGE_STYLE[lineage]?.name ?? 'Prismatic'} ${base}`;
 }
 
+// Habit names, goals and the creature's name are user text going into innerHTML. Escaping is the
+// render boundary's job — the store keeps what the user typed, the DOM never executes it.
+function escapeHtml(t) {
+  return String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function questMarkup(h) {
   const isDone = state.day.doneIds.includes(h.id);
   const streakMeta = h.streak > 0
@@ -138,11 +157,11 @@ function questMarkup(h) {
     <li class="quest${isDone ? ' done' : ''}">
       <span class="quest__glyph">${h.glyph}</span>
       <span class="quest__text">
-        <span class="quest__name">${h.name}</span>
+        <span class="quest__name">${escapeHtml(h.name)}</span>
         <span class="quest__meta">${streakMeta}</span>
       </span>
       <button class="check${isDone ? ' on' : ''}" data-habit="${h.id}"
-              aria-pressed="${isDone}" aria-label="${isDone ? 'Undo' : 'Complete'} ${h.name}">
+              aria-pressed="${isDone}" aria-label="${isDone ? 'Undo' : 'Complete'} ${escapeHtml(h.name)}">
         <span class="check__ring">${icons.check}</span>
       </button>
     </li>`;
@@ -295,7 +314,7 @@ function askAboutSound() {
   const banner = document.createElement('div');
   banner.className = 'ask';
   banner.innerHTML = `
-    <p class="ask__text">${state.creature.name} wants to make sounds — okay?</p>
+    <p class="ask__text">${escapeHtml(state.creature.name)} wants to make sounds — okay?</p>
     <div class="ask__actions">
       <button class="ask__btn" data-sound="no">Not now</button>
       <button class="ask__btn ask__btn--yes" data-sound="yes">Sure</button>

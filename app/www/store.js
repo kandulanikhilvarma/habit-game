@@ -36,6 +36,7 @@ function seed() {
     comeback: false,
     badges: [],
     decor: [],        // cosmetic glade pieces won from perfect days (§3.4)
+    notes: [],        // private per-day journal (§3.5); the weekly letter reads it back
     account: null,       // { email, name, uid } once signed in; null while a guest
     webhookToken: null,  // per-account token for POST /api/v1/complete; generated on demand
     settings: { sound: null, theme: 'dark' },
