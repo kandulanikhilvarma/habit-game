@@ -206,7 +206,7 @@ export function renderYou(host, state, identity = { anonymous: true }) {
         <button class="btn btn--secondary" id="rename-creature">Rename</button>
         <button class="btn btn--secondary" id="change-creature">Change creature</button>
       </div>
-      <button class="btn btn--primary share-btn" id="share-dna">Share your creature</button>
+      <button class="btn btn--primary btn--block" id="share-dna">Share your creature</button>
     </div>
 
     <div class="card">
@@ -247,10 +247,10 @@ export function renderYou(host, state, identity = { anonymous: true }) {
         <button class="btn btn--secondary" id="export-data">Download my data</button>
       </div>
       ${identity.anonymous
-        ? `<button class="btn btn--danger" id="start-over">Start over</button>
+        ? `<button class="btn btn--danger btn--block" id="start-over">Start over</button>
            <p class="card__meta">Erases this creature and every habit on this device. There is no
               account to delete yet, because you are playing as a guest.</p>`
-        : `<button class="btn btn--danger" id="delete-account">Delete my account</button>`}
+        : `<button class="btn btn--danger btn--block" id="delete-account">Delete my account</button>`}
     </div>
 
     <div class="card">
@@ -278,7 +278,7 @@ function accountBlock(identity) {
   if (identity.anonymous) {
     return `
       <p class="card__meta">Sign in to keep your creature safe across devices.</p>
-      <button class="btn btn--primary btn--google" id="google-signin">Sign in with Google</button>`;
+      <button class="btn btn--primary btn--block" id="google-signin">Sign in with Google</button>`;
   }
   // Show the name as the heading; only add the email underneath when it is a distinct second line.
   const heading = identity.name || identity.email || 'Signed in';
