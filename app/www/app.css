@@ -776,3 +776,11 @@ a.ask__btn { display: inline-flex; align-items: center; justify-content: center;
   display: flex; justify-content: space-between;
   font-size: var(--size-small); color: var(--text-muted);
 }
+
+/* ---- habit glyphs as drawn icons ---- */
+.glyph-icon { display: inline-flex; color: var(--mint); }
+.glyph-icon svg { width: 22px; height: 22px; }
+.glyph-emoji { font-size: 1.25rem; line-height: 1; }
+.quest__glyph .glyph-icon svg, .habit-stat__glyph .glyph-icon svg { width: 24px; height: 24px; }
+.glyph { display: inline-flex; align-items: center; justify-content: center; }
+.glyph.on .glyph-icon { color: #0d1022; }

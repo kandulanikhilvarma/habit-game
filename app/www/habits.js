@@ -1,23 +1,24 @@
 // Habit creation and removal. The sheet surface itself is sheet.js — this is only its contents.
 
 import { DAY_LABELS, DAY_NAMES } from './schedule.js';
+import { habitIcons, habitGlyph } from './icons.js';
 
 export const MAX_HABITS = 7;          // MASTER_PLAN §3.5: cap total at 7, "master these first"
 
 // Templates keep adding a habit to ≤3 taps. Glyphs are user content, which is the one place
 // emoji are allowed (DESIGN_MOTION_SPEC §2).
 export const TEMPLATES = [
-  { name: 'Read 20 minutes', glyph: '📖', category: 'mind' },
-  { name: 'Meditate 10 minutes', glyph: '🧘', category: 'mind' },
-  { name: 'Journal', glyph: '✍️', category: 'mind' },
-  { name: 'Morning workout', glyph: '🏃', category: 'body' },
-  { name: '10,000 steps', glyph: '🚶', category: 'body' },
-  { name: 'Drink water', glyph: '💧', category: 'body' },
-  { name: 'Sleep by 11pm', glyph: '🌙', category: 'order' },
-  { name: 'Less Instagram', glyph: '📵', category: 'order' },
+  { name: 'Read 20 minutes', glyph: 'book', category: 'mind' },
+  { name: 'Meditate 10 minutes', glyph: 'lotus', category: 'mind' },
+  { name: 'Journal', glyph: 'pen', category: 'mind' },
+  { name: 'Morning workout', glyph: 'run', category: 'body' },
+  { name: '10,000 steps', glyph: 'walk', category: 'body' },
+  { name: 'Drink water', glyph: 'water', category: 'body' },
+  { name: 'Sleep by 11pm', glyph: 'moon', category: 'order' },
+  { name: 'Less Instagram', glyph: 'phoneOff', category: 'order' },
 ];
 
-const GLYPHS = ['📖', '🧘', '✍️', '🏃', '🚶', '💧', '🌙', '📵', '🎸', '🧹', '🥗', '☀️'];
+const GLYPHS = Object.keys(habitIcons);
 const CATEGORIES = [
   ['mind', 'Mind'],
   ['body', 'Body'],
@@ -40,7 +41,7 @@ export function sheetMarkup(habitCount, habit = null) {
     <p class="field__label">Start from a template</p>
     <div class="chips">
       ${TEMPLATES.map((t, i) => `
-        <button type="button" class="chip-btn" data-template="${i}">${t.glyph} ${t.name}</button>`).join('')}
+        <button type="button" class="chip-btn" data-template="${i}">${habitGlyph(t.glyph)} ${t.name}</button>`).join('')}
     </div>`}
 
     <label class="field">
@@ -52,7 +53,7 @@ export function sheetMarkup(habitCount, habit = null) {
     <p class="field__label">Icon</p>
     <div class="glyph-grid" id="glyph-grid">
       ${GLYPHS.map((g) => `
-        <button type="button" class="glyph${g === glyph ? ' on' : ''}" data-glyph="${g}" aria-pressed="${g === glyph}">${g}</button>`).join('')}
+        <button type="button" class="glyph${g === glyph ? ' on' : ''}" data-glyph="${g}" aria-pressed="${g === glyph}" aria-label="${g}">${habitGlyph(g)}</button>`).join('')}
     </div>
 
     <p class="field__label">Category</p>

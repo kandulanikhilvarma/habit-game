@@ -8,7 +8,7 @@ import { worldSvg } from './world.js';
 import { scheduledOn, scheduleLabel } from './schedule.js';
 import { rollEgg, decorLabel } from './eggs.js';
 import { renderJourney, renderYou } from './screens.js';
-import { icons } from './icons.js';
+import { icons, habitGlyph } from './icons.js';
 import { celebrate, wakeUp, haptic, bindIdleLifecycle, randomizeBlink } from './fx.js';
 import { playAdd, playRemove, playPick, playPet } from './audio.js';
 import { sheetMarkup, makeHabit, isDuplicateName, TEMPLATES, MAX_HABITS } from './habits.js';
@@ -169,7 +169,7 @@ function questMarkup(h) {
     : '<span>New quest</span>';
   return `
     <li class="quest${isDone ? ' done' : ''}">
-      <span class="quest__glyph">${h.glyph}</span>
+      <span class="quest__glyph">${habitGlyph(h.glyph)}</span>
       <span class="quest__text">
         <span class="quest__name">${escapeHtml(h.name)}</span>
         <span class="quest__meta">${streakMeta}</span>
