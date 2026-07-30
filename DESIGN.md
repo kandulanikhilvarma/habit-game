@@ -41,6 +41,29 @@ One colour, solid, never a gradient. Deep indigo `#4c5bd4` — the one hue the c
 
 The only other saturated colours, and they always carry meaning: `--violet` mind, `--flame` streak and body, `--mint` order and anything meaning "kept", `--blush`. Retuned for a warm neutral ground and darkened in light mode to hold contrast.
 
+## Buttons
+
+One family, four jobs, on `--radius-sm` like the rest of the controls. The app previously ran three
+button systems at once: 999px pills (`.cta`, `.ask__btn`, `.chip-btn`), 12px controls and 18px cards,
+all visible together.
+
+| variant | use | treatment |
+|---|---|---|
+| `btn--primary` | the one action of a group | brand fill, white |
+| `btn--secondary` | available, not the main thing | raised surface, border, **full** text colour |
+| `btn--quiet` | low stakes, dismissals | text only |
+| `btn--danger` | irreversible | text only in the danger colour; fills **only** once armed |
+
+Rules that hold the uniformity:
+- `.btn-row > .btn { flex: 1 1 0 }` — siblings in a row share the width. One button shrink-wrapping
+  its label beside a full-width neighbour is what made the account card look unfinished.
+- `btn--block` is explicit, never an accident of context.
+- **At most one filled button per card.** Two primaries side by side is no primary.
+- Secondary never uses `--text-muted`. That is the colour disabled controls use, and a live action
+  wearing it reads as switched off.
+- Destructive is the quietest control on the screen, never a full-width outlined peer of the
+  primary. The one irreversible action should not compete for the tap.
+
 ## Type
 
 Nunito, self-hosted, three sizes (`--size-title` 1.5rem, `--size-body` 1rem floor, `--size-small` 0.875rem). Weight carries emphasis. Gradient text is not used anywhere.

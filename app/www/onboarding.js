@@ -19,8 +19,8 @@ export function runWelcome(host, { onSignIn } = {}) {
       <h1 class="onboard__title">Kumo</h1>
       <p class="onboard__sub">A creature that grows from the habits you actually keep.</p>
       <div class="welcome__actions">
-        <button class="cta cta--google" id="welcome-signin">Sign in with Google</button>
-        <button class="ask__btn" id="welcome-guest">Continue as guest</button>
+        <button class="btn btn--primary btn--block" id="welcome-signin">Sign in with Google</button>
+        <button class="btn btn--quiet btn--block" id="welcome-guest">Continue as guest</button>
       </div>
     </div>`;
 
@@ -50,7 +50,7 @@ export function runOnboarding(host, { change = false } = {}) {
             <span class="starter__line">${s.tagline}</span>
           </button>`).join('')}
       </div>
-      <button class="cta" id="begin" disabled>Pick one to ${change ? 'switch' : 'begin'}</button>
+      <button class="btn btn--primary btn--block" id="begin" disabled>Pick one to ${change ? 'switch' : 'begin'}</button>
     </div>`;
 
   return new Promise((resolve) => {

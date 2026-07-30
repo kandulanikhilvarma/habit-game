@@ -4,6 +4,33 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-31 (later still) — One button system, and guests stop being offered an account
+
+Phone feedback, and one of the items was a regression I had introduced.
+
+### The buttons
+The app was running **three button systems at once**: 999px pills (`.cta`, `.ask__btn`, `.chip-btn`), 12px controls (`.segment`, `.glyph`) and 18px cards, all on screen together. Collapsed into one family with four jobs (primary, secondary, quiet, danger) on the system radius. Every button is now 12px radius and 44px tall, everywhere, including the sheet and the welcome screen. Zero legacy classes remain.
+
+Two things that were actually wrong, not just inconsistent:
+- **`.btn-row .ask__btn { flex: 1 }` stopped matching** when I renamed those buttons the session before, so "Download my data" shrank to its label beside full-width siblings. That is the button circled in the screenshot. Row children share width by rule now, so it cannot drift again.
+- **Destructive was a full-width outlined button directly under the primary**, reading as its peer. The one irreversible action on the screen should be the quietest thing on it; it now fills only once armed, when filling is the warning.
+
+Also: secondary buttons had been set to `--text-muted`, which is the colour disabled controls use, so an available action read as switched off.
+
+### Guests were offered an account they do not have
+"Delete my account" showed for everyone. A guest has no account, no email, nothing to sign back into. The button worked (it wiped the local save and the anonymous cloud copy) but the label described something that did not exist. Guests get "Start over" now, which is what it does; signed-in people keep account deletion, which the compliance pages promise. Both branches verified by rendering the screen with each identity.
+
+### Also
+Six user-facing strings still carried em-dashes; the previous pass swept the marketing copy and stopped at the app. Card padding 16px to 14px vertical, and the webhook card folds into a `<details>` instead of costing a full card of weight for a feature almost nobody opens.
+
+### Verified
+All three screens plus the opened fold and the habit sheet, both themes, via the real theme toggle: **0 contrast failures**. Buttons: one radius, one height, row siblings equal width, at most one filled button per card. `npm test` 114/114.
+
+### The verification lesson, now three times over
+Flipping `data-theme` directly and measuring immediately produces **convincing but false failures**. Twice it was a `transition` still running; once the computed `background-color` stayed on the dark value while the custom property already read light, because the property is transitioned and driven by a var. The real control calls `applyTheme()` then `render()`, which rebuilds the nodes. Measure through the real control, settle, and composite the alpha stack, or the numbers are fiction.
+
+---
+
 ## 2026-07-31 (later) — Rebrand: the palette became a palette
 
 Reported: the colours felt unbranded. They were. Mint-to-violet on navy is the default palette of the wellness and AI app category, so it read as a template rather than an identity, it was spent as a fill on every selected control at once, and the navy ground tinted eleven creature images that span orange, violet, cyan, green and iridescent.

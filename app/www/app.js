@@ -339,8 +339,8 @@ function askAboutSound() {
   banner.innerHTML = `
     <p class="ask__text">${escapeHtml(state.creature.name)} wants to make sounds. Okay?</p>
     <div class="ask__actions">
-      <button class="ask__btn" data-sound="no">Not now</button>
-      <button class="ask__btn ask__btn--yes" data-sound="yes">Sure</button>
+      <button class="btn btn--quiet" data-sound="no">Not now</button>
+      <button class="btn btn--primary" data-sound="yes">Sure</button>
     </div>`;
   document.body.append(banner);
 

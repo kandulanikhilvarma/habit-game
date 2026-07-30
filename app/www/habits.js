@@ -85,7 +85,7 @@ export function sheetMarkup(habitCount, habit = null) {
              value="${habit ? escapeAttr(habit.goal ?? '') : ''}" autocomplete="off">
     </label>
 
-    <button class="cta" id="add-habit"${editing ? '' : ' disabled'}>${editing ? 'Save changes' : 'Add quest'}</button>`;
+    <button class="btn btn--primary btn--block" id="add-habit"${editing ? '' : ' disabled'}>${editing ? 'Save changes' : 'Add quest'}</button>`;
 }
 
 function escapeAttr(s) {
