@@ -138,19 +138,73 @@ function questMarkup(h) {
         <span class="quest__meta">${streakMeta}</span>
       </span>
       <button class="check${isDone ? ' on' : ''}" data-habit="${h.id}"
-              aria-pressed="${isDone}" aria-label="Complete ${h.name}">
+              aria-pressed="${isDone}" aria-label="${isDone ? 'Undo' : 'Complete'} ${h.name}">
         <span class="check__ring">${icons.check}</span>
       </button>
     </li>`;
 }
 
-// ponytail: no undo this gate. Reversing XP, per-habit streak, global streak and the perfect-day
-// bonus is real accounting; it belongs with the edit/delete flows, not bolted on here.
+// Undo is a snapshot, not arithmetic run backwards. `best` and the banked freeze are maxima and
+// thresholds — once raised, no subtraction recovers what they were, so the only honest reversal is
+// to remember the values and put them back. Lives in `state.day` so it survives a reload and is
+// cleared by the daily rollover: undo corrects a mistap, it does not rewrite history.
+function snapshot(habit) {
+  return {
+    streak: habit.streak, best: habit.best, total: habit.total,
+    gStreak: state.gStreak, gBest: state.gBest, freezes: state.freezes,
+    xp: state.creature.xp, dayXp: state.day.xpEarned,
+    comeback: state.comeback, badges: [...state.badges],
+  };
+}
+
+function undoComplete(habitId) {
+  const before = state.day.undo?.[habitId];
+  const habit = state.habits.find((h) => h.id === habitId);
+  if (!before || !habit) return false;
+
+  // Only the newest check-in, so the snapshots unwind in the order they were taken. Undoing an
+  // older one would restore an XP total from before every completion that followed it.
+  if (habitId !== state.day.doneIds[state.day.doneIds.length - 1]) {
+    toast('Only your most recent check-in can be undone.');
+    return false;
+  }
+
+  habit.streak = before.streak;
+  habit.best = before.best;
+  habit.total = before.total;
+  state.gStreak = before.gStreak;
+  state.gBest = before.gBest;
+  state.freezes = before.freezes;
+  state.creature.xp = before.xp;
+  state.day.xpEarned = before.dayXp;
+  state.comeback = before.comeback;
+  state.badges = before.badges;
+  state.day.doneIds = state.day.doneIds.filter((id) => id !== habitId);
+  // Drop this habit's newest row for today, so Journey stops counting a completion that was undone.
+  for (let i = state.log.length - 1; i >= 0; i -= 1) {
+    if (state.log[i].hid === habitId && state.log[i].date === state.day.date) {
+      state.log.splice(i, 1);
+      break;
+    }
+  }
+  delete state.day.undo[habitId];
+
+  save(state);
+  haptic('light');
+  if (soundOn()) playRemove();
+  render();
+  toast('Undone.');
+  // Whole state, not a completion delta: the cloud has to forget the XP and streak too.
+  cloud?.pushAll(state).catch((err) => console.warn('cloud undo queued/failed', err));
+  return true;
+}
+
 function complete(habitId, at) {
   if (state.day.doneIds.includes(habitId)) return;
   const habit = state.habits.find((h) => h.id === habitId);
   if (!habit) return;
 
+  const before = snapshot(habit);
   const firstToday = state.day.doneIds.length === 0;
   const affinity = habit.category === SPECIES[state.creature.species]?.affinity;
   let xp = xpForCompletion({ streak: habit.streak, auto: false, affinity });
@@ -180,6 +234,7 @@ function complete(habitId, at) {
     state.comeback = false;
     if (!state.badges.includes('rekindled')) state.badges.push('rekindled');
   }
+  (state.day.undo ??= {})[habitId] = before;
   save(state);
 
   if (wasAsleep) {
@@ -205,7 +260,10 @@ function complete(habitId, at) {
 el('quests').addEventListener('pointerdown', (e) => {
   const btn = e.target.closest('.check');
   if (!btn) return;
-  complete(btn.dataset.habit, { x: e.clientX, y: e.clientY });
+  const id = btn.dataset.habit;
+  // A ticked box unticks — the same affordance every checkbox has, so undo needs no extra chrome.
+  if (state.day.doneIds.includes(id)) undoComplete(id);
+  else complete(id, { x: e.clientX, y: e.clientY });
 });
 
 el('creature').addEventListener('pointerdown', () => {

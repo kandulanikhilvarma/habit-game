@@ -166,6 +166,14 @@ export function renderYou(host, state, identity = { anonymous: true }) {
     </div>
 
     <div class="card">
+      <p class="card__label">Feedback</p>
+      <p class="card__meta">Something broken, or an idea? It goes straight to the person who builds this.</p>
+      <div class="btn-row">
+        <a class="ask__btn" href="mailto:kandulanikhilvarma@gmail.com?subject=Kumo%20feedback">Send feedback</a>
+      </div>
+    </div>
+
+    <div class="card">
       <p class="card__label">Automation (advanced)</p>
       ${state.webhookToken
         ? `<p class="card__meta">Complete a habit from IFTTT, Tasker or a script:</p>

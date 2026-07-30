@@ -93,6 +93,18 @@ export function save(state) {
   localStorage.setItem(KEY, JSON.stringify(state));
 }
 
+// `pushWholeState` writes the log inside one Firestore document, and a document hard-fails at
+// 1 MiB — an unbounded log eventually breaks sync outright rather than degrading. Journey never
+// reads past 150 days, so keeping ~2 years is generous and puts a ceiling on the document.
+export const LOG_KEEP_DAYS = 730;
+
+export function pruneLog(log = [], today = todayKey()) {
+  const cutoff = new Date(`${today}T00:00:00Z`);
+  cutoff.setUTCDate(cutoff.getUTCDate() - LOG_KEEP_DAYS);
+  const oldest = cutoff.toISOString().slice(0, 10);
+  return log.filter((e) => e.date >= oldest);
+}
+
 /**
  * Move the state to today if the calendar moved. Returns {state, rolled, freezeUsed, missed}
  * so the UI can decide whether to play a comeback beat.
@@ -116,6 +128,7 @@ export function rollover(state, today = todayKey()) {
   // reads as "waiting for you", where a punished one reads as "delete the app" (MASTER_PLAN §3.3).
   if (isComeback(Math.max(0, missed))) state.comeback = true;
   state.day = { date: today, doneIds: [], xpEarned: 0 };
+  state.log = pruneLog(state.log, today);
   save(state);
   return { state, rolled: true, freezeUsed: next.freezeUsed, missed: Math.max(0, missed) };
 }
