@@ -43,7 +43,10 @@ h1 em {
 }
 .points strong { color: var(--text); }
 
+.cta { font-size: 1.125rem; font-weight: 700; }
 .cta a { color: var(--mint); }
+.note { margin-top: 18px; color: var(--muted); font-size: 0.9375rem; }
+.note a { color: var(--mint); }
 
 footer { display: flex; gap: 20px; padding-top: 24px; border-top: 1px solid var(--border); }
 footer a { color: var(--muted); font-size: 0.875rem; }
