@@ -31,10 +31,10 @@ export function weeklyLetter(log = [], creatureName = 'Your creature', now = Dat
 
   const lines = [];
   // 1. Show-up count, warmly framed.
-  if (daysShownUp >= 6) lines.push(`You showed up ${daysShownUp} of 7 days this week. I feel it — thank you.`);
+  if (daysShownUp >= 6) lines.push(`You showed up ${daysShownUp} of 7 days this week. I feel it. Thank you.`);
   else if (daysShownUp >= 3) lines.push(`You showed up ${daysShownUp} of 7 days this week. Steady is how we grow.`);
   else if (daysShownUp >= 1) lines.push(`You came back ${daysShownUp} day${daysShownUp === 1 ? '' : 's'} this week. Every return counts, and I noticed.`);
-  else lines.push('A quiet week. I have been waiting, not worried — come back when you can.');
+  else lines.push('A quiet week. I have been waiting, not worried. Come back when you can.');
 
   // 2. The hardest weekday, from all history (needs more than one week to mean anything).
   const perWeekday = new Array(7).fill(0);
