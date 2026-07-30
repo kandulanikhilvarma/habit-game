@@ -29,7 +29,8 @@
 4. Goal-driven: before building, state the verifiable success criterion; after building, PROVE it (run the test, show the output, screenshot the UI). Never claim done without evidence.
 5. One file = one responsibility. Never `eval`/`exec` on model output. Secrets only in env vars.
 
-## Design rules (the short version — full spec in DESIGN_MOTION_SPEC.md)
+## Design rules (the short version — colour system in DESIGN.md, motion in DESIGN_MOTION_SPEC.md)
+- `DESIGN.md` owns the palette and the standing visual bans. `PRODUCT.md` owns product truth and records that the user chose the conventional visual world deliberately, benchmarked against Duolingo, Apple Fitness and Linear.
 - Animate `transform`/`opacity` only. `transition: all` banned. `ease-in` banned. No `scale(0)` entries. UI motion <300ms; overshoot curve only on reward beats.
 - CSS transitions (interruptible) over keyframes for anything re-triggerable.
 - No emojis as UI chrome icons — inline SVG (Lucide). Emojis only as user-chosen habit glyphs.

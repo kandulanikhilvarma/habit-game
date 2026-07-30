@@ -1,0 +1,54 @@
+{
+  "title": "Choose Kumo's visual world",
+  "question": "The roll assigned The Bestiary Sheet. Keep it, take an alternate, or re-roll. The current mint-to-violet gradient is the category rut and is out either way.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "The Bestiary Sheet",
+      "kicker": "THE ROLL",
+      "lineage": "Tabletop bestiary spreads and character sheets",
+      "thesis": "Your creature is a specimen entry, and your habits are the stat block that made it.",
+      "palette": ["#1b1a2e", "#7f2231", "#c98a3a", "#3f7d5a"],
+      "materials": ["oxblood buckram", "brass foil", "ledger rule", "plate ink"],
+      "viewport": "The creature sits centred on a ruled plate, its lineage named beneath like a binomial, with mind/body/order scored in the margin.",
+      "risk": "Goes musty if the rules get thin and the ground goes cream instead of ink.",
+      "sketch": ".impeccable/sketches/assigned.webp"
+    },
+    {
+      "id": "challenger-provenance",
+      "label": "Provenance Ribbon",
+      "lineage": "Museum custody lines",
+      "thesis": "A habit history is a custody line: unbroken stretches, honest gaps, and returns.",
+      "case": "Fuses well: a missed day becomes unwoven thread instead of a red cross, which suits the no-punishment rule. Weaker on the creature itself, which is the thing people come back for.",
+      "sketch": ".impeccable/sketches/challenger-provenance.webp",
+      "hero": "https://impeccable.style/worlds/cards/exhibition-museum-curation-provenance-ribbon-hero.webp"
+    },
+    {
+      "id": "challenger-rain",
+      "label": "Gravity Rain Garden",
+      "lineage": "Impossible-weather gardens",
+      "thesis": "Each habit is a cloud with its own gravity, and the glade is what the rain built.",
+      "case": "The glade would be gorgeous and the art would sit in it beautifully. Fuses poorly with the daily job: it wants exploring, and the real visit is a three-second tap.",
+      "sketch": ".impeccable/sketches/challenger-rain.webp",
+      "hero": "https://impeccable.style/worlds/cards/dream-surreal-impossible-worlds-gravity-rain-garden-hero.webp"
+    },
+    {
+      "id": "challenger-darkroom",
+      "label": "Darkroom Safelight",
+      "lineage": "Amber printing darkrooms",
+      "thesis": "The creature develops in the tray, appearing slowly as the days accumulate.",
+      "case": "The amber ground is a genuinely fresh answer for a night-time app. Fuses poorly on principle: its whole drama is that pulling the print too early loses it, and this product refuses to punish.",
+      "sketch": ".impeccable/sketches/challenger-darkroom.webp",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-darkroom-safelight-bay-hero.webp"
+    }
+  ],
+  "reroll": true,
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "The habit-app look every competitor ships, executed impeccably.",
+    "viewport": "Soft rounded cards, a friendly accent, generous white space, done properly rather than approximately.",
+    "sketch": ".impeccable/sketches/canon.webp"
+  },
+  "steer": true
+}
