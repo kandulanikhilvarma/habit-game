@@ -62,7 +62,7 @@ export async function syncReminders(habits, creatureName) {
       const at = nextTriggerAt(h.reminder);
       if (!at) return [];
       const body = {
-        title: `${h.glyph} ${h.name}`,
+        title: h.name,   // a notification title cannot render an SVG
         // The creature asks, the app does not nag (VALIDATION_REPORT §4 notification ethics).
         body: `${creatureName} is ready when you are.`,
         actionTypeId: ACTION_TYPE,

@@ -6,6 +6,7 @@ import { heatmap, successRate, trend, bestHourInsight, weekdayWeekendSplit, hour
 import { weeklyLetter } from './letter.js';
 import { SPECIES, LINEAGE_STYLE } from './creature.js';
 import { scheduleLabel } from './schedule.js';
+import { habitGlyph } from './icons.js';
 
 const TREND_ICON = { up: '↗', down: '↘', flat: '→' };
 
@@ -131,7 +132,7 @@ function habitStatMarkup(h, log) {
   const pct = Math.round(r.rate * 100);
   return `
     <li class="habit-stat">
-      <span class="habit-stat__glyph">${h.glyph}</span>
+      <span class="habit-stat__glyph">${habitGlyph(h.glyph)}</span>
       <span class="habit-stat__name">${escapeHtml(h.name)}</span>
       <span class="habit-stat__num">${pct}%<small> 30d</small></span>
       <span class="habit-stat__trend trend--${t}">${TREND_ICON[t]}</span>
@@ -221,7 +222,7 @@ export function renderYou(host, state, identity = { anonymous: true }) {
           <li class="habit-row" data-delete="${h.id}">
             <span class="habit-row__fill" aria-hidden="true"></span>
             <span class="habit-row__text">
-              ${h.glyph} ${escapeHtml(h.name)}
+              ${habitGlyph(h.glyph)} ${escapeHtml(h.name)}
               ${h.goal ? `<span class="habit-row__goal">Why: ${escapeHtml(h.goal)} · ${h.total} day${h.total === 1 ? '' : 's'} in</span>` : ''}
               <span class="habit-row__goal">${scheduleLabel(h.days)}</span>
             </span>
