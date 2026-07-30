@@ -386,21 +386,30 @@ body {
 .today, .quests, .add-quest { flex: none; }
 /* The ground belongs under the creature's feet, not behind the name text — so the glade is
    anchored to the creature's own box, and the island's top arc lands just above its base. */
-.creature-plot { position: relative; display: grid; place-items: center; }
-.glade {
-  position: absolute;
-  top: 73%; left: 50%;
-  width: 210%;
-  aspect-ratio: 400 / 120;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-.creature-stage {
+/* The plot carries the size, not the creature inside it: an explicitly sized box cannot collapse
+   the way a content-sized nested grid can on WebKit (the bug that once blanked Home). Scales down
+   on short screens so Home fits on small phones, full size on tall ones. */
+.creature-plot {
   position: relative;
-  /* Scales down on short screens so Home fits without scrolling on small phones (iPhone SE), full
-     size on tall ones. */
   width: clamp(120px, 22vh, 170px);
   height: clamp(120px, 22vh, 170px);
+}
+.glade {
+  position: absolute;
+  left: 50%; bottom: 0;
+  width: 210%;
+  /* Height comes from the SVG's own viewBox ratio, and the offset is a share of the glade's own
+     height — so neither depends on the parent resolving a percentage height. `top: 73%` here
+     silently became `top: 0` on any engine that sized the plot to zero, which threw the ground up
+     behind the creature. */
+  transform: translate(-50%, 58%);
+  pointer-events: none;
+}
+.glade svg { display: block; width: 100%; height: auto; }
+.creature-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
   display: grid; place-items: center;
   cursor: pointer;
   transition: transform var(--t-press) var(--ease-out);
@@ -727,4 +736,24 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .firefly { animation: none; opacity: 0.8; }
+}
+
+/* Guardian tier (stage 4): the lineage's own light gathering behind the creature. Sits under the
+   art because .creature-stage lays both in the same grid cell and the aura comes first. */
+.aura {
+  grid-area: 1 / 1;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 52%, var(--aura) 0%, transparent 62%);
+  opacity: 0.34;
+  animation: aura-breathe 4.8s var(--ease-in-out) infinite;
+  will-change: transform, opacity;
+}
+.creature-stage .creature-art { grid-area: 1 / 1; }
+@keyframes aura-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.28; }
+  50%      { transform: scale(1.08); opacity: 0.42; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aura { animation: none; opacity: 0.32; }
 }
