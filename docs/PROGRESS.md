@@ -4,6 +4,36 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-30 (later still) — Guardian tier, new logo, and a glade anchor fix
+
+### Glade anchor (PR #43)
+Chasing a phone report about the grass and the creature's base. Nothing clipped at 375x667 or 390x844 and `aspect-ratio` turned out to be irrelevant (the SVG's viewBox ratio already sizes it), but there was a real fragility: the glade used `top: 73%` against `.creature-plot`, **a nested grid sized by its content**. A percentage `top` resolves against the parent's height, so on any engine resolving that as zero — the WebKit behaviour that blanked Home in Gate 0 — `73%` becomes `0` and the ground jumps up behind the creature.
+
+Fixed by removing every dependency on a parent resolving a height: `.creature-plot` carries an explicit `clamp()` size, the glade offsets by a share of **its own** height via `transform`, and `.glade svg { height: auto }` takes the height from the viewBox. Measured after: island arc 17-20px above the creature's base at both phone sizes, 3 plants, no overflow. **Not proven on iOS Safari** — this removes the known fragility, it does not confirm the device symptom is gone.
+
+### Guardian tier (PR #44)
+Stage 4 reused the stage-3 picture — the same "label changes, image doesn't" defect fixed one tier down earlier the same day. Each lineage now has a Guardian form, so the ladder is four distinct pictures: starter (2) -> lineage (3) -> Guardian (4) -> shared Radiant (5). The stage-4 aura stand-in shipped in #43 is removed.
+
+### Logo -> moth-sage Guardian
+Was the ember-beast; the user preferred the moth Guardian and asked me to decide. It holds up on both counts that matter: its violet **is** `--violet #9d7bff` (the ember's orange never was), and the symmetrical wing silhouette survives 32px. The rune halo does not — it collapses to a grey blob — so the favicon crops the halo and keeps the wings, while the in-app art keeps it. Candidates were rendered at 32px and 48px and compared before choosing.
+
+### Asset processing lesson
+This batch arrived on a **darker** checkerboard (greys 79/120) with wide glows, and the previous key left grey patches inside every glow. Two failures worth remembering:
+1. A "smart" un-composite (solving alpha from the checker's periodic contrast) **destroyed the art** — internal detail at the sample distance reads as checker contrast, so creature interiors went transparent. Reverted.
+2. What worked was measuring the two pixel populations instead of guessing: halo/checker at saturation <=85 and brightness <=155, creature core at 158/237. Keyed on that band, border-connected. Clean alpha, glows intact.
+
+### Verified in this session
+- Full ladder in the browser: xp 60->`sol`, 400->`sol`, 1600->`moth`, 3000->`moth-guardian`, 8000->`radiant`; four distinct keys, all 200.
+- Favicon 200, linked relatively so it also resolves in the Capacitor WebView.
+- Contact sheets of the Guardians on the app background — no residue.
+- `npm test` 75/75, including a new guard walking every species x stage x lineage and asserting the art key has a file on disk (a mistyped key is a broken image no mapping test would catch).
+
+### Still open
+- At 375x667 Home is ~50px taller than the viewport, so it scrolls and the sticky tab bar overlays the quest list. Untouched.
+- On-device pass on all of the above.
+
+---
+
 ## 2026-07-30 (later) — Glade fixed, evolution made visible, brand mark chosen
 
 ### The glade bug (PR #41)
