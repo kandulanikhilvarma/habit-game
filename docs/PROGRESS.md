@@ -4,6 +4,40 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-31 (later) — Rebrand: the palette became a palette
+
+Reported: the colours felt unbranded. They were. Mint-to-violet on navy is the default palette of the wellness and AI app category, so it read as a template rather than an identity, it was spent as a fill on every selected control at once, and the navy ground tinted eleven creature images that span orange, violet, cyan, green and iridescent.
+
+Run through the `impeccable` skill, which routed it as a replacement visual world: PRODUCT.md first, then a direction roll before any code.
+
+### The decision, and who made it
+The roll assigned a derived world ("The Bestiary Sheet" — the product's attunement, lineage and stage model literally is a character sheet). **The user took the standing exit, the category standard, deliberately**, benchmarked against Duolingo, Apple Fitness and Linear. That is what got built, at full fidelity. It is recorded in `PRODUCT.md` under Brand Commitments as a standing preference so future work does not reopen the direction.
+
+### The system
+Colour strategy is **Restrained**: neutrals plus one accent, which is the right call for an Operate surface and leaves the creature as the only saturated thing on screen.
+- Ground: warm neutral, near-black at night and near-white by day, chosen from the use scene rather than the category.
+- Brand: deep indigo `#4c5bd4`, solid, never a gradient. The one hue the creature cast does not occupy.
+- Data colours (mind, body, order, streak) are the only other saturated colours and always carry meaning.
+
+Full rationale and the standing bans live in `DESIGN.md`. `CLAUDE.md` now points at it.
+
+### Defects found while verifying
+- **Light-mode delete button at 4.09:1.** It borrowed `--blush`, a *data* colour, for a destructive action. Destructive now has its own themed token.
+- **Attunement bars animated `width`** — layout thrash, the identical bug the XP bar had already been fixed for and this one was missed.
+- Gradient text and the eyebrow above the marketing heading removed (both are craft-floor bans). The two remaining `.eyebrow` uses were back-links and were renamed `.backlink`.
+- 16 em-dashes still in the marketing and compliance copy, cleared.
+
+### Verified
+Every text colour measured against its **composited** background (alpha layers resolved) across Home, Journey and You in both themes, plus all four site pages: **0 failures**. `npm test` 114/114. Impeccable's mechanical detector clean apart from `--spring-pop`, which DESIGN_MOTION_SPEC pins for reward beats and the committed spec overrides.
+
+### A verification lesson worth keeping
+Two audit rounds reported failures that were **the probe's fault, not the design's**: it treated `rgba()` backgrounds as opaque, and it sampled elements mid-`transition` on `color`. Both produced convincing-looking numbers (1.06:1, 3.57:1) for elements that were actually fine. Composite the alpha stack, and settle ~700ms plus two animation frames after any theme flip, before believing a contrast reading.
+
+### Still true
+Nothing has run on a phone, and no motion has been watched. How any of this *looks* is unverified — contrast was measured, appearance was not judged.
+
+---
+
 ## 2026-07-31 — Feature-complete on web: the gaps in the plan are closed
 
 Everything MASTER_PLAN specifies that does not need an Android device is now built. `npm test` 111/111.
