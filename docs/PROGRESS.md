@@ -4,6 +4,45 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-30 — PROJECT PARKED: web product complete, Android differentiator not started
+
+Owner is moving to other projects. This entry is the handoff. Read it first.
+
+### What is done and live
+The whole product that can exist without an Android device is shipped, tested and deployed on Vercel:
+
+- **Loop:** onboarding (max 3 habits), habit sheet with templates, tap-to-complete, edit and hold-to-delete, XP/levels/stages, per-habit and global streaks, earned streak freezes, comeback arc with a warm wake-up.
+- **Creature:** six starters with real art, branching evolution across five tiers with a distinct picture at every tier (starter, lineage, Guardian, Radiant), attunement bars, rename, change species.
+- **Journey:** heatmap, success rate, trend, best-hour insight, weekday/weekend split, rule-based weekly letter.
+- **World:** the glade grows a permanent planting per habit kept 7+ days, day/night light, perfect-day fireflies, dims (never ruins) on neglect.
+- **Growth:** the Habit DNA share card — a 9:16 PNG through the OS share sheet.
+- **Account:** anonymous by default, Google sign-in that links progress, offline-first with cloud reconcile, export, delete.
+- **Backend:** Flask on Vercel, `/api/health`, the completion webhook, Pydantic validation, pytest.
+- **Compliance:** privacy policy and account-deletion pages with a real contact address.
+- **Quality:** `npm test` 75/75, pytest green, Firestore rules emulator test proving another uid is denied, CI on every PR, no AI attribution in history.
+
+### Parked: what Android needs (do not start this in a cloud session)
+This is the actual differentiator and none of it exists. It needs a physical Android device, Android Studio, and a Play Console account (one-off $25). Rough order:
+
+1. **Health Connect** — add the plugin, request the read permissions, map steps/sleep to habit completions. Health Connect only; the Google Fit APIs die Dec 2026.
+2. **UsageStats** — screen-time reading is a special permission (`PACKAGE_USAGE_STATS`) with its own consent screen and a Play policy declaration. This is the "using Instagram less makes something grow" mechanic, and it is the single highest-value item left.
+3. **The 2x2 widget** — Kotlin/Glance. MASTER_PLAN calls it the #1 retention surface, not optional.
+4. **FCM** — reminders that survive the app being closed.
+5. **Play listing** — signing key, store assets, data-safety form (the privacy policy and deletion URL already exist and are live).
+
+Constraint that still holds: raw health and usage data never leaves the device. Only derived completion events sync.
+
+### Known issues left open (deliberately)
+- At 375x667 the Home screen is ~50px taller than the viewport, so it scrolls and the sticky tab bar overlaps the quest list mid-scroll. Cosmetic; fixing it properly needs visual verification on a device.
+- Motion has never been verified anywhere. The check-in beat, fireflies, aura and wake-up ceremony are code-reviewed against DESIGN_MOTION_SPEC but nothing has watched them run.
+- Nothing has been run on a phone at all. The Gate 0 exit criterion (install the APK, complete a habit, prove offline to sync) is still open.
+- Deliberate simplifications are marked `ponytail:` in the source: no undo on a completed habit, unbounded local log, lineage art as overlay rather than per-species redraws.
+
+### If picking this up again
+Start by reading this entry, then `docs/HABITGAME_MVP_MASTER_PLAN.md` section 5 for the integration design. The web app is not a prototype to throw away — it is the shipping frontend; the Android work adds native verification underneath it.
+
+---
+
 ## 2026-07-30 (later still) — Guardian tier, new logo, and a glade anchor fix
 
 ### Glade anchor (PR #43)
