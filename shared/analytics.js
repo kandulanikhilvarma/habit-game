@@ -4,6 +4,8 @@
 // These are honest counts, not projections — the "coach inside a game" tells the truth, including
 // the reds. No ML: every insight here is a plain query over timestamps.
 
+import { isScheduledOn } from './schedule.js';
+
 const DAY_MS = 86400000;
 
 function dayKey(ms) {
@@ -43,7 +45,14 @@ export function successRate(log = [], habit, { windowDays = 30, now = Date.now()
 
   // Count due days as whole calendar days (window start → today, inclusive), not a rounded ms delta,
   // so the result does not shift with the time of day a habit was created or a query is run.
-  const dueDays = Math.max(1, Math.round((startOfDay(now) - startOfDay(dueFrom)) / DAY_MS) + 1);
+  // Only days the habit is actually scheduled for count as due: dividing a Mon/Wed/Fri habit by
+  // every calendar day caps a perfect record at 43% and tells a consistent user they are failing.
+  const spanDays = Math.max(1, Math.round((startOfDay(now) - startOfDay(dueFrom)) / DAY_MS) + 1);
+  let dueDays = 0;
+  for (let i = 0; i < spanDays; i += 1) {
+    if (isScheduledOn(habit, dayKey(startOfDay(dueFrom) + i * DAY_MS))) dueDays += 1;
+  }
+  dueDays = Math.max(1, dueDays);
   const fromDate = dayKey(dueFrom);
   const toDate = dayKey(now);   // upper bound matters: trend() queries past windows
 
