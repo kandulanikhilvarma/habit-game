@@ -11,7 +11,7 @@ function makeGame(state) {
     streak: h.streak, best: h.best, total: h.total,
     gStreak: state.gStreak, gBest: state.gBest, freezes: state.freezes,
     xp: state.creature.xp, dayXp: state.day.xpEarned,
-    comeback: state.comeback, badges: [...state.badges],
+    comeback: state.comeback, badges: [...state.badges], decor: [...(state.decor ?? [])],
   });
 
   function complete(id) {
@@ -28,7 +28,7 @@ function makeGame(state) {
       state.gStreak = r.streak; state.freezes = r.freezes;
       state.gBest = Math.max(state.gBest, state.gStreak);
     }
-    if (state.day.doneIds.length === state.habits.length) xp += PERFECT_DAY_BONUS;
+    if (state.day.doneIds.length === state.habits.length) { xp += PERFECT_DAY_BONUS; (state.decor ??= []).push('crystal'); }
     if (state.comeback) {
       state.comeback = false;
       if (!state.badges.includes('rekindled')) state.badges.push('rekindled');
@@ -45,7 +45,7 @@ function makeGame(state) {
     h.streak = b.streak; h.best = b.best; h.total = b.total;
     state.gStreak = b.gStreak; state.gBest = b.gBest; state.freezes = b.freezes;
     state.creature.xp = b.xp; state.day.xpEarned = b.dayXp;
-    state.comeback = b.comeback; state.badges = b.badges;
+    state.comeback = b.comeback; state.badges = b.badges; state.decor = b.decor;
     state.day.doneIds = state.day.doneIds.filter((x) => x !== id);
     for (let i = state.log.length - 1; i >= 0; i -= 1) {
       if (state.log[i].hid === id && state.log[i].date === state.day.date) { state.log.splice(i, 1); break; }
@@ -62,7 +62,7 @@ const fresh = (over = {}) => ({
     { id: 'a', category: 'mind', streak: 3, best: 9, total: 20 },
     { id: 'b', category: 'body', streak: 0, best: 0, total: 0 },
   ],
-  gStreak: 6, gBest: 11, freezes: 1, comeback: false, badges: [],
+  gStreak: 6, gBest: 11, freezes: 1, comeback: false, badges: [], decor: [],
   day: { date: '2026-07-30', doneIds: [], xpEarned: 0 },
   log: [],
   ...over,
@@ -150,4 +150,14 @@ test('completions unwind cleanly in reverse order', () => {
   g.undo('a');
   delete s.day.undo;
   assert.equal(JSON.stringify(s), snap, 'back to the start of the day');
+});
+
+test('an egg won by a completion is given back when it is undone', () => {
+  const s = fresh();
+  const g = makeGame(s);
+  g.complete('a');
+  g.complete('b');                                  // perfect day -> egg
+  assert.deepEqual(s.decor, ['crystal']);
+  g.undo('b');
+  assert.deepEqual(s.decor, [], 'undoing the perfect day takes the reward with it');
 });

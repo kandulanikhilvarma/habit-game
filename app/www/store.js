@@ -35,6 +35,7 @@ function seed() {
     ],
     comeback: false,
     badges: [],
+    decor: [],        // cosmetic glade pieces won from perfect days (§3.4)
     account: null,       // { email, name, uid } once signed in; null while a guest
     webhookToken: null,  // per-account token for POST /api/v1/complete; generated on demand
     settings: { sound: null, theme: 'dark' },

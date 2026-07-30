@@ -6,6 +6,9 @@
 // Colours come from CSS variables, not hex: this SVG is injected inline, so `var()` resolves
 // against the page and the whole scene re-tints on the light/dark toggle with no JS involved.
 
+import { DECOR } from './eggs.js';
+import { scheduledOn } from './schedule.js';
+
 const PLANT_AT = 7;       // a habit maintained ≥7 days plants something permanent
 const MAX_ELEMENTS = 10;  // MVP cap on placeable elements
 const VW = 400;
@@ -62,12 +65,53 @@ function plant(category, x, y, lit) {
   </g>`;
 }
 
+// Egg rewards, drawn not loaded. Each sits at a fixed spot so the glade stays recognisably yours
+// as it fills in, rather than rearranging itself every render.
+function decorPiece(key, x, y) {
+  if (key === 'mushrooms') {
+    return `<g class="decor decor--mushrooms">
+      <ellipse cx="${x - 5}" cy="${y}" rx="4" ry="3" fill="var(--blush)"/>
+      <rect x="${x - 6}" y="${y}" width="2" height="4" fill="var(--world-post)"/>
+      <ellipse cx="${x + 3}" cy="${y - 2}" rx="5" ry="3.6" fill="var(--blush)"/>
+      <rect x="${x + 2}" y="${y - 2}" width="2" height="5" fill="var(--world-post)"/>
+    </g>`;
+  }
+  if (key === 'crystal') {
+    return `<g class="decor decor--crystal">
+      <path d="M${x} ${y - 16} l5 9 -5 7 -5 -7z" fill="var(--violet)" opacity="0.9"/>
+      <path d="M${x} ${y - 16} l5 9 -5 7z" fill="var(--mint)" opacity="0.5"/>
+    </g>`;
+  }
+  if (key === 'flowers') {
+    return `<g class="decor decor--flowers">${[-7, 0, 7].map((dx, i) => `
+      <line x1="${x + dx}" y1="${y}" x2="${x + dx}" y2="${y - 8 - i}" stroke="var(--world-rim)" stroke-width="1.4"/>
+      <circle cx="${x + dx}" cy="${y - 9 - i}" r="2.6" fill="${['var(--flame)', 'var(--blush)', 'var(--mint)'][i]}"/>`).join('')}
+    </g>`;
+  }
+  if (key === 'firepit') {
+    return `<g class="decor decor--firepit">
+      <ellipse cx="${x}" cy="${y}" rx="8" ry="3" fill="var(--world-post)"/>
+      <path d="M${x} ${y - 12} q4 5 0 9 q-4 -4 0 -9z" fill="var(--flame)"/>
+    </g>`;
+  }
+  if (key === 'archway') {
+    return `<g class="decor decor--archway">
+      <path d="M${x - 9} ${y} v-10 a9 9 0 0 1 18 0 v10" fill="none" stroke="var(--world-leaf)" stroke-width="3"/>
+    </g>`;
+  }
+  return `<g class="decor decor--pond">
+    <ellipse cx="${x}" cy="${y}" rx="13" ry="4.5" fill="var(--world-rim)" opacity="0.5"/>
+    <ellipse cx="${x}" cy="${y - 1}" rx="7" ry="2.2" fill="var(--mint)" opacity="0.45"/>
+  </g>`;
+}
+
 export function worldSvg(state, { now = Date.now() } = {}) {
   const light = daylight(new Date(now).getHours());
   const dim = (state.gStreak ?? 0) === 0;           // neglect: pause growth, dim the light
   const lit = light.lantern && !dim;
   const done = state.day?.doneIds?.length ?? 0;
-  const perfectDay = state.habits.length > 0 && done === state.habits.length;
+  const todays = scheduledOn(state.habits, state.day?.date ?? '');
+  const perfectDay = todays.length > 0 && done === todays.length;
 
   const planted = state.habits.filter((h) => (h.total || 0) >= PLANT_AT).slice(0, MAX_ELEMENTS);
 
@@ -78,6 +122,15 @@ export function worldSvg(state, { now = Date.now() } = {}) {
     const spread = 0.42 + (rank / Math.max(1, Math.ceil(planted.length / 2))) * 0.44;
     const x = ISLAND.cx + side * spread * ISLAND.rx;
     return plant(h.category || 'mind', x, groundY(x) + 10, lit);
+  }).join('');
+
+  // Decor fills the glade outward from the edges, so it never crowds the creature in the middle.
+  const owned = (state.decor ?? []).filter((d) => DECOR.includes(d));
+  const decor = owned.map((key, i) => {
+    const side = i % 2 === 0 ? -1 : 1;
+    const rank = Math.floor(i / 2);
+    const x = ISLAND.cx + side * (0.62 + rank * 0.13) * ISLAND.rx;
+    return decorPiece(key, x, groundY(x) + 16);
   }).join('');
 
   const fireflies = (perfectDay && !dim)
@@ -105,6 +158,7 @@ export function worldSvg(state, { now = Date.now() } = {}) {
     </defs>
     <ellipse cx="${ISLAND.cx}" cy="${ISLAND.cy - 6}" rx="${ISLAND.rx}" ry="${ISLAND.ry + 18}" fill="url(#w-sky)"/>
     <ellipse cx="${ISLAND.cx}" cy="${ISLAND.cy}" rx="${ISLAND.rx}" ry="${ISLAND.ry}" fill="url(#w-ground)"/>
+    ${decor}
     ${plants}
     ${fireflies}
   </svg>`;
