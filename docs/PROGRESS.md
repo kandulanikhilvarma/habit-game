@@ -4,6 +4,33 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-31 — Feature-complete on web: the gaps in the plan are closed
+
+Everything MASTER_PLAN specifies that does not need an Android device is now built. `npm test` 111/111.
+
+### Shipped this session
+- **Undo (#46).** Tapping the wrong habit was permanent. A ticked box now unticks. Undo restores a *snapshot*, not reversed arithmetic — `best` is a maximum and the banked freeze is a threshold, so no subtraction recovers them. Only the newest check-in can be undone, which keeps the snapshots unwinding in the order they were taken.
+- **Log cap (#46).** The log rides inside one Firestore document, which hard-fails at 1 MiB. Capped at two years; Journey never reads past 150.
+- **Weekday schedules (#47).** `schedule(daily or specific weekdays)` was specified from the start but every habit ran daily, so a Mon/Wed/Fri habit lost its streak each Tuesday for resting as planned. Empty `days` means every day, so no migration. Home, perfect days, streak breaks and reminders all follow the schedule.
+- **Schedule-aware rates (#48).** Shipping schedules exposed this: success rate divided by every calendar day, so a flawless Mon/Wed/Fri record read 43%.
+- **Eggs (#49).** §3.4's variable reward. A perfect day has a 1-in-4 chance of hatching a cosmetic piece into the glade. Cosmetic forever. Undo takes the egg back with the completion that won it.
+- **Memories (#50).** §3.5's journal tier. One line a day on Journey, quoted back by the creature in the weekly letter. Photos deliberately skipped — storage and privacy cost a line of text does not have.
+- **XSS closed (#50).** Habit names, goals and the creature's name were interpolated into `innerHTML` unescaped. Pre-existing, but notes made it reachable from *synced* data rather than only self-inflicted. All user text is escaped at the render boundary now; verified with a live `<img onerror>` payload across all three screens — nothing executed.
+
+### Two near-misses worth remembering
+- **A Firebase admin private key was almost committed.** GitHub push protection caught it. `.gitignore` had `*-service-account*.json`, but Firebase names its downloads `<project>-firebase-adminsdk-<hash>.json`, which that pattern misses. Now covered. The key never reached the remote and did not need rotating — but it still sits in the project folder and belongs outside it.
+- **Capacitor's `schedule.on.weekday` takes one weekday, not an array.** My first pass passed an array, which would have silently scheduled *nothing* for every multi-day habit. Multi-day habits now emit one notification per weekday with per-weekday ids.
+
+### Deliberately not built
+- **Photo proof** (§3.5 tier 2) — storage and privacy cost; the text note carries the same weight for the letter.
+- **Habit targets** (minutes/steps/count) — the field only earns its keep once auto-verification can measure against it, which is Android work.
+- **375x667 Home overflow** — Home is ~50px taller than a short phone, so it scrolls and the sticky tab bar overlaps the quest list mid-scroll. Cosmetic, and fixing it properly needs a device to judge.
+
+### What remains is Android-only
+Unchanged from the parked entry below: Health Connect, UsageStats screen-time, the widget, FCM, the Play listing. Read "Parked: what Android needs" before starting any of it. **Nothing has ever run on a phone, and no motion has ever been watched** — those two statements are still true and still matter.
+
+---
+
 ## 2026-07-30 — PROJECT PARKED: web product complete, Android differentiator not started
 
 Owner is moving to other projects. This entry is the handoff. Read it first.
