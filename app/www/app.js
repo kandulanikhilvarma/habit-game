@@ -6,6 +6,7 @@ import { load, save, rollover, todayKey, dedupeHabits } from './store.js';
 import { creatureSvg, creatureArt, artKeyFor, SPECIES, LINEAGE_STYLE } from './creature.js';
 import { worldSvg } from './world.js';
 import { scheduledOn, scheduleLabel } from './schedule.js';
+import { rollEgg, decorLabel } from './eggs.js';
 import { renderJourney, renderYou } from './screens.js';
 import { icons } from './icons.js';
 import { celebrate, wakeUp, haptic, bindIdleLifecycle, randomizeBlink } from './fx.js';
@@ -157,6 +158,7 @@ function snapshot(habit) {
     gStreak: state.gStreak, gBest: state.gBest, freezes: state.freezes,
     xp: state.creature.xp, dayXp: state.day.xpEarned,
     comeback: state.comeback, badges: [...state.badges],
+    decor: [...(state.decor ?? [])],
   };
 }
 
@@ -182,6 +184,7 @@ function undoComplete(habitId) {
   state.day.xpEarned = before.dayXp;
   state.comeback = before.comeback;
   state.badges = before.badges;
+  state.decor = before.decor;   // an egg won by this completion is not kept after undoing it
   state.day.doneIds = state.day.doneIds.filter((id) => id !== habitId);
   // Drop this habit's newest row for today, so Journey stops counting a completion that was undone.
   for (let i = state.log.length - 1; i >= 0; i -= 1) {
@@ -237,6 +240,13 @@ function complete(habitId, at) {
     state.comeback = false;
     if (!state.badges.includes('rekindled')) state.badges.push('rekindled');
   }
+  // A perfect day sometimes leaves something behind in the glade (§3.4). Rolled after the bonus so
+  // the drop is the surprise on top, never the reason the day mattered.
+  let hatched = null;
+  if (perfect) {
+    hatched = rollEgg({ perfect: true, unlocked: state.decor ?? [] });
+    if (hatched) (state.decor ??= []).push(hatched);
+  }
   (state.day.undo ??= {})[habitId] = before;
   save(state);
 
@@ -252,6 +262,7 @@ function complete(habitId, at) {
     perfect,
     sound: state.settings.sound === true,
   });
+  if (hatched) setTimeout(() => toast(`An egg hatched — ${decorLabel(hatched)} appears in your glade.`), 1200);
   if (state.settings.sound === null) askAboutSound();
 
   // Fire-and-forget: the write is already local and Firestore replays it whenever the network
