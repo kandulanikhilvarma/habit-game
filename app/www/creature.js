@@ -47,22 +47,27 @@ export const SPECIES = {
 const ART_NAMES = {
   kumo: 'Kumo', embr: 'Embr', moss: 'Moss', aqua: 'Aqua', sol: 'Sol', nyx: 'Nyx',
   ember: 'Ember-beast', moth: 'Moth-sage', sentinel: 'Sentinel', prismatic: 'Prismatic',
+  'ember-guardian': 'Ember-beast Guardian', 'moth-guardian': 'Moth-sage Guardian',
+  'sentinel-guardian': 'Sentinel Guardian', 'prismatic-guardian': 'Prismatic Guardian',
   radiant: 'Radiant guardian',
 };
 
 /**
- * Which art the creature wears. Stage 2 is still the starter you picked; from stage 3 it wears the
- * lineage your habits chose (the branching-evolution payoff has to be *visible*, not just a label);
- * stage 5 is the shared Radiant form — the endgame every branch grows into.
+ * Which art the creature wears. Stage 2 is still the starter you picked; stage 3 is the lineage
+ * your habits chose (the branching-evolution payoff has to be *visible*, not just a label); stage 4
+ * is that lineage's Guardian; stage 5 is the shared Radiant form every branch grows into. Four
+ * different pictures, so every promotion shows.
  */
 export function artKeyFor(species, stage, lineage) {
   if (stage >= 5) return 'radiant';
-  if (stage >= 3) return lineage in LINEAGE_STYLE ? lineage : 'prismatic';
+  const line = lineage in LINEAGE_STYLE ? lineage : 'prismatic';
+  if (stage === 4) return `${line}-guardian`;
+  if (stage === 3) return line;
   return species in SPECIES ? species : 'kumo';
 }
 
 /** The face of the app: welcome screen, favicon, marketing. One place to change the brand mark. */
-export const LOGO_CREATURE = 'ember';
+export const LOGO_CREATURE = 'moth-guardian';
 
 export function creatureArt(key) {
   const k = key in ART_NAMES ? key : 'kumo';
