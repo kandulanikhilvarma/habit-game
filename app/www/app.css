@@ -81,8 +81,8 @@ body {
 .habit-stat__num small { font-weight: 400; color: var(--text-muted); }
 
 .card {
-  display: grid; gap: 4px;
-  padding: 16px;
+  display: grid; gap: 6px;
+  padding: 14px 16px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -695,21 +695,6 @@ body {
 .welcome .ask__btn { justify-self: center; }
 
 /* ---- destructive: delete account ---- */
-.danger-btn {
-  min-height: var(--tap);
-  margin-top: 4px;
-  padding: 0 16px;
-  background: none;
-  border: 1px solid var(--danger-line);
-  border-radius: 999px;
-  color: var(--danger);
-  font: inherit; font-size: var(--size-small); font-weight: 700;
-  cursor: pointer;
-  transition: transform var(--t-press) var(--ease-out), background var(--t-ui) var(--ease-out);
-}
-.danger-btn:active { transform: scale(0.98); }
-.danger-btn--armed { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
-.danger-btn:disabled { opacity: 0.6; cursor: default; }
 
 /* ---- weekly letter card ---- */
 .letter { border-color: #9d7bff44; background: linear-gradient(180deg, #9d7bff11, var(--surface)); }
@@ -803,3 +788,66 @@ a.ask__btn { display: inline-flex; align-items: center; justify-content: center;
 .quest__glyph .glyph-icon svg, .habit-stat__glyph .glyph-icon svg { width: 24px; height: 24px; }
 .glyph { display: inline-flex; align-items: center; justify-content: center; }
 .glyph.on .glyph-icon { color: var(--accent-ink); }
+
+/* ---- buttons ----
+   One family, three jobs. Before this the screen mixed 999px pills, 12px segments and 18px cards,
+   and the secondary button set its label to --text-muted, which is the colour disabled controls
+   use: a button that reads as unavailable is the "naive" tell, not the shape. */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: var(--tap);
+  padding: 0 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font: inherit; font-size: var(--size-body); font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--t-press) var(--ease-out),
+              background-color var(--t-ui) var(--ease-out),
+              border-color var(--t-ui) var(--ease-out);
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.btn:disabled:active { transform: none; }
+
+.btn--primary { background: var(--brand); color: #fff; }
+.btn--primary:hover { background: var(--brand-strong); }
+
+/* Full text colour, not muted: this is an available action, it just is not the main one. */
+.btn--secondary {
+  background: var(--surface-raised);
+  border-color: var(--border);
+  color: var(--text);
+  font-size: var(--size-small);
+}
+.btn--secondary:hover { border-color: var(--brand-line); }
+
+.btn--danger {
+  background: none;
+  border-color: var(--danger-line);
+  color: var(--danger);
+  font-size: var(--size-small);
+}
+.btn--danger--armed { background: var(--danger-soft); border-color: var(--danger); }
+
+.btn--google { width: 100%; }
+.btn--primary.share-btn { width: 100%; margin-top: 8px; }
+
+/* ---- folded section ----
+   The webhook is a real feature and a rare one. As a full card it cost the same weight as the
+   account, for something most people never open. */
+.card--fold { cursor: pointer; }
+.card--fold > summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 24px;
+}
+.card--fold > summary::-webkit-details-marker { display: none; }
+.card--fold > summary::after {
+  content: ''; width: 8px; height: 8px; flex: none;
+  border-right: 2px solid var(--text-muted); border-bottom: 2px solid var(--text-muted);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform var(--t-ui) var(--ease-out);
+}
+.card--fold[open] > summary::after { transform: rotate(-135deg) translate(-2px, -2px); }
+.card--fold[open] { gap: 8px; }

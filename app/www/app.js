@@ -134,7 +134,16 @@ function render() {
     el('export-data')?.addEventListener('click', exportData);
     el('gen-token')?.addEventListener('click', generateWebhookToken);
     el('regen-token')?.addEventListener('click', generateWebhookToken);
-    bindDeleteAccount(el('delete-account'));
+    bindDestructive(el('delete-account'), {
+      label: 'Delete my account',
+      armedLabel: 'Tap again to delete everything',
+      work: wipeCloud,
+    });
+    bindDestructive(el('start-over'), {
+      label: 'Start over',
+      armedLabel: 'Tap again to erase everything',
+      work: wipeCloud,
+    });
     el('theme')?.querySelectorAll('[data-theme-choice]').forEach((b) => {
       b.addEventListener('click', () => {
         state.settings.theme = b.dataset.themeChoice;
@@ -295,7 +304,7 @@ function complete(habitId, at) {
     perfect,
     sound: state.settings.sound === true,
   });
-  if (hatched) setTimeout(() => toast(`An egg hatched — ${decorLabel(hatched)} appears in your glade.`), 1200);
+  if (hatched) setTimeout(() => toast(`An egg hatched. ${decorLabel(hatched)} appears in your glade.`), 1200);
   if (state.settings.sound === null) askAboutSound();
 
   // Fire-and-forget: the write is already local and Firestore replays it whenever the network
@@ -328,7 +337,7 @@ function askAboutSound() {
   const banner = document.createElement('div');
   banner.className = 'ask';
   banner.innerHTML = `
-    <p class="ask__text">${escapeHtml(state.creature.name)} wants to make sounds — okay?</p>
+    <p class="ask__text">${escapeHtml(state.creature.name)} wants to make sounds. Okay?</p>
     <div class="ask__actions">
       <button class="ask__btn" data-sound="no">Not now</button>
       <button class="ask__btn ask__btn--yes" data-sound="yes">Sure</button>
@@ -409,7 +418,7 @@ function exportData() {
   const line = (s = '') => `${s}
 `;
   let out = '';
-  out += line(`KUMO — your data, exported ${todayKey()}`);
+  out += line(`KUMO. Your data, exported ${todayKey()}`);
   out += line('='.repeat(48));
   out += line();
   out += line(`Creature:      ${state.creature.name} (${SPECIES[state.creature.species]?.name ?? state.creature.species})`);
@@ -586,7 +595,7 @@ el('add-quest').addEventListener('click', () => { haptic('light'); openAddSheet(
 // it) so the Google popup opens inside the tap gesture — an await here gets the popup blocked on iOS.
 function beginSignIn() {
   haptic('light');
-  if (!signInFn) { toast('Still loading — try again in a moment.'); return; }
+  if (!signInFn) { toast('Still loading. Try again in a moment.'); return; }
   Promise.resolve(signInFn()).catch((err) => {
     if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') return;
     toast(err?.code === 'auth/unauthorized-domain'
@@ -599,37 +608,43 @@ el('home-signin').addEventListener('click', beginSignIn);
 
 // Two-tap delete so a stray tap can't wipe an account: first tap arms + warns, second within 4s
 // wipes local + cloud and reloads to a fresh guest.
-function bindDeleteAccount(btn) {
+// Two taps, because it cannot be undone. Guests get the same machinery under an honest label:
+// there is no account to delete yet, so the destructive action is "erase what is on this device".
+function bindDestructive(btn, { label, armedLabel, work }) {
   if (!btn) return;
   let armed = false;
   let armTimer = null;
   btn.addEventListener('click', async () => {
     if (!armed) {
       armed = true;
-      btn.textContent = 'Tap again to delete everything';
-      btn.classList.add('danger-btn--armed');
+      btn.textContent = armedLabel;
+      btn.classList.add('btn--danger--armed');
       armTimer = setTimeout(() => {
         armed = false;
-        btn.textContent = 'Delete my account';
-        btn.classList.remove('danger-btn--armed');
+        btn.textContent = label;
+        btn.classList.remove('btn--danger--armed');
       }, 4000);
       return;
     }
     clearTimeout(armTimer);
     btn.disabled = true;
-    btn.textContent = 'Deleting…';
+    btn.textContent = 'Erasing…';
     try {
-      if (cloudCtx) {
-        const { deleteAccount } = await import('./cloud.js');
-        await deleteAccount(cloudCtx);
-      }
+      await work();
     } catch (err) {
-      console.warn('account delete failed', err);
+      console.warn('destructive action failed', err);
     }
     localStorage.removeItem('habitgame.state.v1');
     location.reload();
   });
 }
+
+async function wipeCloud() {
+  if (!cloudCtx) return;
+  const { deleteAccount } = await import('./cloud.js');
+  await deleteAccount(cloudCtx);
+}
+
 
 // A habit row: quick tap edits, press-and-hold deletes. Hold is deliberate where destructive, the
 // fill animates over 1.2s and letting go early cancels (DESIGN_MOTION_SPEC §5).
@@ -742,7 +757,7 @@ async function boot() {
     identity = currentIdentity();
     if (ctx.authError) {
       toast(ctx.authError === 'auth/unauthorized-domain'
-        ? 'Sign-in blocked — add this site to Firebase authorized domains.'
+        ? 'Sign-in blocked. Add this site to Firebase authorized domains.'
         : `Sign-in error: ${ctx.authError}`);
     }
     // Live auth: whenever sign-in state changes (popup completes, or a redirect lands), the UI
