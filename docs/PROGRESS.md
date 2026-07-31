@@ -4,6 +4,34 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-31 (final web session) — Renamed to Bud, awards, and the sign-out leak
+
+### The security fix that mattered most
+Signing out ended the Firebase session and reloaded, leaving **the whole save in localStorage**. On a shared phone the next person opened the app to the previous account's creature, habits, log and notes, and could export all of it. The code claimed it re-inited a fresh anonymous session; it did not. Fixed by clearing the device on sign-out.
+
+### Renamed to Bud
+`appId` is permanent from the first Play release and nothing is published, so this was the last moment the change was free. Kumo named the purple cloud starter, now one creature of eleven, and competed for search with every cloud product using the same Japanese word. **Bud** means a sprout and a companion, both literally true, and survives being said once. Sprig was rejected on the user's own point: `/spr/` is a hard onset for non-native speakers. Tally was rejected because TallyPrime owns that word in India.
+
+The cloud starter keeps the name Kumo: it is a creature, not the product.
+
+### Awards
+Nothing ever said "you did that". Earned awards show as marks; under them, the single closest unearned rung of each ladder with its progress. Two rules keep them honest, both tested:
+- **Derived from state, never toggled** — an award cannot outlive the save that earned it, so undo takes it back with the XP.
+- **Nothing is awarded for not missing a day.** An unbroken-streak award is the punishment mechanic wearing a medal. A test asserts no award name contains "never" or "without missing", so a later change cannot quietly add one.
+
+### Also shipped
+- Undo works on **any** of today's check-ins, not only the newest. The old whole-state snapshot was only reversible in order. Day-level rewards (perfect bonus, egg, global streak, banked freeze, wake-up badge) now unwind from the day, which fixed a real bug: undoing a different habit ended the perfect day but left its bonus standing.
+- Home fits a short phone: the shell is capped to the viewport so the **list** scrolls, not the page. 89px of overflow at 375x667 became 0, and 7 habits also fit.
+- Light is the default theme. Export is offered only once there is an account behind it. Offline says so. Scrollbars are thin instead of the platform trough. Journey folds from 5.1 screens to 4.1.
+- The new mark replaces cropped creature art in every icon slot, trimmed and re-centred first, and checked at 16/32/48/96px before wiring — the test the previous logo failed.
+
+### Still not built, and cannot be built here
+Health Connect, UsageStats screen-time, the widget, FCM and the Play listing. These need a device, Android Studio and a Play account. Writing Kotlin that cannot be compiled or run would be worse than not writing it.
+
+Owner tasks before publishing: a **trademark and Play Store collision check on "Bud"** (Play search returns 200 for every query, so it cannot be done from a shell), the Firebase project display name (it still says Kumo on the Google consent screen), and deciding whether to rename the repo — which risks the Vercel link and is not worth doing casually.
+
+---
+
 ## 2026-07-31 (later still) — One button system, and guests stop being offered an account
 
 Phone feedback, and one of the items was a regression I had introduced.
