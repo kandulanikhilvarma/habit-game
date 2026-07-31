@@ -24,8 +24,13 @@ body {
 .app {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;          /* min-, not fixed height: grow-and-scroll beats clip-to-nothing */
+  min-height: 100vh;          /* min-, not fixed: a collapsed shell would clip to nothing */
   min-height: 100dvh;
+  /* ...but it must not grow past the screen either, or Home scrolls as a page and the sticky tab
+     bar rides over the quest list. Capped here, the list is what scrolls, which is what a list of
+     habits should do once there are more than a screenful. */
+  max-height: 100vh;
+  max-height: 100dvh;
   max-width: 480px;
   margin: 0 auto;
   padding: max(12px, env(safe-area-inset-top)) 16px 0;
@@ -350,14 +355,17 @@ body {
 /* ---- scene ---- */
 .scene {
   position: relative;
-  flex: 1 1 auto;            /* takes the free space in the home column */
+  flex: 0 1 auto;   /* yields height before the quest list does */            /* takes the free space in the home column */
   display: grid;
   place-items: center;
   align-content: center;
   gap: 4px;
   min-height: 0;
 }
-.today, .quests, .add-quest { flex: none; }
+/* The quest list is the part that gives, so Home fits a short phone instead of growing past it and
+   sliding its last card under the sticky tab bar. `flex: none` here meant the page grew instead. */
+.today, .add-quest { flex: none; }
+.quests { flex: 1 1 auto; min-height: 0; }
 /* The ground belongs under the creature's feet, not behind the name text — so the glade is
    anchored to the creature's own box, and the island's top arc lands just above its base. */
 /* The plot carries the size, not the creature inside it: an explicitly sized box cannot collapse
@@ -438,7 +446,12 @@ body {
 .dot.on { background: var(--accent-line); border-color: var(--accent-line); }
 
 /* ---- quests ---- */
-.quests { display: grid; gap: 10px; padding-bottom: 8px; overflow-y: auto; }
+.quests {
+  display: grid; gap: 10px; align-content: start;
+  padding-bottom: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
 
 .quest {
   display: flex; align-items: center; gap: 12px;
@@ -884,3 +897,10 @@ a.ask__btn { display: inline-flex; align-items: center; justify-content: center;
 .grid-cell.is-done { background: var(--mint); }
 /* A day the habit was never due is not a gap in the record. */
 .grid-cell.is-rest { background: none; box-shadow: inset 0 0 0 1px var(--border); }
+
+/* What counts as done, in the user's own words. Sits with the name because that is the question
+   it answers; nothing verifies it, so it never wears the tone of a measured value. */
+.quest__target { font-weight: 400; color: var(--text-muted); font-size: var(--size-small); }
+
+.empty { gap: 8px; }
+.empty .card__value { font-size: var(--size-body); }
