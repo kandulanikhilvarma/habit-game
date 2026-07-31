@@ -58,6 +58,18 @@ export function hop(stageEl) {
   );
 }
 
+/** Petting: a squash and stretch, which is what a living thing does when poked. Smaller and
+ *  shorter than the hop, which is the reward beat and has to stay the bigger of the two. */
+export function pet(stageEl) {
+  if (reduced.matches) return;
+  const body = stageEl.querySelector('#body-group') || stageEl.querySelector('.creature-art');
+  if (!body) return;
+  body.animate(
+    [{ transform: 'scale(1)' }, { transform: 'scale(1.04, 0.96)' }, { transform: 'scale(1)' }],
+    { duration: 320, easing: 'cubic-bezier(0.22, 1.4, 0.36, 1)', composite: 'replace' },
+  );
+}
+
 /** Streak flame ticks 1 -> 1.15 -> 1. */
 export function tickFlame(flameEl) {
   if (!flameEl || reduced.matches) return;

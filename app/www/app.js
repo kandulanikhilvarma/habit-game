@@ -10,7 +10,7 @@ import { rollEgg, decorLabel } from './eggs.js';
 import { newlyEarned } from './achievements.js';
 import { renderJourney, renderYou } from './screens.js';
 import { icons, habitGlyph } from './icons.js';
-import { celebrate, wakeUp, haptic, bindIdleLifecycle, randomizeBlink } from './fx.js';
+import { celebrate, wakeUp, pet, haptic, bindIdleLifecycle, randomizeBlink } from './fx.js';
 import { playAdd, playRemove, playPick, playPet } from './audio.js';
 import { sheetMarkup, makeHabit, isDuplicateName, TEMPLATES } from './habits.js';
 import { presentSheet } from './sheet.js';
@@ -390,10 +390,7 @@ el('quests').addEventListener('pointerdown', (e) => {
 });
 
 el('creature').addEventListener('pointerdown', () => {
-  el('creature').querySelector('#body-group')?.animate(
-    [{ transform: 'scale(1)' }, { transform: 'scale(1.04, 0.96)' }, { transform: 'scale(1)' }],
-    { duration: 320, easing: 'cubic-bezier(0.22, 1.4, 0.36, 1)' },
-  );
+  pet(el('creature'));
   haptic('light');
   if (soundOn()) playPet();
 });
