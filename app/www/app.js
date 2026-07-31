@@ -25,7 +25,7 @@ let cloudCtx = null;   // { db, uid } once cloud init resolves; needed for accou
 
 // Theme: dark by default, light when chosen. Applied to <html> so tokens.css can override surfaces.
 function applyTheme() {
-  document.documentElement.dataset.theme = state.settings.theme || 'dark';
+  document.documentElement.dataset.theme = state.settings.theme || 'light';
 }
 applyTheme();
 
@@ -124,7 +124,12 @@ function render() {
     el('sign-out')?.addEventListener('click', async () => {
       const { signOutUser } = await import('./cloud.js');
       await signOutUser();
-      location.reload();   // simplest correct reset: re-init as a fresh anonymous session
+      // Signing out has to clear the device too. Ending only the Firebase session left the whole
+      // save in localStorage, so the next person to open the app on a shared phone saw the previous
+      // account's creature and habits, and could export them from the You screen. The data is safe
+      // in Firestore and comes back on the next sign-in; what is on this device must not linger.
+      localStorage.removeItem('habitgame.state.v1');
+      location.reload();
     });
     el('change-creature')?.addEventListener('click', changeCreature);
     el('rename-creature')?.addEventListener('click', renameCreature);
@@ -188,7 +193,7 @@ function questMarkup(h) {
     <li class="quest${isDone ? ' done' : ''}">
       <span class="quest__glyph">${habitGlyph(h.glyph)}</span>
       <span class="quest__text">
-        <span class="quest__name">${escapeHtml(h.name)}</span>
+        <span class="quest__name">${escapeHtml(h.name)}${h.target ? ` <span class="quest__target">${escapeHtml(h.target)}</span>` : ''}</span>
         <span class="quest__meta">${streakMeta}</span>
       </span>
       <button class="check${isDone ? ' on' : ''}" data-habit="${h.id}"
@@ -202,39 +207,35 @@ function questMarkup(h) {
 // thresholds — once raised, no subtraction recovers what they were, so the only honest reversal is
 // to remember the values and put them back. Lives in `state.day` so it survives a reload and is
 // cleared by the daily rollover: undo corrects a mistap, it does not rewrite history.
-function snapshot(habit) {
+// What one completion has to give back. Deliberately per-completion and absolute-free: the old
+// version stored the whole state, which is only reversible for the newest check-in, so undoing an
+// older one restored an XP total from before everything that followed it.
+function completionRecord(habit, xp) {
+  return { xp, habit: { streak: habit.streak, best: habit.best, total: habit.total } };
+}
+
+/** Everything a day-level reward touched, captured once at the day's first completion. */
+function dayStartRecord() {
   return {
-    streak: habit.streak, best: habit.best, total: habit.total,
     gStreak: state.gStreak, gBest: state.gBest, freezes: state.freezes,
-    xp: state.creature.xp, dayXp: state.day.xpEarned,
     comeback: state.comeback, badges: [...state.badges],
-    decor: [...(state.decor ?? [])],
   };
 }
 
+const scheduledCount = () => scheduledOn(state.habits, state.day.date).length;
+const isPerfectDay = () => scheduledCount() > 0 && state.day.doneIds.length === scheduledCount();
+
+
 function undoComplete(habitId) {
-  const before = state.day.undo?.[habitId];
+  const rec = state.day.undo?.[habitId];
   const habit = state.habits.find((h) => h.id === habitId);
-  if (!before || !habit) return false;
+  if (!rec || !habit) return false;
 
-  // Only the newest check-in, so the snapshots unwind in the order they were taken. Undoing an
-  // older one would restore an XP total from before every completion that followed it.
-  if (habitId !== state.day.doneIds[state.day.doneIds.length - 1]) {
-    toast('Only your most recent check-in can be undone.');
-    return false;
-  }
-
-  habit.streak = before.streak;
-  habit.best = before.best;
-  habit.total = before.total;
-  state.gStreak = before.gStreak;
-  state.gBest = before.gBest;
-  state.freezes = before.freezes;
-  state.creature.xp = before.xp;
-  state.day.xpEarned = before.dayXp;
-  state.comeback = before.comeback;
-  state.badges = before.badges;
-  state.decor = before.decor;   // an egg won by this completion is not kept after undoing it
+  habit.streak = rec.habit.streak;
+  habit.best = rec.habit.best;
+  habit.total = rec.habit.total;
+  state.creature.xp -= rec.xp;
+  state.day.xpEarned -= rec.xp;
   state.day.doneIds = state.day.doneIds.filter((id) => id !== habitId);
   // Drop this habit's newest row for today, so Journey stops counting a completion that was undone.
   for (let i = state.log.length - 1; i >= 0; i -= 1) {
@@ -244,6 +245,29 @@ function undoComplete(habitId) {
     }
   }
   delete state.day.undo[habitId];
+
+  // The perfect-day bonus and its egg belong to the day, not to whichever completion happened to
+  // finish it. Undoing any habit ends the perfect day, so both come off whoever carried them.
+  if (state.day.perfectBonus && !isPerfectDay()) {
+    state.creature.xp -= PERFECT_DAY_BONUS;
+    state.day.xpEarned -= PERFECT_DAY_BONUS;
+    state.day.perfectBonus = false;
+    if (state.day.eggWon) {
+      state.decor = (state.decor ?? []).filter((d) => d !== state.day.eggWon);
+      state.day.eggWon = null;
+    }
+  }
+  // The global streak, the banked freeze and the wake-up were earned by the day starting at all,
+  // so they only unwind once nothing is left ticked.
+  if (state.day.doneIds.length === 0 && state.day.dayStart) {
+    const d = state.day.dayStart;
+    state.gStreak = d.gStreak;
+    state.gBest = d.gBest;
+    state.freezes = d.freezes;
+    state.comeback = d.comeback;
+    state.badges = d.badges;
+    state.day.dayStart = null;
+  }
 
   save(state);
   haptic('light');
@@ -255,16 +279,18 @@ function undoComplete(habitId) {
   return true;
 }
 
+
 function complete(habitId, at) {
   if (state.day.doneIds.includes(habitId)) return;
   const habit = state.habits.find((h) => h.id === habitId);
   if (!habit) return;
 
-  const before = snapshot(habit);
   const firstToday = state.day.doneIds.length === 0;
+  if (firstToday) state.day.dayStart = dayStartRecord();
   const affinity = habit.category === SPECIES[state.creature.species]?.affinity;
-  let xp = xpForCompletion({ streak: habit.streak, auto: false, affinity });
+  const base = xpForCompletion({ streak: habit.streak, auto: false, affinity });
 
+  (state.day.undo ??= {})[habitId] = completionRecord(habit, base);
   habit.streak += 1;
   habit.best = Math.max(habit.best, habit.streak);
   habit.total += 1;
@@ -278,26 +304,34 @@ function complete(habitId, at) {
     state.freezes = rolled.freezes;
     state.gBest = Math.max(state.gBest, state.gStreak);
   }
-  const perfect = state.day.doneIds.length === scheduledOn(state.habits, state.day.date).length;
-  if (perfect) xp += PERFECT_DAY_BONUS;
   const wasAsleep = state.comeback;
-
-  state.creature.xp += xp;
-  state.day.xpEarned += xp;
+  state.creature.xp += base;
+  state.day.xpEarned += base;
+  let xp = base;
 
   if (wasAsleep) {
     // Coming back is the moment worth marking, so the badge is earned here and never expires.
     state.comeback = false;
     if (!state.badges.includes('rekindled')) state.badges.push('rekindled');
   }
-  // A perfect day sometimes leaves something behind in the glade (§3.4). Rolled after the bonus so
-  // the drop is the surprise on top, never the reason the day mattered.
+
+  // The bonus is the day's, awarded once, and tracked on the day so undoing any habit can take it
+  // back. Folding it into one completion's XP made it survive undoing a different one.
+  const perfect = isPerfectDay();
   let hatched = null;
-  if (perfect) {
+  if (perfect && !state.day.perfectBonus) {
+    state.creature.xp += PERFECT_DAY_BONUS;
+    state.day.xpEarned += PERFECT_DAY_BONUS;
+    state.day.perfectBonus = true;
+    xp += PERFECT_DAY_BONUS;
+    // A perfect day sometimes leaves something behind in the glade (§3.4). Rolled after the bonus
+    // so the drop is the surprise on top, never the reason the day mattered.
     hatched = rollEgg({ perfect: true, unlocked: state.decor ?? [] });
-    if (hatched) (state.decor ??= []).push(hatched);
+    if (hatched) {
+      (state.decor ??= []).push(hatched);
+      state.day.eggWon = hatched;
+    }
   }
-  (state.day.undo ??= {})[habitId] = before;
   save(state);
 
   if (wasAsleep) {
@@ -572,6 +606,7 @@ function openAddSheet(editHabit = null) {
     }
     const reminder = sheet.querySelector('#habit-reminder').value || null;
     const goal = sheet.querySelector('#habit-goal').value.trim() || null;
+    const target = sheet.querySelector('#habit-target').value.trim() || null;
     const picked = [...sheet.querySelectorAll('.day.on')].map((b) => Number(b.dataset.day));
     // All seven selected is the same thing as no schedule; store it as "every day".
     const days = picked.length === 7 ? [] : picked;
@@ -582,10 +617,10 @@ function openAddSheet(editHabit = null) {
     if (reminder) await ensurePermission();   // asked at the moment it is needed, not on first launch
 
     if (editHabit) {
-      Object.assign(editHabit, { name, glyph, category, reminder, goal, days });
+      Object.assign(editHabit, { name, glyph, category, reminder, goal, target, days });
     } else {
       if (state.habits.length >= MAX_HABITS) return;
-      state.habits.push(makeHabit({ name, glyph, category, reminder, goal, days }, state.habits));
+      state.habits.push(makeHabit({ name, glyph, category, reminder, goal, target, days }, state.habits));
     }
     save(state);
     render();

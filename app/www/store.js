@@ -40,7 +40,7 @@ function seed() {
     notes: [],        // private per-day journal (§3.5); the weekly letter reads it back
     account: null,       // { email, name, uid } once signed in; null while a guest
     webhookToken: null,  // per-account token for POST /api/v1/complete; generated on demand
-    settings: { sound: null, theme: 'dark', chart: 'days' },
+    settings: { sound: null, theme: 'light', chart: 'days' },
     day: { date: todayKey(), doneIds: [], xpEarned: 0 },
     // Local completion log — the Journey screen reads this. The cloud has the same rows, but the
     // app is offline-first, so analytics must work with no network and no Firebase project.

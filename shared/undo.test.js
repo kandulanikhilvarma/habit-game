@@ -7,19 +7,22 @@ import { xpForCompletion, streakAfterDay, PERFECT_DAY_BONUS } from './game-math.
 
 // Mirrors complete()/undoComplete() in app/www/app.js, minus rendering, sound and cloud.
 function makeGame(state) {
-  const snapshot = (h) => ({
-    streak: h.streak, best: h.best, total: h.total,
-    gStreak: state.gStreak, gBest: state.gBest, freezes: state.freezes,
-    xp: state.creature.xp, dayXp: state.day.xpEarned,
-    comeback: state.comeback, badges: [...state.badges], decor: [...(state.decor ?? [])],
-  });
+  const scheduled = () => state.habits.length;
+  const isPerfect = () => scheduled() > 0 && state.day.doneIds.length === scheduled();
 
   function complete(id) {
     if (state.day.doneIds.includes(id)) return;
     const h = state.habits.find((x) => x.id === id);
-    const before = snapshot(h);
     const firstToday = state.day.doneIds.length === 0;
-    let xp = xpForCompletion({ streak: h.streak, auto: false });
+    if (firstToday) {
+      state.day.dayStart = {
+        gStreak: state.gStreak, gBest: state.gBest, freezes: state.freezes,
+        comeback: state.comeback, badges: [...state.badges],
+      };
+    }
+    const base = xpForCompletion({ streak: h.streak, auto: false });
+    (state.day.undo ??= {})[id] = { xp: base, habit: { streak: h.streak, best: h.best, total: h.total } };
+
     h.streak += 1; h.best = Math.max(h.best, h.streak); h.total += 1;
     state.day.doneIds.push(id);
     state.log.push({ date: state.day.date, hid: id, ts: Date.now() });
@@ -28,29 +31,46 @@ function makeGame(state) {
       state.gStreak = r.streak; state.freezes = r.freezes;
       state.gBest = Math.max(state.gBest, state.gStreak);
     }
-    if (state.day.doneIds.length === state.habits.length) { xp += PERFECT_DAY_BONUS; (state.decor ??= []).push('crystal'); }
+    state.creature.xp += base; state.day.xpEarned += base;
     if (state.comeback) {
       state.comeback = false;
       if (!state.badges.includes('rekindled')) state.badges.push('rekindled');
     }
-    state.creature.xp += xp; state.day.xpEarned += xp;
-    (state.day.undo ??= {})[id] = before;
+    if (isPerfect() && !state.day.perfectBonus) {
+      state.creature.xp += PERFECT_DAY_BONUS;
+      state.day.xpEarned += PERFECT_DAY_BONUS;
+      state.day.perfectBonus = true;
+      (state.decor ??= []).push('crystal');
+      state.day.eggWon = 'crystal';
+    }
   }
 
   function undo(id) {
-    const b = state.day.undo?.[id];
+    const rec = state.day.undo?.[id];
     const h = state.habits.find((x) => x.id === id);
-    if (!b || !h) return false;
-    if (id !== state.day.doneIds[state.day.doneIds.length - 1]) return false;
-    h.streak = b.streak; h.best = b.best; h.total = b.total;
-    state.gStreak = b.gStreak; state.gBest = b.gBest; state.freezes = b.freezes;
-    state.creature.xp = b.xp; state.day.xpEarned = b.dayXp;
-    state.comeback = b.comeback; state.badges = b.badges; state.decor = b.decor;
+    if (!rec || !h) return false;
+    h.streak = rec.habit.streak; h.best = rec.habit.best; h.total = rec.habit.total;
+    state.creature.xp -= rec.xp; state.day.xpEarned -= rec.xp;
     state.day.doneIds = state.day.doneIds.filter((x) => x !== id);
     for (let i = state.log.length - 1; i >= 0; i -= 1) {
       if (state.log[i].hid === id && state.log[i].date === state.day.date) { state.log.splice(i, 1); break; }
     }
     delete state.day.undo[id];
+    if (state.day.perfectBonus && !isPerfect()) {
+      state.creature.xp -= PERFECT_DAY_BONUS;
+      state.day.xpEarned -= PERFECT_DAY_BONUS;
+      state.day.perfectBonus = false;
+      if (state.day.eggWon) {
+        state.decor = (state.decor ?? []).filter((d) => d !== state.day.eggWon);
+        state.day.eggWon = null;
+      }
+    }
+    if (state.day.doneIds.length === 0 && state.day.dayStart) {
+      const d = state.day.dayStart;
+      state.gStreak = d.gStreak; state.gBest = d.gBest; state.freezes = d.freezes;
+      state.comeback = d.comeback; state.badges = d.badges;
+      state.day.dayStart = null;
+    }
     return true;
   }
   return { complete, undo };
@@ -75,7 +95,7 @@ test('undo returns every field to exactly where it was', () => {
   g.complete('a');
   assert.notEqual(JSON.stringify(s), snap, 'completing changed something');
   assert.ok(g.undo('a'));
-  delete s.day.undo;
+  delete s.day.undo; delete s.day.dayStart; delete s.day.perfectBonus; delete s.day.eggWon;
   assert.equal(JSON.stringify(s), snap, 'undo restored the exact prior state');
 });
 
@@ -129,15 +149,46 @@ test('waking from a comeback re-sleeps if that completion is undone', () => {
   assert.deepEqual(s.badges, [], 'the badge was not really earned yet');
 });
 
-test('only the newest check-in can be undone', () => {
+test('any of the day’s check-ins can be undone, not only the newest', () => {
   const s = fresh();
   const g = makeGame(s);
   g.complete('a');
+  const xpAfterA = s.creature.xp;
   g.complete('b');
-  const xpAfterBoth = s.creature.xp;
-  assert.equal(g.undo('a'), false, 'an older completion is refused');
-  assert.equal(s.creature.xp, xpAfterBoth, 'and nothing was changed by the refusal');
-  assert.ok(g.undo('b'));
+  assert.ok(g.undo('a'), 'an older completion is accepted now');
+  assert.equal(s.day.doneIds.join(), 'b', 'the newer one is untouched');
+  assert.equal(s.habits[0].streak, 3, "the undone habit's streak is back");
+  assert.equal(s.habits[1].streak, 1, "the other habit's streak is not");
+  g.complete('a');
+  assert.equal(s.creature.xp > xpAfterA, true, 're-completing works');
+});
+
+test('undoing any habit ends the perfect day and takes its bonus and egg', () => {
+  const s = fresh();
+  const xpStart = s.creature.xp;
+  const g = makeGame(s);
+  g.complete('a');
+  g.complete('b');                                   // completes the set
+  assert.equal(s.day.perfectBonus, true);
+  assert.deepEqual(s.decor, ['crystal']);
+  g.undo('a');                                       // the one that did NOT carry the bonus
+  assert.equal(s.day.perfectBonus, false, 'the day is no longer perfect');
+  assert.deepEqual(s.decor, [], 'the egg goes with it');
+  // Only b's own XP should be left standing on the starting total: a's is gone with a, and the
+  // day bonus is gone with the perfect day.
+  assert.equal(s.creature.xp, xpStart + s.day.undo.b.xp, 'no bonus left behind');
+});
+
+test('undoing out of order still lands on the exact starting state', () => {
+  const s = fresh();
+  const snap = JSON.stringify(s);
+  const g = makeGame(s);
+  g.complete('a');
+  g.complete('b');
+  g.undo('a');
+  g.undo('b');
+  delete s.day.undo; delete s.day.dayStart; delete s.day.perfectBonus; delete s.day.eggWon;
+  assert.equal(JSON.stringify(s), snap, 'reverse order and forward order agree');
 });
 
 test('completions unwind cleanly in reverse order', () => {
@@ -148,7 +199,7 @@ test('completions unwind cleanly in reverse order', () => {
   g.complete('b');
   g.undo('b');
   g.undo('a');
-  delete s.day.undo;
+  delete s.day.undo; delete s.day.dayStart; delete s.day.perfectBonus; delete s.day.eggWon;
   assert.equal(JSON.stringify(s), snap, 'back to the start of the day');
 });
 

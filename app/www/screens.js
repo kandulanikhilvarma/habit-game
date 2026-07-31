@@ -21,6 +21,17 @@ export function renderJourney(host, state) {
   const notes = state.notes ?? [];
   const letter = weeklyLetter(log, state.creature.name, Date.now(), notes);
 
+  if (log.length === 0) {
+    host.innerHTML = `
+      <h2 class="screen__title">Journey</h2>
+      <div class="card empty">
+        <p class="card__value">Nothing to show yet, and that is fine.</p>
+        <p class="card__meta">Tick a quest on Home and this fills in: how the fortnight went, which
+          habit is carrying you, and a note from ${escapeHtml(state.creature.name)} each week.</p>
+      </div>`;
+    return;
+  }
+
   host.innerHTML = `
     <h2 class="screen__title">Journey</h2>
 
@@ -294,7 +305,7 @@ export function renderYou(host, state, identity = { anonymous: true }) {
     <div class="card">
       <p class="card__label">Appearance</p>
       <div class="segmented" id="theme">
-        <button type="button" class="segment${(state.settings.theme || 'dark') === 'dark' ? ' on' : ''}" data-theme-choice="dark" aria-pressed="${(state.settings.theme || 'dark') === 'dark'}">Dark</button>
+        <button type="button" class="segment${(state.settings.theme || 'light') === 'dark' ? ' on' : ''}" data-theme-choice="dark" aria-pressed="${(state.settings.theme || 'light') === 'dark'}">Dark</button>
         <button type="button" class="segment${state.settings.theme === 'light' ? ' on' : ''}" data-theme-choice="light" aria-pressed="${state.settings.theme === 'light'}">Light</button>
       </div>
     </div>
@@ -304,18 +315,13 @@ export function renderYou(host, state, identity = { anonymous: true }) {
       ${accountBlock(identity)}
       <div class="btn-row">
         <button class="btn btn--secondary" id="export-data">Download my data</button>
+        <button class="btn btn--secondary" id="send-feedback">Send feedback</button>
       </div>
       ${identity.anonymous
         ? `<button class="btn btn--danger btn--block" id="start-over">Start over</button>
            <p class="card__meta">Erases this creature and every habit on this device. There is no
               account to delete yet, because you are playing as a guest.</p>`
         : `<button class="btn btn--danger btn--block" id="delete-account">Delete my account</button>`}
-    </div>
-
-    <div class="card">
-      <p class="card__label">Feedback</p>
-      <p class="card__meta">Something broken, or an idea? It goes straight to the person who builds this.</p>
-      <button class="btn btn--secondary" id="send-feedback">Send feedback</button>
     </div>
 
     <details class="card card--fold">

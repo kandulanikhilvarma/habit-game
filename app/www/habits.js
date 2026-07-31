@@ -80,6 +80,12 @@ export function sheetMarkup(habitCount, habit = null) {
     </label>
 
     <label class="field">
+      <span class="field__label">What counts as done (optional)</span>
+      <input class="field__input" id="habit-target" type="text" maxlength="30"
+             placeholder="20 minutes" value="${habit ? escapeAttr(habit.target ?? '') : ''}" autocomplete="off">
+    </label>
+
+    <label class="field">
       <span class="field__label">Why this matters (optional)</span>
       <input class="field__input" id="habit-goal" type="text" maxlength="60" placeholder="e.g. sleep better, pass the exam"
              value="${habit ? escapeAttr(habit.goal ?? '') : ''}" autocomplete="off">
@@ -108,7 +114,7 @@ export function habitId(name, existing) {
   return `${base}-${n}`;
 }
 
-export function makeHabit({ name, glyph, category, reminder = null, goal = null, days = [] }, existing) {
+export function makeHabit({ name, glyph, category, reminder = null, goal = null, target = null, days = [] }, existing) {
   return {
     id: habitId(name, existing),
     name: name.trim(),
@@ -116,6 +122,7 @@ export function makeHabit({ name, glyph, category, reminder = null, goal = null,
     category,
     reminder: reminder || null,
     goal: goal || null,
+    target: target || null,   // what counts, in the user's words; nothing verifies it yet
     // Empty means every day — the shape every habit had before schedules existed.
     days: days.length === 7 ? [] : days,
     streak: 0,
