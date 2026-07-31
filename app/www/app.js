@@ -726,6 +726,18 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) chec
 window.addEventListener('focus', checkRollover);
 document.addEventListener('resume', checkRollover);   // Capacitor app resume
 
+// The events above all need the app to be re-entered. Someone who leaves it open past midnight
+// would keep yesterday's ticks on screen until they switched away and back, so the day also turns
+// on its own clock. One timer, re-armed each night, rather than polling.
+let midnightTimer = null;
+function armMidnight() {
+  clearTimeout(midnightTimer);
+  const now = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 2);
+  midnightTimer = setTimeout(() => { checkRollover(); armMidnight(); }, next - now);
+}
+armMidnight();
+
 async function boot() {
   checkRollover();
   render();

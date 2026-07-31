@@ -27,12 +27,12 @@ function heatRing(log) {
     const y = cy + Math.sin(a) * r;
     const on = c.count > 0;
     const dot = on ? Math.min(4, c.count) : 0;
-    const fill = ['#1f2547', '#21506b', '#2f8a86', '#46c69f', '#5ef0c0'][dot];
+    const fill = ['#2a2b34', '#2f4a44', '#356b57', '#3a9270', '#3fb98f'][dot];
     return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${on ? 7 : 4}" fill="${fill}"/>`;
   }).join('');
 }
 
-export function dnaCardSvg(state, { creatureHref = null } = {}) {
+export function dnaCardSvg(state, { creatureHref = null, fontHref = null } = {}) {
   const { level } = levelFromTotalXp(state.creature.xp);
   const stage = stageForLevel(level);
   const lineage = lineageFor(attunementFrom(state.habits));
@@ -44,19 +44,19 @@ export function dnaCardSvg(state, { creatureHref = null } = {}) {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
     <defs>
+      <!-- The card rasterises from a Blob, so it cannot see the page's webfont. Embedding the face
+           is the only way the shared image carries the product's type instead of whatever sans the
+           renderer happens to default to. -->
+      ${fontHref ? `<style>@font-face{font-family:'Figtree';font-weight:400 800;src:url(${fontHref}) format('woff2');}</style>` : ''}
       <radialGradient id="bg" cx="50%" cy="30%" r="80%">
-        <stop offset="0%" stop-color="#1c2150"/>
-        <stop offset="60%" stop-color="#0d1022"/>
-        <stop offset="100%" stop-color="#05060f"/>
+        <stop offset="0%" stop-color="#22232c"/>
+        <stop offset="60%" stop-color="#141519"/>
+        <stop offset="100%" stop-color="#0b0b0e"/>
       </radialGradient>
-      <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#5ef0c0"/>
-        <stop offset="100%" stop-color="#9d7bff"/>
-      </linearGradient>
     </defs>
     <rect width="${W}" height="${H}" fill="url(#bg)"/>
 
-    <text x="${W / 2}" y="150" text-anchor="middle" fill="#a7adcf" font-family="Nunito, sans-serif"
+    <text x="${W / 2}" y="150" text-anchor="middle" fill="#a5a3ad" font-family="Figtree, system-ui, sans-serif"
           font-size="44" letter-spacing="6">KUMO</text>
 
     ${heatRing(state.log ?? [])}
@@ -65,26 +65,26 @@ export function dnaCardSvg(state, { creatureHref = null } = {}) {
       ? `<image x="270" y="540" width="540" height="540" href="${creatureHref}" preserveAspectRatio="xMidYMid meet"/>`
       : `<g transform="translate(${W / 2 - 260}, 560) scale(2.6)">${creatureInner(state.creature.species, stage, lineage)}</g>`}
 
-    <text x="${W / 2}" y="1180" text-anchor="middle" fill="#eef0ff" font-family="Nunito, sans-serif"
+    <text x="${W / 2}" y="1180" text-anchor="middle" fill="#f3f2f4" font-family="Figtree, system-ui, sans-serif"
           font-size="96" font-weight="800">${escapeText(state.creature.name || 'Kumo')}</text>
-    <text x="${W / 2}" y="1256" text-anchor="middle" fill="${style.accent}" font-family="Nunito, sans-serif"
+    <text x="${W / 2}" y="1256" text-anchor="middle" fill="${style.accent}" font-family="Figtree, system-ui, sans-serif"
           font-size="52" font-weight="700">${stageName} · ${lineageName}</text>
 
-    <g font-family="Nunito, sans-serif" text-anchor="middle">
+    <g font-family="Figtree, system-ui, sans-serif" text-anchor="middle">
       ${statBlock(W / 2 - 300, `${state.gStreak}`, 'day flame')}
       ${statBlock(W / 2, `Lv ${level}`, 'level')}
       ${statBlock(W / 2 + 300, `${totalDone}`, 'quests done')}
     </g>
 
-    <text x="${W / 2}" y="1820" text-anchor="middle" fill="#5b6288" font-family="Nunito, sans-serif"
+    <text x="${W / 2}" y="1820" text-anchor="middle" fill="#6a6873" font-family="Figtree, system-ui, sans-serif"
           font-size="40">your habits are the controller</text>
   </svg>`;
 }
 
 function statBlock(x, value, label) {
   return `
-    <text x="${x}" y="1480" fill="#eef0ff" font-size="84" font-weight="800">${value}</text>
-    <text x="${x}" y="1540" fill="#a7adcf" font-size="40">${label}</text>`;
+    <text x="${x}" y="1480" fill="#f3f2f4" font-size="84" font-weight="800">${value}</text>
+    <text x="${x}" y="1540" fill="#a5a3ad" font-size="40">${label}</text>`;
 }
 
 function escapeText(s) {
@@ -118,6 +118,15 @@ async function artDataUrl(key) {
   });
 }
 
+async function fontDataUrl() {
+  const blob = await (await fetch('assets/fonts/figtree-latin.woff2')).blob();
+  return await new Promise((res) => {
+    const fr = new FileReader();
+    fr.onload = () => res(fr.result);
+    fr.readAsDataURL(blob);
+  });
+}
+
 /** Share the card via the OS share sheet, or fall back to a download. */
 export async function shareCard(state) {
   const { level } = levelFromTotalXp(state.creature.xp);
@@ -127,7 +136,8 @@ export async function shareCard(state) {
   const creatureHref = stage >= 2
     ? await artDataUrl(artKeyFor(state.creature.species, stage, lineageFor(attunementFrom(state.habits)))).catch(() => null)
     : null;
-  const png = await toPng(dnaCardSvg(state, { creatureHref }));
+  const fontHref = await fontDataUrl().catch(() => null);
+  const png = await toPng(dnaCardSvg(state, { creatureHref, fontHref }));
   const file = new File([png], 'kumo-dna.png', { type: 'image/png' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     await navigator.share({ files: [file], title: 'My Kumo', text: 'What did your habits become?' });
