@@ -1,7 +1,7 @@
 // First run only. Per DESIGN_MOTION_SPEC §3 item 9 this is the one screen allowed to be generous:
 // it happens once, so the delight budget is not being spent on a daily surface.
 
-import { SPECIES, creatureArt, LOGO_CREATURE } from './creature.js';
+import { SPECIES, creatureArt } from './creature.js';
 import { haptic } from './fx.js';
 
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -15,7 +15,7 @@ const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
 export function runWelcome(host, { onSignIn } = {}) {
   host.innerHTML = `
     <div class="onboard welcome">
-      <div class="welcome__mark">${creatureArt(LOGO_CREATURE)}</div>
+      <img class="welcome__mark" src="assets/logo-512.png" width="112" height="112" alt="Bud">
       <h1 class="onboard__title">Bud</h1>
       <p class="onboard__sub">A creature that grows from the habits you actually keep.</p>
       <div class="welcome__actions">

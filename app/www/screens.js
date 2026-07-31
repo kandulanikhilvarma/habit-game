@@ -7,6 +7,7 @@ import { weeklyLetter } from './letter.js';
 import { SPECIES, LINEAGE_STYLE } from './creature.js';
 import { scheduleLabel } from './schedule.js';
 import { habitGlyph } from './icons.js';
+import { awardBoard } from './achievements.js';
 
 const TREND_ICON = { up: '↗', down: '↘', flat: '→' };
 
@@ -58,6 +59,8 @@ export function renderJourney(host, state) {
     ${memoriesMarkup(notes, state.day.date)}
 
     ${log.length >= 21 ? `<h3 class="screen__sub">The long view</h3>${heatmapMarkup(heatmap(log, { days: 84 }))}` : ''}
+
+    ${awardsMarkup(awardBoard(state))}
 
     ${bestHourMarkup(bestHourInsight(log))}
     ${weekdayMarkup(weekdayWeekendSplit(log), log.length)}
@@ -192,6 +195,37 @@ function weekOverWeekMarkup(cells) {
       <p class="card__label">This week</p>
       <p class="card__value">${now} completed <span class="trend--${diff >= 0 ? 'up' : 'down'}">${diff > 0 ? '↗' : diff < 0 ? '↘' : '→'}</span></p>
       <p class="card__meta">${line}</p>
+    </div>`;
+}
+
+// Earned awards, then the single closest rung of each ladder. Seeing the next one, and how near
+// it is, is what brings someone back; a wall of locked medals just lists what you have not done.
+function awardsMarkup({ earned, next }) {
+  if (!earned.length && !next.length) return '';
+  return `
+    <h3 class="screen__sub">Awards</h3>
+    <div class="card awards">
+      ${earned.length ? `<div class="awards__grid">
+        ${earned.map((a) => `
+          <span class="award is-earned" title="${escapeAttr(a.note)}">
+            <span class="award__mark" aria-hidden="true"></span>
+            <span class="award__name">${escapeHtml(a.name)}</span>
+          </span>`).join('')}
+      </div>` : `<p class="card__meta">Complete a habit and your first award lands here.</p>`}
+      ${next.length ? `
+        <p class="card__label">Next up</p>
+        <ul class="plain-list">
+          ${next.slice(0, 3).map((a) => `
+            <li class="award-next">
+              <span class="award-next__row">
+                <span class="award-next__name">${escapeHtml(a.name)}</span>
+                <span class="award-next__count">${Math.min(a.value, a.target)} of ${a.target}</span>
+              </span>
+              <span class="award-next__track">
+                <span class="award-next__fill" style="transform:scaleX(${a.progress.toFixed(3)})"></span>
+              </span>
+            </li>`).join('')}
+        </ul>` : ''}
     </div>`;
 }
 

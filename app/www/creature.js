@@ -66,9 +66,6 @@ export function artKeyFor(species, stage, lineage) {
   return species in SPECIES ? species : 'kumo';
 }
 
-/** The face of the app: welcome screen, favicon, marketing. One place to change the brand mark. */
-export const LOGO_CREATURE = 'moth-guardian';
-
 export function creatureArt(key) {
   const k = key in ART_NAMES ? key : 'kumo';
   return `<img class="creature-art" src="assets/creatures/${k}.png" alt="${ART_NAMES[k]}" draggable="false">`;

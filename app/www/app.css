@@ -904,3 +904,91 @@ a.ask__btn { display: inline-flex; align-items: center; justify-content: center;
 
 .empty { gap: 8px; }
 .empty .card__value { font-size: var(--size-body); }
+
+/* ---- scrollbars ----
+   Two panes scroll inside the app, and the platform default draws a wide grey trough for each,
+   which reads as furniture bolted onto the layout rather than as part of it. Thin, on the surface
+   colour, and no arrow buttons. Firefox gets the standard property; WebKit needs the pseudos. */
+.quests,
+#screen-journey,
+#screen-you,
+.sheet {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.quests::-webkit-scrollbar,
+#screen-journey::-webkit-scrollbar,
+#screen-you::-webkit-scrollbar,
+.sheet::-webkit-scrollbar { width: 6px; height: 6px; }
+.quests::-webkit-scrollbar-track,
+#screen-journey::-webkit-scrollbar-track,
+#screen-you::-webkit-scrollbar-track,
+.sheet::-webkit-scrollbar-track { background: transparent; }
+.quests::-webkit-scrollbar-thumb,
+#screen-journey::-webkit-scrollbar-thumb,
+#screen-you::-webkit-scrollbar-thumb,
+.sheet::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+.quests::-webkit-scrollbar-thumb:hover,
+#screen-journey::-webkit-scrollbar-thumb:hover,
+#screen-you::-webkit-scrollbar-thumb:hover,
+.sheet::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+.quests::-webkit-scrollbar-button,
+#screen-journey::-webkit-scrollbar-button,
+#screen-you::-webkit-scrollbar-button,
+.sheet::-webkit-scrollbar-button { display: none; }
+
+img.welcome__mark { border-radius: 22px; display: block; margin: 0 auto; }
+
+/* ---- awards ----
+   Earned ones are shown as a filled mark; the ladder rungs below show how near the next is, which
+   is the part that brings someone back. Nothing here renders an award you have not earned as a
+   greyed-out medal: a wall of locked things is a list of failures. */
+.awards { gap: 10px; }
+.awards__grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.award {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 10px 6px 8px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  border: 1px solid var(--brand-line);
+  color: var(--brand-ink);
+  font-size: var(--size-small); font-weight: 700;
+}
+.award__mark {
+  width: 14px; height: 14px; flex: none;
+  border-radius: 50%;
+  background: var(--brand-ink);
+  /* a filled dot with a notch reads as a medal at 14px, where a drawn medal reads as mush */
+  box-shadow: inset 0 -4px 0 0 color-mix(in srgb, var(--brand-ink) 60%, transparent);
+}
+.award-next { display: grid; gap: 4px; padding: 4px 0; }
+.award-next__row { display: flex; justify-content: space-between; gap: 8px; font-size: var(--size-small); }
+.award-next__name { color: var(--text); font-weight: 700; }
+.award-next__count { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.award-next__track {
+  height: 6px; border-radius: 999px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.award-next__fill {
+  display: block; height: 100%; width: 100%;
+  transform-origin: left center;
+  background: var(--brand);
+  transition: transform var(--t-ui) var(--ease-out);
+}
+
+/* Offline is a statement of fact, not a warning: the work is saved either way. */
+.offline {
+  flex: none;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--size-small);
+}
+.offline[hidden] { display: none; }

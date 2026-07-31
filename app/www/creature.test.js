@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { artKeyFor, creatureArt, LOGO_CREATURE } from './creature.js';
+import { artKeyFor, creatureArt } from './creature.js';
 
 test('stage 2 still wears the starter you picked', () => {
   for (const s of ['kumo', 'embr', 'moss', 'aqua', 'sol', 'nyx']) {
@@ -50,15 +50,11 @@ test('art markup carries the class fx.js animates and a real alt', () => {
   assert.match(html, /assets\/creatures\/radiant\.png/);
 });
 
-test('the logo creature is a real art key', () => {
-  assert.match(creatureArt(LOGO_CREATURE), new RegExp(`${LOGO_CREATURE}\\.png`));
-});
-
 // A key with no file behind it renders as a broken image on someone's Home screen, and no amount of
 // unit-testing the mapping catches that. Check the files actually exist.
 test('every art key a real player can reach has a file on disk', () => {
   const dir = new URL('./assets/creatures/', import.meta.url);
-  const wanted = new Set([LOGO_CREATURE]);
+  const wanted = new Set();
   for (const s of ['kumo', 'embr', 'moss', 'aqua', 'sol', 'nyx']) {
     for (const stage of [2, 3, 4, 5]) {
       for (const l of ['ember', 'moth', 'sentinel', 'prismatic']) wanted.add(artKeyFor(s, stage, l));

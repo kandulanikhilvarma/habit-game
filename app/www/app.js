@@ -7,6 +7,7 @@ import { creatureSvg, creatureArt, artKeyFor, SPECIES, LINEAGE_STYLE } from './c
 import { worldSvg } from './world.js';
 import { scheduledOn, scheduleLabel } from './schedule.js';
 import { rollEgg, decorLabel } from './eggs.js';
+import { newlyEarned } from './achievements.js';
 import { renderJourney, renderYou } from './screens.js';
 import { icons, habitGlyph } from './icons.js';
 import { celebrate, wakeUp, haptic, bindIdleLifecycle, randomizeBlink } from './fx.js';
@@ -285,6 +286,9 @@ function complete(habitId, at) {
   const habit = state.habits.find((h) => h.id === habitId);
   if (!habit) return;
 
+  // Awards are derived, so "what is new" is the difference between two states, not a flag.
+  const awardsBefore = { creature: { ...state.creature }, habits: state.habits.map((h) => ({ ...h })),
+    gBest: state.gBest, badges: [...state.badges], decor: [...(state.decor ?? [])], log: state.log };
   const firstToday = state.day.doneIds.length === 0;
   if (firstToday) state.day.dayStart = dayStartRecord();
   const affinity = habit.category === SPECIES[state.creature.species]?.affinity;
@@ -347,6 +351,9 @@ function complete(habitId, at) {
     sound: state.settings.sound === true,
   });
   if (hatched) setTimeout(() => toast(`An egg hatched. ${decorLabel(hatched)} appears in your glade.`), 1200);
+  // One award at a time, after the completion beat has landed, so the two do not talk over each other.
+  const won = newlyEarned(awardsBefore, state)[0];
+  if (won) setTimeout(() => { toast(`Award earned: ${won.name}. ${won.note}.`); haptic('success'); }, hatched ? 2400 : 1400);
   if (state.settings.sound === null) askAboutSound();
 
   // Fire-and-forget: the write is already local and Firestore replays it whenever the network
@@ -765,6 +772,17 @@ function checkRollover() {
     render();
   }
 }
+// Cloud writes queue and replay when the network returns, which is correct but invisible: without
+// a word, a completion made offline looks like it went nowhere.
+function showConnection() {
+  const bar = el('offline');
+  if (!bar) return;
+  bar.hidden = navigator.onLine;
+}
+window.addEventListener('online', () => { showConnection(); toast('Back online. Your progress is syncing.'); });
+window.addEventListener('offline', showConnection);
+showConnection();
+
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checkRollover(); });
 window.addEventListener('focus', checkRollover);
 document.addEventListener('resume', checkRollover);   // Capacitor app resume
