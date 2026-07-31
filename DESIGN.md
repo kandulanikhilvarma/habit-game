@@ -79,6 +79,19 @@ The share card embeds the same face as a base64 `@font-face` inside its SVG. The
 from a Blob and cannot see the page's webfont, so without embedding, the one artifact that leaves
 the app renders in whatever sans the renderer defaults to.
 
+## Awards
+
+Earned awards show as filled marks; below them, the **single closest unearned rung of each ladder**
+with its progress. Listing every locked award turns the screen into a list of things you have not
+done, which is the failure mode this product exists to avoid.
+
+Two rules hold:
+- **Derived from state, never toggled.** An award cannot outlive the save that earned it, so undoing
+  a completion takes its award back the same way it takes the XP.
+- **Nothing is awarded for not missing.** "Unbroken" awards are the punishment mechanic wearing a
+  medal. Every award is for something done. There is a test asserting no award name contains
+  "never" or "without missing".
+
 ## Motion
 
 Transform and opacity only. UI under 300ms; the overshoot curve is reserved for reward beats. `prefers-reduced-motion` handled on every animation.
