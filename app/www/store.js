@@ -44,7 +44,7 @@ function seed() {
     day: { date: todayKey(), doneIds: [], xpEarned: 0 },
     // Local completion log — the Journey screen reads this. The cloud has the same rows, but the
     // app is offline-first, so analytics must work with no network and no Firebase project.
-    // ponytail: unbounded for now. A year of 7 daily habits is ~2,500 rows; prune when it matters.
+    // Pruned to LOG_KEEP_DAYS on each rollover: it rides inside one Firestore document.
     log: [],
     createdAt: Date.now(),
   };
