@@ -4,6 +4,51 @@ Living log. Every session ends by updating this file; every session starts by re
 
 ---
 
+## 2026-07-31 (last web session) — Home density, coloured awards, and the rename that had not finished
+
+Six things reported from the phone, then repo work.
+
+### The rename was half done
+`capacitor.config.json` said `app.bud.habitgame`. The generated Android project it feeds still said
+`app.kumo.habitgame`, so a debug APK installed as **"Kumo"** under the old id — the one identifier
+that is permanent from the first Play release. Fixed in all six places plus the CI artifact name.
+
+### Home
+`.scene` was a shrinkable box centred in the leftover space, which did both wrong things at once:
+with a short list it absorbed **88px of dead air**, and with a full one it compressed until the
+creature's bob crossed the XP bar. Sized by its contents now, so the slack goes to the quest list.
+Nine habits: **3 rows visible → 5**; clearance above the creature 13px → 19px; still 0 page overflow
+at 375×667.
+
+The seven-habit cap is gone. It was a product opinion enforced as a limit — the add button vanished
+at seven and the store silently truncated above it. The advice survives in the sheet copy.
+
+### Scroll
+No scrollbars anywhere. The edges fade instead, 22px top / 26px bottom, each side applied only when
+content actually continues past it, so a list that fits or is scrolled to its end shows no fade. The
+two lengths are `@property`-registered — unregistered custom properties jump between values, which
+is the popping the fade exists to remove.
+
+### Awards
+Seven identical indigo pills became 54px discs, each wearing the data colour that already means its
+ladder and its own glyph. The glyph colour is `--award-ink`, the page's own ground, which inverts
+with the theme; since the hues flip too, one token covers both modes. All 9 discs measured in both
+themes: worst 3.31:1 light, 3.95:1 dark, above the 3:1 graphics floor. 0 failures.
+
+### Repo
+README was still the Gate 0 one: wrong product name, three of four gates marked "not started" when
+all four have shipped, and a link to a CI artifact that no longer exists under that name. Rewritten
+around the actual pitch, with the logo and a strip of the real evolution art. MIT LICENSE added,
+with the eleven creature images reserved.
+
+### Verification note
+The browser pane screenshots correctly at 393×852, but its images cannot be written to disk. Headless
+Chrome on this machine **ignores `--window-size`** (viewport pinned at 762×484 regardless of flags,
+old or new headless), so in-app screenshots could not be captured as files. The README uses composed
+creature art instead. If real screenshots are wanted, take them on the phone.
+
+---
+
 ## 2026-07-31 (final web session) — Renamed to Bud, awards, and the sign-out leak
 
 ### The security fix that mattered most
