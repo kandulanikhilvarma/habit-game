@@ -16,7 +16,7 @@ export function runWelcome(host, { onSignIn } = {}) {
   host.innerHTML = `
     <div class="onboard welcome">
       <div class="welcome__mark">${creatureArt(LOGO_CREATURE)}</div>
-      <h1 class="onboard__title">Kumo</h1>
+      <h1 class="onboard__title">Bud</h1>
       <p class="onboard__sub">A creature that grows from the habits you actually keep.</p>
       <div class="welcome__actions">
         <button class="btn btn--google btn--block" id="welcome-signin">Sign in with Google</button>

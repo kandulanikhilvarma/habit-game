@@ -442,7 +442,7 @@ async function sendFeedback() {
 
 ---
 Level ${level} · ${state.habits.length} habits · ${state.gStreak} day streak`;
-  const href = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Kumo feedback')}&body=${encodeURIComponent(body)}`;
+  const href = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Bud feedback')}&body=${encodeURIComponent(body)}`;
   try {
     await navigator.clipboard?.writeText(FEEDBACK_EMAIL);
     toast(`Opening mail. Address copied: ${FEEDBACK_EMAIL}`);
@@ -460,7 +460,7 @@ function exportData() {
   const line = (s = '') => `${s}
 `;
   let out = '';
-  out += line(`KUMO. Your data, exported ${todayKey()}`);
+  out += line(`BUD. Your data, exported ${todayKey()}`);
   out += line('='.repeat(48));
   out += line();
   out += line(`Creature:      ${state.creature.name} (${SPECIES[state.creature.species]?.name ?? state.creature.species})`);
@@ -511,7 +511,7 @@ function exportData() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `kumo-data-${todayKey()}.txt`;
+  a.download = `bud-data-${todayKey()}.txt`;
   document.body.append(a);
   a.click();
   a.remove();
