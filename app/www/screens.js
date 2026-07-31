@@ -2,7 +2,7 @@
 // time-of-day curve, per-habit trends) is Gate 2 and needs completion history to say anything true.
 
 import { levelFromTotalXp, stageForLevel, attunementFrom, lineageFor } from './game-math.js';
-import { heatmap, successRate, trend, bestHourInsight, weekdayWeekendSplit, hourLabel } from './analytics.js';
+import { heatmap, successRate, trend, bestHourInsight, weekdayWeekendSplit, hourLabel, habitGrid, rollingRate } from './analytics.js';
 import { weeklyLetter } from './letter.js';
 import { SPECIES, LINEAGE_STYLE } from './creature.js';
 import { scheduleLabel } from './schedule.js';
@@ -14,6 +14,7 @@ const STAGE_NAMES = ['Egg', 'Hatchling', 'Sprite', 'Guardian', 'Radiant'];
 const CATEGORY_REGION = { mind: 'grove', body: 'forge', order: 'crystal garden' };
 
 export function renderJourney(host, state) {
+  const view = state.settings?.chart ?? 'days';
   const log = state.log ?? [];
   const totalDone = state.habits.reduce((sum, h) => sum + h.total, 0);
 
@@ -37,7 +38,10 @@ export function renderJourney(host, state) {
     </div>
 
     <h3 class="screen__sub">Last two weeks</h3>
-    ${barsMarkup(heatmap(log, { days: 14 }))}
+    ${chartSwitcher(view)}
+    ${view === 'habits' ? gridMarkup(habitGrid(log, state.habits, { days: 14 }))
+      : view === 'trend' ? trendMarkup(rollingRate(log, state.habits, { days: 14 }))
+      : barsMarkup(heatmap(log, { days: 14 }))}
     ${weekOverWeekMarkup(heatmap(log, { days: 14 }))}
 
     ${memoriesMarkup(notes, state.day.date)}
@@ -79,28 +83,82 @@ function escapeAttr(t) {
   return escapeHtml(t).replace(/"/g, '&quot;');
 }
 
-// The graph the numbers alone never gave: fourteen days, one bar each, so a good run or a dip is
-// visible at a glance instead of inferred from a grid of squares.
+// Three ways to read the same fortnight, because the questions are different: how much did I do
+// (days), which habit is slipping (habits), and am I trending up (trend).
+const CHART_VIEWS = [['days', 'Days'], ['habits', 'Habits'], ['trend', 'Trend']];
+function chartSwitcher(view) {
+  return `
+    <div class="segmented" id="chart-view" role="tablist" aria-label="Chart type">
+      ${CHART_VIEWS.map(([key, label]) => `
+        <button type="button" class="segment${key === view ? ' on' : ''}" data-chart="${key}"
+                role="tab" aria-selected="${key === view}">${label}</button>`).join('')}
+    </div>`;
+}
+
+// Columns, with a faint track behind each. Without the track an empty fortnight rendered as a row
+// of short dashes that read as fourteen failures rather than as a chart with nothing in it yet.
 function barsMarkup(cells) {
   const max = Math.max(1, ...cells.map((c) => c.count));
-  const W = 320;
-  const H = 76;
-  const gap = 5;
+  const W = 320, H = 76, gap = 5;
   const bw = (W - gap * (cells.length - 1)) / cells.length;
-  const bars = cells.map((c, i) => {
-    const h = c.count === 0 ? 3 : Math.max(6, Math.round((c.count / max) * H));
-    const x = i * (bw + gap);
-    const today = i === cells.length - 1;
-    return `<rect x="${x.toFixed(1)}" y="${H - h}" width="${bw.toFixed(1)}" height="${h}" rx="3"
-      fill="${c.count === 0 ? 'var(--border)' : 'var(--mint)'}" opacity="${today ? 1 : c.count === 0 ? 0.7 : 0.85}">
-      <title>${c.date}: ${c.count}</title></rect>`;
+  const marks = cells.map((c, i) => {
+    const x = (i * (bw + gap)).toFixed(1);
+    const h = c.count === 0 ? 0 : Math.max(6, Math.round((c.count / max) * H));
+    const track = `<rect x="${x}" y="0" width="${bw.toFixed(1)}" height="${H}" rx="4"
+      fill="var(--surface-raised)" opacity="0.6"/>`;
+    const bar = c.count === 0 ? '' : `<rect x="${x}" y="${H - h}" width="${bw.toFixed(1)}" height="${h}" rx="4"
+      fill="var(--mint)" opacity="${i === cells.length - 1 ? 1 : 0.85}"/>`;
+    return `<g><title>${c.date}: ${c.count} completed</title>${track}${bar}</g>`;
   }).join('');
   const label = (i) => new Date(`${cells[i].date}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short' });
+  const total = cells.reduce((n, c) => n + c.count, 0);
   return `
     <div class="card chart">
       <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img"
-           aria-label="Completions per day for the last fourteen days">${bars}</svg>
+           aria-label="Completions per day for the last fourteen days, ${total} in total">${marks}</svg>
       <div class="chart__axis"><span>${label(0)}</span><span>${label(cells.length - 1)} (today)</span></div>
+    </div>`;
+}
+
+// A grid: habits down, days across. The one view that answers "which habit am I dropping".
+function gridMarkup(rows) {
+  if (!rows.length) return `<p class="screen__note">Add a habit and this fills in.</p>`;
+  const days = rows[0].cells.length;
+  return `
+    <div class="card chart">
+      <div class="grid-chart" style="--cols:${days}">
+        ${rows.map((r) => `
+          <span class="grid-chart__name" title="${escapeAttr(r.habit.name)}">${habitGlyph(r.habit.glyph)}</span>
+          ${r.cells.map((c) => `<span class="grid-cell${c.done ? ' is-done' : c.scheduled ? '' : ' is-rest'}"
+             title="${escapeAttr(r.habit.name)} · ${c.date}${c.done ? ' · done' : c.scheduled ? ' · missed' : ' · rest day'}"></span>`).join('')}
+        `).join('')}
+      </div>
+      <div class="chart__axis"><span>14 days ago</span><span>today</span></div>
+    </div>`;
+}
+
+// A rate over a trailing week, so the shape stays readable when the daily counts are too sparse
+// to have one, and so adding a habit does not look like a sudden improvement.
+function trendMarkup(points) {
+  if (!points.some((p) => p.due)) {
+    return `<p class="screen__note">Once a few days are in, your seven-day rate draws itself here.</p>`;
+  }
+  const W = 320, H = 76, pad = 4;
+  const x = (i) => (i / (points.length - 1)) * W;
+  const y = (r) => pad + (1 - r) * (H - pad * 2);
+  const line = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.rate).toFixed(1)}`).join('');
+  const area = `${line}L${W},${H}L0,${H}Z`;
+  const last = points.at(-1);
+  return `
+    <div class="card chart">
+      <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img"
+           aria-label="Seven-day completion rate, currently ${Math.round(last.rate * 100)} percent">
+        <path d="${area}" fill="var(--mint)" opacity="0.14"/>
+        <path d="${line}" fill="none" stroke="var(--mint)" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="${x(points.length - 1).toFixed(1)}" cy="${y(last.rate).toFixed(1)}" r="4" fill="var(--mint)"/>
+      </svg>
+      <div class="chart__axis"><span>7-day rate</span><span>${Math.round(last.rate * 100)}% now</span></div>
     </div>`;
 }
 
@@ -142,11 +200,12 @@ function habitStatMarkup(h, log) {
 // GitHub-style cells, coloured by count. Rendered complete and instantly — this is data the user
 // reads, so it never animates in (DESIGN_MOTION_SPEC §3 part 2 rejection list).
 function heatmapMarkup(cells) {
+  const span = cells.length;
   const dots = cells.map((c) => {
     const level = c.count === 0 ? 0 : Math.min(4, c.count);
     return `<span class="heat heat--${level}" title="${c.date}: ${c.count}"></span>`;
   }).join('');
-  return `<div class="heatmap" role="img" aria-label="Completion history, last 150 days">${dots}</div>`;
+  return `<div class="heatmap" role="img" aria-label="Completion history, last ${span} days">${dots}</div>`;
 }
 
 // Weekday vs weekend: a simple "best conditions" read (§4.4 item 4). Per-day averages so a 5:2

@@ -124,3 +124,47 @@ export function hourLabel(h) {
   const twelve = h % 12 === 0 ? 12 : h % 12;
   return `${twelve}${period}`;
 }
+
+/**
+ * Per-habit, per-day completion grid — rows are habits, columns are days.
+ * Answers the question the daily totals cannot: *which* habit is slipping.
+ * `scheduled` marks days the habit was not due, so a rest day never reads as a miss.
+ */
+export function habitGrid(log = [], habits = [], { days = 14, now = Date.now() } = {}) {
+  const dates = [];
+  for (let i = days - 1; i >= 0; i -= 1) dates.push(dayKey(now - i * DAY_MS));
+  const done = new Set(log.map((e) => `${e.hid}|${e.date}`));
+  return habits.map((h) => ({
+    habit: h,
+    cells: dates.map((date) => ({
+      date,
+      done: done.has(`${h.id}|${date}`),
+      scheduled: isScheduledOn(h, date),
+    })),
+  }));
+}
+
+/**
+ * Completion rate over a trailing window, one point per day. A rate rather than a count, so
+ * adding a habit does not read as a sudden improvement, and it stays readable when the raw
+ * daily counts are too sparse to show a shape.
+ */
+export function rollingRate(log = [], habits = [], { days = 14, window = 7, now = Date.now() } = {}) {
+  const done = new Set(log.map((e) => `${e.hid}|${e.date}`));
+  const out = [];
+  for (let i = days - 1; i >= 0; i -= 1) {
+    const end = now - i * DAY_MS;
+    let hit = 0;
+    let due = 0;
+    for (let w = 0; w < window; w += 1) {
+      const date = dayKey(end - w * DAY_MS);
+      for (const h of habits) {
+        if (!isScheduledOn(h, date)) continue;
+        due += 1;
+        if (done.has(`${h.id}|${date}`)) hit += 1;
+      }
+    }
+    out.push({ date: dayKey(end), rate: due ? hit / due : 0, due });
+  }
+  return out;
+}

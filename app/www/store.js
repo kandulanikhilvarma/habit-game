@@ -5,6 +5,7 @@
 
 import { applyMissedDays, isComeback } from './game-math.js';
 import { missedScheduledDay } from './schedule.js';
+import { MAX_HABITS } from './habits.js';
 
 const KEY = 'habitgame.state.v1';
 const DAY_MS = 86400000;
@@ -39,7 +40,7 @@ function seed() {
     notes: [],        // private per-day journal (§3.5); the weekly letter reads it back
     account: null,       // { email, name, uid } once signed in; null while a guest
     webhookToken: null,  // per-account token for POST /api/v1/complete; generated on demand
-    settings: { sound: null, theme: 'dark' },
+    settings: { sound: null, theme: 'dark', chart: 'days' },
     day: { date: todayKey(), doneIds: [], xpEarned: 0 },
     // Local completion log — the Journey screen reads this. The cloud has the same rows, but the
     // app is offline-first, so analytics must work with no network and no Firebase project.
@@ -77,7 +78,7 @@ export function dedupeHabits(habits) {
     if (seen.has(key)) continue;
     seen.add(key);
     kept.push(h);
-    if (kept.length >= 7) break;
+    if (kept.length >= MAX_HABITS) break;
   }
   return kept;
 }
