@@ -37,6 +37,13 @@ One colour, solid, never a gradient. Deep indigo `#4c5bd4` — the one hue the c
 - As text: `--brand-ink`, `#a5aeff` on dark (8.08:1), `#4450bf` on light (6.68:1). The dark ink is 1.9:1 on white, so light mode must darken it; this is why the token is themed.
 - Selected states that repeat use `--brand-soft` / `--brand-line`, never the fill. An accent that lands on every repeated element stops meaning "this one".
 
+### Scroll surfaces
+
+No scrollbars. A bar drawn beside the content is the desktop answer to "is there more?"; on a phone
+it appears mid-gesture and vanishes. The edges fade instead — 22px at the top, 26px at the bottom —
+each side applied only when content actually continues past it, so a list that fits, or one scrolled
+to its end, shows no fade at all.
+
 ### Data colours
 
 The only other saturated colours, and they always carry meaning: `--violet` mind, `--flame` streak and body, `--mint` order and anything meaning "kept", `--blush`. Retuned for a warm neutral ground and darkened in light mode to hold contrast.
@@ -81,7 +88,13 @@ the app renders in whatever sans the renderer defaults to.
 
 ## Awards
 
-Earned awards show as filled marks; below them, the **single closest unearned rung of each ladder**
+Earned awards are the one place in the app allowed to be colourful: a shelf of 54px discs, each
+wearing the data colour that already means its ladder — `--flame` for streaks and for coming back,
+`--mint` for growth and the glade, `--violet` for whole days, indigo for the plain count — with a
+line glyph struck in `--award-ink`, which is the page's own ground and therefore inverts with the
+theme. Measured at 3.31:1 (light) and 3.95:1 (dark) at worst, above the 3:1 floor for graphics.
+
+Below them, the **single closest unearned rung of each ladder**
 with its progress. Listing every locked award turns the screen into a list of things you have not
 done, which is the failure mode this product exists to avoid.
 

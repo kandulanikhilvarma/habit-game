@@ -12,7 +12,7 @@ import { renderJourney, renderYou } from './screens.js';
 import { icons, habitGlyph } from './icons.js';
 import { celebrate, wakeUp, haptic, bindIdleLifecycle, randomizeBlink } from './fx.js';
 import { playAdd, playRemove, playPick, playPet } from './audio.js';
-import { sheetMarkup, makeHabit, isDuplicateName, TEMPLATES, MAX_HABITS } from './habits.js';
+import { sheetMarkup, makeHabit, isDuplicateName, TEMPLATES } from './habits.js';
 import { presentSheet } from './sheet.js';
 import { initReminders, ensurePermission, syncReminders } from './reminders.js';
 
@@ -81,7 +81,6 @@ function render() {
     .join('');
 
   el('quests').innerHTML = todays.map(questMarkup).join('');
-  el('add-quest').hidden = state.habits.length >= MAX_HABITS;
   el('home-signin').hidden = !identity.anonymous;   // guest prompt on Home, gone once signed in
   randomizeBlink();
 
@@ -168,6 +167,25 @@ function render() {
       });
     });
   }
+
+  document.querySelectorAll('.scroll-fade').forEach(markScrollEdges);
+}
+
+// With no scrollbar, the edge fade is the only thing that says "there is more", so it has to be
+// honest: on only where content actually continues past that edge. Re-read on scroll and after
+// every render, since a render changes what fits.
+function markScrollEdges(box) {
+  const top = box.scrollTop > 2;
+  const bot = box.scrollTop + box.clientHeight < box.scrollHeight - 2;
+  box.classList.toggle('is-top', top);
+  box.classList.toggle('is-bot', bot);
+}
+
+function bindScrollEdges() {
+  document.querySelectorAll('.scroll-fade').forEach((box) => {
+    box.addEventListener('scroll', () => markScrollEdges(box), { passive: true });
+  });
+  addEventListener('resize', () => document.querySelectorAll('.scroll-fade').forEach(markScrollEdges));
 }
 
 // Stages 1-2 are the shared rail; from stage 3 the name carries the lineage the user's habits chose.
@@ -626,7 +644,6 @@ function openAddSheet(editHabit = null) {
     if (editHabit) {
       Object.assign(editHabit, { name, glyph, category, reminder, goal, target, days });
     } else {
-      if (state.habits.length >= MAX_HABITS) return;
       state.habits.push(makeHabit({ name, glyph, category, reminder, goal, target, days }, state.habits));
     }
     save(state);
@@ -803,6 +820,7 @@ async function boot() {
   checkRollover();
   render();
   bindIdleLifecycle();
+  bindScrollEdges();
 
   // A ✓ tapped on a notification lands here. The habit completes at the centre of the screen
   // because there is no tap point to float the XP from.

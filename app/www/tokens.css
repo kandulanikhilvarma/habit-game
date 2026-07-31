@@ -80,6 +80,11 @@
 
   /* Destructive actions get their own token. Borrowing a data colour meant the delete button
      inherited whatever the palette needed for decor, and in light mode that landed at 4.09:1. */
+  /* Awards. The disc carries a data colour that already means something — the flame is the streak
+     flame, mint is "kept", violet is mind — and the glyph inside is the page's own ground, which
+     inverts with the theme and so stays legible on every disc in both. */
+  --award-ink: #141519;
+  --award-brand: #5b69e0;
   --danger: #f2764b;        /* 5.98:1 on surface */
   --danger-soft: rgba(242, 118, 75, 0.14);
   --danger-line: rgba(242, 118, 75, 0.45);
@@ -128,6 +133,8 @@
   --flame: #c47e18;
   --mint: #1f8f68;
   --blush: #d4552b;
+  --award-ink: #ffffff;
+  --award-brand: #4c5bd4;
   --danger: #b53d18;        /* 5.76:1 on white, 5.11:1 on the raised surface */
   --danger-soft: rgba(181, 61, 24, 0.1);
   --danger-line: rgba(181, 61, 24, 0.42);

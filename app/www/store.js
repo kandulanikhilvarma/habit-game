@@ -5,7 +5,6 @@
 
 import { applyMissedDays, isComeback } from './game-math.js';
 import { missedScheduledDay } from './schedule.js';
-import { MAX_HABITS } from './habits.js';
 
 const KEY = 'habitgame.state.v1';
 const DAY_MS = 86400000;
@@ -68,8 +67,9 @@ function withDefaults(stored) {
   return merged;
 }
 
-/** Drop habits that repeat a name (keep the first) and enforce the 7-habit cap — cleans up data
- *  created before the duplicate/cap rules existed, which is why some accounts show "Workout" twice. */
+/** Drop habits that repeat a name, keeping the first — cleans up accounts created before the
+ *  duplicate rule existed, which is why some show "Workout" twice. There is no cap on how many
+ *  someone may keep. */
 export function dedupeHabits(habits) {
   const seen = new Set();
   const kept = [];
@@ -78,7 +78,6 @@ export function dedupeHabits(habits) {
     if (seen.has(key)) continue;
     seen.add(key);
     kept.push(h);
-    if (kept.length >= MAX_HABITS) break;
   }
   return kept;
 }

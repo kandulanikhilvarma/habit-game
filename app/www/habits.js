@@ -3,8 +3,6 @@
 import { DAY_LABELS, DAY_NAMES, scheduleLabel } from './schedule.js';
 import { habitIcons, habitGlyph } from './icons.js';
 
-export const MAX_HABITS = 7;          // MASTER_PLAN §3.5: cap total at 7, "master these first"
-
 // Templates keep adding a habit to ≤3 taps. Glyphs are user content, which is the one place
 // emoji are allowed (DESIGN_MOTION_SPEC §2).
 export const TEMPLATES = [
@@ -28,7 +26,6 @@ const CATEGORIES = [
 // Doubles as the add and edit sheet: pass an existing habit to pre-fill and switch to edit copy.
 export function sheetMarkup(habitCount, habit = null) {
   const editing = !!habit;
-  const remaining = MAX_HABITS - habitCount;
   const glyph = habit?.glyph ?? GLYPHS[0];
   const category = habit?.category ?? CATEGORIES[0][0];
   const days = Array.isArray(habit?.days) ? habit.days : [];
@@ -37,7 +34,7 @@ export function sheetMarkup(habitCount, habit = null) {
     <h2 class="sheet__title">${editing ? 'Edit quest' : 'New habit quest'}</h2>
     ${editing
       ? ''
-      : `<p class="sheet__note">${remaining} of ${MAX_HABITS} slots left. Fewer habits, kept longer, beats more habits dropped.</p>
+      : `<p class="sheet__note">Fewer habits, kept longer, beats more habits dropped.</p>
     <p class="field__label">Start from a template</p>
     <div class="chips">
       ${TEMPLATES.map((t, i) => `

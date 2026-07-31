@@ -353,14 +353,18 @@ body {
 }
 
 /* ---- scene ---- */
+/* Sized by its contents, never by the leftover space. As a shrinkable, centred box it did both
+   wrong things at once: with a short list it absorbed 88px of dead air, and with a full one it
+   compressed until the creature's bob crossed the XP bar. Fixed height means the slack goes to the
+   quest list, which is the part that runs out of room. */
 .scene {
   position: relative;
-  flex: 0 1 auto;   /* yields height before the quest list does */            /* takes the free space in the home column */
+  flex: 0 0 auto;
   display: grid;
   place-items: center;
-  align-content: center;
-  gap: 4px;
-  min-height: 0;
+  gap: 2px;
+  margin-top: 12px;  /* real clearance: the bob lifts 7px past the box, and at 6px the
+                        sprout on the creature's head was grazing the XP bar */
 }
 /* The quest list is the part that gives, so Home fits a short phone instead of growing past it and
    sliding its last card under the sticky tab bar. `flex: none` here meant the page grew instead. */
@@ -373,8 +377,8 @@ body {
    on short screens so Home fits on small phones, full size on tall ones. */
 .creature-plot {
   position: relative;
-  width: clamp(120px, 22vh, 170px);
-  height: clamp(120px, 22vh, 170px);
+  width: clamp(96px, 15vh, 128px);
+  height: clamp(96px, 15vh, 128px);
 }
 .glade {
   position: absolute;
@@ -429,7 +433,7 @@ body {
 }
 #eyes { animation: blink 5s linear infinite; }
 
-.creature-name { font-size: var(--size-title); font-weight: 800; letter-spacing: -0.02em; }
+.creature-name { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; }
 .creature-stage-tag { font-size: var(--size-small); color: var(--text-muted); }
 
 /* ---- today row ---- */
@@ -447,15 +451,15 @@ body {
 
 /* ---- quests ---- */
 .quests {
-  display: grid; gap: 10px; align-content: start;
-  padding-bottom: 8px;
+  display: grid; gap: 8px; align-content: start;
+  padding-bottom: 4px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
 .quest {
   display: flex; align-items: center; gap: 12px;
-  padding: 12px 14px;
+  padding: 9px 12px;
   min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -466,7 +470,7 @@ body {
 .quest__text { min-width: 0; }
 .quest__name { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .quest__glyph {
-  width: 40px; height: 40px; flex: none;
+  width: 36px; height: 36px; flex: none;
   display: grid; place-items: center;
   font-size: 1.25rem;
   background: var(--surface-raised);
@@ -906,39 +910,43 @@ a.ask__btn { display: inline-flex; align-items: center; justify-content: center;
 .empty .card__value { font-size: var(--size-body); }
 
 /* ---- scrollbars ----
-   Two panes scroll inside the app, and the platform default draws a wide grey trough for each,
-   which reads as furniture bolted onto the layout rather than as part of it. Thin, on the surface
-   colour, and no arrow buttons. Firefox gets the standard property; WebKit needs the pseudos. */
+   Gone. A bar drawn beside the content is the desktop answer to "is there more?", and on a phone it
+   is a grey streak that appears mid-gesture and vanishes. The edge fades below answer the same
+   question without drawing anything that is not content. */
 .quests,
 #screen-journey,
 #screen-you,
 .sheet {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;   /* momentum, so a flick coasts instead of stopping dead */
 }
 .quests::-webkit-scrollbar,
 #screen-journey::-webkit-scrollbar,
 #screen-you::-webkit-scrollbar,
-.sheet::-webkit-scrollbar { width: 6px; height: 6px; }
-.quests::-webkit-scrollbar-track,
-#screen-journey::-webkit-scrollbar-track,
-#screen-you::-webkit-scrollbar-track,
-.sheet::-webkit-scrollbar-track { background: transparent; }
-.quests::-webkit-scrollbar-thumb,
-#screen-journey::-webkit-scrollbar-thumb,
-#screen-you::-webkit-scrollbar-thumb,
-.sheet::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 999px;
+.sheet::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+/* ---- scroll edges ----
+   Without a scrollbar, a row cut in half at the container edge is the only thing saying "there is
+   more", and a hard cut reads as a rendering fault. The mask dissolves it instead, and each side is
+   only applied when there is actually something past it — `is-top`/`is-bot` are set from the scroll
+   position, so a list that fits or is scrolled to the end has no fade at all. */
+/* Registered so they interpolate — an unregistered custom property jumps between values, which is
+   the popping the fade exists to remove. */
+@property --fade-top { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --fade-bot { syntax: '<length>'; inherits: false; initial-value: 0px; }
+.scroll-fade { --fade-top: 0px; --fade-bot: 0px; }
+.scroll-fade.is-top { --fade-top: 22px; }
+.scroll-fade.is-bot { --fade-bot: 26px; }
+.scroll-fade {
+  -webkit-mask-image: linear-gradient(to bottom,
+    transparent 0, #000 var(--fade-top),
+    #000 calc(100% - var(--fade-bot)), transparent 100%);
+  mask-image: linear-gradient(to bottom,
+    transparent 0, #000 var(--fade-top),
+    #000 calc(100% - var(--fade-bot)), transparent 100%);
+  transition: --fade-top var(--t-ui) linear, --fade-bot var(--t-ui) linear;
 }
-.quests::-webkit-scrollbar-thumb:hover,
-#screen-journey::-webkit-scrollbar-thumb:hover,
-#screen-you::-webkit-scrollbar-thumb:hover,
-.sheet::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-.quests::-webkit-scrollbar-button,
-#screen-journey::-webkit-scrollbar-button,
-#screen-you::-webkit-scrollbar-button,
-.sheet::-webkit-scrollbar-button { display: none; }
 
 img.welcome__mark { border-radius: 22px; display: block; margin: 0 auto; }
 
@@ -946,24 +954,41 @@ img.welcome__mark { border-radius: 22px; display: block; margin: 0 auto; }
    Earned ones are shown as a filled mark; the ladder rungs below show how near the next is, which
    is the part that brings someone back. Nothing here renders an award you have not earned as a
    greyed-out medal: a wall of locked things is a list of failures. */
-.awards { gap: 10px; }
-.awards__grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.awards { gap: 12px; }
+.awards__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+  gap: 14px 6px;
+}
+/* Earned awards are the only place in the app that gets to be colourful, and each disc wears the
+   colour that already means its thing: the streak flame for streaks, mint for kept, violet for
+   mind, indigo for the plain count. Seven greyish pills said nothing; seven coloured discs are a
+   shelf. */
 .award {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 10px 6px 8px;
-  border-radius: 999px;
-  background: var(--brand-soft);
-  border: 1px solid var(--brand-line);
-  color: var(--brand-ink);
-  font-size: var(--size-small); font-weight: 700;
+  display: grid; justify-items: center; gap: 6px;
+  text-align: center;
+  --award-hue: var(--award-brand);
 }
+.award[data-tier='streak'], .award[data-tier='return'] { --award-hue: var(--flame); }
+.award[data-tier='growth'], .award[data-tier='glade']  { --award-hue: var(--mint); }
+.award[data-tier='perfect']                            { --award-hue: var(--violet); }
 .award__mark {
-  width: 14px; height: 14px; flex: none;
+  width: 54px; height: 54px;
+  display: grid; place-items: center;
   border-radius: 50%;
-  background: var(--brand-ink);
-  /* a filled dot with a notch reads as a medal at 14px, where a drawn medal reads as mush */
-  box-shadow: inset 0 -4px 0 0 color-mix(in srgb, var(--brand-ink) 60%, transparent);
+  color: var(--award-ink);
+  /* One light source, top-left, so the disc reads as a struck medal rather than a flat circle. */
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.34), transparent 58%),
+    var(--award-hue);
+  box-shadow: 0 3px 10px -2px color-mix(in srgb, var(--award-hue) 55%, transparent);
 }
+.award__mark svg { width: 26px; height: 26px; }
+.award__name {
+  font-size: 0.8125rem; font-weight: 700; line-height: 1.25;
+  color: var(--text);
+}
+
 .award-next { display: grid; gap: 4px; padding: 4px 0; }
 .award-next__row { display: flex; justify-content: space-between; gap: 8px; font-size: var(--size-small); }
 .award-next__name { color: var(--text); font-weight: 700; }
