@@ -14,7 +14,7 @@ The secondary audience is whoever they show the creature to. Sharing is the grow
 
 ## Product Purpose
 
-Kumo turns the habits a person actually keeps into a creature that grows with them. Completing a habit feeds it; consistency evolves it. Success is a person returning tomorrow without being nagged into it, and still being there in month three.
+Bud turns the habits a person actually keeps into a creature that grows with them. Completing a habit feeds it; consistency evolves it. Success is a person returning tomorrow without being nagged into it, and still being there in month three.
 
 The creature is the point, not a mascot on top of a checklist. Which habits you keep decides what it becomes, so the finished creature is a readable record of a real life rather than a score.
 
@@ -44,12 +44,15 @@ The planned differentiator, not yet built, is auto-verification on Android: scre
 
 ## Brand Commitments
 
-- The name **Kumo** stays.
+- The name is **Bud**, renamed from Kumo before any Play release, while the `appId` was still free
+  to change. Chosen for being sayable on first hearing, and for meaning both a sprout and a
+  companion, which are both literally true of the creature. The cloud starter species keeps the
+  name Kumo: that is a creature in the game, not the product.
 - **The eleven creature images are fixed and may not be regenerated.** Six starters (kumo violet-cloud, embr coral, moss green, aqua cyan, sol gold, nyx indigo), four lineage Guardians (ember orange, moth violet, sentinel cyan, prismatic iridescent) and a shared Radiant form (green). Any palette must sit under art that already spans orange, violet, cyan, green and iridescent without clashing.
 - Voice is warm and plain, never a coach and never a scold. The creature sleeps when neglected and wakes when you return; there is no guilt copy, no shame streak, no red.
 - The logo mark is currently the moth-sage Guardian. Not locked; delegated to design judgment.
 - **Standing visual preference: the category standard.** Offered four derived visual worlds and the
-  conventional path, the user chose convention deliberately. Kumo should sit alongside Duolingo,
+  conventional path, the user chose convention deliberately. Bud should sit alongside Duolingo,
   Apple Fitness and Linear, and their craft level is the bar. Future visual work executes the
   familiar form at full fidelity rather than reopening the direction.
 

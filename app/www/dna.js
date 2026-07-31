@@ -57,7 +57,7 @@ export function dnaCardSvg(state, { creatureHref = null, fontHref = null } = {})
     <rect width="${W}" height="${H}" fill="url(#bg)"/>
 
     <text x="${W / 2}" y="150" text-anchor="middle" fill="#a5a3ad" font-family="Figtree, system-ui, sans-serif"
-          font-size="44" letter-spacing="6">KUMO</text>
+          font-size="44" letter-spacing="6">BUD</text>
 
     ${heatRing(state.log ?? [])}
 
@@ -138,14 +138,14 @@ export async function shareCard(state) {
     : null;
   const fontHref = await fontDataUrl().catch(() => null);
   const png = await toPng(dnaCardSvg(state, { creatureHref, fontHref }));
-  const file = new File([png], 'kumo-dna.png', { type: 'image/png' });
+  const file = new File([png], 'bud-dna.png', { type: 'image/png' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    await navigator.share({ files: [file], title: 'My Kumo', text: 'What did your habits become?' });
+    await navigator.share({ files: [file], title: 'My Bud', text: 'What did your habits become?' });
     return 'shared';
   }
   const url = URL.createObjectURL(png);
   const a = document.createElement('a');
-  a.href = url; a.download = 'kumo-dna.png';
+  a.href = url; a.download = 'bud-dna.png';
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   return 'downloaded';

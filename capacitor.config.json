@@ -1,6 +1,6 @@
 {
-  "appId": "app.kumo.habitgame",
-  "appName": "Kumo",
+  "appId": "app.bud.habitgame",
+  "appName": "Bud",
   "webDir": "app/www",
   "android": {
     "path": "app/android",
