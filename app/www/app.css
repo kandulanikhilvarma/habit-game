@@ -311,6 +311,423 @@ body {
 .onboard__cards:has(.picked) .starter:not(.picked) { opacity: 0.3; }
 
 
+/* ---- top bar ---- */
+.topbar { display: flex; align-items: center; justify-content: space-between; }
+
+.chip {
+  display: flex; align-items: center; gap: 6px;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: var(--size-small);
+  font-weight: 700;
+}
+.chip svg { width: 18px; height: 18px; }
+.chip--level svg { color: var(--mint); }
+.chip--streak svg { color: var(--flame); }
+
+.flame-icon { display: inline-flex; transform-origin: 50% 80%; }
+
+/* ---- xp bar ---- */
+.xp {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.xp__fill {
+  height: 100%;
+  width: 100%;
+  background: var(--brand);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--t-beat) linear;
+}
+
+/* ---- scene ---- */
+.scene {
+  position: relative;
+  flex: 1 1 auto;            /* takes the free space in the home column */
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  min-height: 0;
+}
+.today, .quests, .add-quest { flex: none; }
+/* The ground belongs under the creature's feet, not behind the name text — so the glade is
+   anchored to the creature's own box, and the island's top arc lands just above its base. */
+/* The plot carries the size, not the creature inside it: an explicitly sized box cannot collapse
+   the way a content-sized nested grid can on WebKit (the bug that once blanked Home). Scales down
+   on short screens so Home fits on small phones, full size on tall ones. */
+.creature-plot {
+  position: relative;
+  width: clamp(120px, 22vh, 170px);
+  height: clamp(120px, 22vh, 170px);
+}
+.glade {
+  position: absolute;
+  left: 50%; bottom: 0;
+  width: 210%;
+  /* Height comes from the SVG's own viewBox ratio, and the offset is a share of the glade's own
+     height — so neither depends on the parent resolving a percentage height. `top: 73%` here
+     silently became `top: 0` on any engine that sized the plot to zero, which threw the ground up
+     behind the creature. */
+  transform: translate(-50%, 58%);
+  pointer-events: none;
+}
+.glade svg { display: block; width: 100%; height: auto; }
+.creature-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: transform var(--t-press) var(--ease-out);
+}
+.creature-stage svg { width: 100%; height: 100%; overflow: visible; }
+.creature-art {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: block;
+  -webkit-user-drag: none; user-select: none;
+  animation: bob 3.6s var(--ease-in-out) infinite;
+  will-change: transform;
+}
+.creature-stage:active { transform: scale(0.98); }
+
+/* One clock: body and shadow share duration and easing, so they can never drift apart. */
+#body-group { animation: bob 3.6s var(--ease-in-out) infinite; transform-origin: 100px 150px; }
+#shadow { animation: bob-shadow 3.6s var(--ease-in-out) infinite; transform-origin: 100px 164px; }
+#eyes { transform-origin: 100px 102px; }
+
+/* Not just a bob: a gentle rock and breathe so a still creature reads as alive, not asleep. */
+@keyframes bob {
+  0%, 100% { transform: translateY(0) rotate(-1.3deg) scale(1); }
+  25%      { transform: translateY(-4px) rotate(0deg) scale(1.012); }
+  50%      { transform: translateY(-7px) rotate(1.3deg) scale(1.02); }
+  75%      { transform: translateY(-4px) rotate(0deg) scale(1.012); }
+}
+@keyframes bob-shadow {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50%      { transform: scale(0.88); opacity: 0.4; }
+}
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  96%           { transform: scaleY(0.1); }
+}
+#eyes { animation: blink 5s linear infinite; }
+
+.creature-name { font-size: var(--size-title); font-weight: 800; letter-spacing: -0.02em; }
+.creature-stage-tag { font-size: var(--size-small); color: var(--text-muted); }
+
+/* ---- today row ---- */
+.today { display: flex; align-items: center; justify-content: space-between; }
+.today__label { font-size: var(--size-small); color: var(--text-muted); }
+.today__dots { display: flex; gap: 6px; }
+/* Same size whether done or not: a row where half the dots are bigger reads as a rendering
+   glitch, not as progress. Fill is the signal. */
+.dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: transparent; border: 1.5px solid var(--border);
+  transition: background-color var(--t-ui) var(--ease-out), border-color var(--t-ui) var(--ease-out);
+}
+.dot.on { background: var(--accent-line); border-color: var(--accent-line); }
+
+/* ---- quests ---- */
+.quests { display: grid; gap: 10px; padding-bottom: 8px; overflow-y: auto; }
+
+.quest {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: transform var(--t-press) var(--ease-out), opacity var(--t-ui) var(--ease-out),
+              border-color var(--t-ui) var(--ease-out);
+}
+.quest__text { min-width: 0; }
+.quest__name { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quest__glyph {
+  width: 40px; height: 40px; flex: none;
+  display: grid; place-items: center;
+  font-size: 1.25rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.quest__text { flex: 1; min-width: 0; }
+.quest__name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.quest__meta { font-size: var(--size-small); color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+.quest__meta svg { width: 14px; height: 14px; color: var(--flame); }
+
+.check {
+  position: relative;
+  flex: none;
+  width: 46px; height: 46px;
+  padding: 0;
+  background: none; border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+/* Hit padding beyond the visible circle, without pushing the card layout around. */
+.check::after { content: ''; position: absolute; inset: -8px; }
+.check__ring {
+  display: grid; place-items: center;
+  width: 46px; height: 46px;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  transition: transform var(--t-fast) var(--ease-out),
+              border-color var(--t-fast) var(--ease-out),
+              background-color var(--t-fast) var(--ease-out);
+}
+.check:active .check__ring { transform: scale(0.95); }
+.check svg { width: 22px; height: 22px; opacity: 0; transition: opacity var(--t-press) var(--ease-out); }
+
+/* A finished quest is settled, not louder than the ones still waiting. Six filled gradient discs
+   read as decoration; a soft accent disc still says "done" without taking over the screen. */
+.check.on .check__ring {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  transform: scale(1);
+  transition-timing-function: var(--spring-pop);
+}
+.check.on svg { opacity: 1; color: var(--accent-ink); }
+.quest.done { background: var(--surface); }
+.quest.done .quest__name { color: var(--text-muted); }
+.quest.done .quest__glyph { opacity: 0.65; }
+
+/* ---- floating xp (fire-and-forget decoration) ---- */
+.xp-float {
+  position: fixed;
+  z-index: var(--z-widget-fx);
+  font-weight: 800;
+  color: var(--mint);
+  pointer-events: none;
+  animation: xp-rise var(--t-beat) var(--ease-out) forwards;
+}
+@keyframes xp-rise {
+  from { transform: translate(-50%, 0) scale(0.9); opacity: 0; }
+  25%  { opacity: 1; }
+  to   { transform: translate(-50%, -56px) scale(1.1); opacity: 0; }
+}
+
+/* ---- tabs ---- */
+.tabs {
+  display: flex;
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--bg);   /* opaque: it is sticky, content scrolls under it */
+}
+.tab {
+  flex: 1;
+  min-height: var(--tap);
+  display: grid; place-items: center; gap: 2px;
+  padding: 8px 0;
+  background: none; border: none;
+  color: var(--text-muted);
+  font: inherit; font-size: 0.75rem;
+  cursor: pointer;
+  transition: color var(--t-press) var(--ease-out), transform var(--t-press) var(--ease-out);
+}
+.tab:active { transform: scale(0.96); }
+.tab[aria-selected='true'] { color: var(--text); }
+.tab svg { width: 22px; height: 22px; }
+
+@media (prefers-reduced-motion: reduce) {
+  #body-group, #shadow, #eyes, .creature-art { animation: none; }
+  .screen { animation: none; }
+  .xp-float { animation: xp-fade var(--t-ui) linear forwards; }
+  @keyframes xp-fade { from { opacity: 1; } to { opacity: 0; } }
+  .dot, .check__ring, .quest, .tab, .xp__fill {
+    transition-duration: var(--t-press);
+    transition-timing-function: linear;
+  }
+  .dot.on, .check.on .check__ring { transform: none; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .sheet { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+.badge {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #ff8fb122;
+  border: 1px solid var(--danger-line);
+  color: var(--blush);
+  font-size: var(--size-small);
+  font-weight: 700;
+}
+
+.habit-row__time {
+  position: relative;
+  margin-left: auto;
+  font-size: var(--size-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+/* ---- attunement blend (You screen) ---- */
+.attune { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 6px 10px; padding: 4px 0; }
+.attune__label { font-size: var(--size-small); color: var(--text-muted); }
+.attune__track { height: 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); overflow: hidden; }
+.attune__fill {
+  display: block; height: 100%; width: 100%; border-radius: 999px;
+  transform-origin: left center;
+  transition: transform var(--t-ui) var(--ease-out);
+}
+.attune__val { font-size: var(--size-small); font-variant-numeric: tabular-nums; color: var(--text-muted); min-width: 2ch; text-align: right; }
+
+/* ---- journey: heatmap + trends ---- */
+.heatmap {
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 3px;
+  padding: 4px 0;
+}
+.heat { aspect-ratio: 1; border-radius: 3px; background: var(--surface-raised); }
+.heat--0 { background: #1a1f3d; }
+.heat--1 { background: #21506b; }
+.heat--2 { background: #2f8a86; }
+.heat--3 { background: #46c69f; }
+.heat--4 { background: var(--mint); }
+
+.habit-stat__trend { font-weight: 800; font-size: 1.1rem; }
+.trend--up { color: var(--mint); }
+.trend--down { color: var(--blush); }
+.trend--flat { color: var(--text-muted); }
+
+/* ---- toast (errors, blocked actions) ---- */
+.toast {
+  position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom));
+  transform: translate(-50%, 12px);
+  z-index: var(--z-toast);
+  max-width: 88%;
+  padding: 10px 16px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: var(--size-small); font-weight: 600;
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--t-ui) var(--ease-out), transform var(--t-ui) var(--ease-out);
+}
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+.onboard__sub { text-align: center; color: var(--text-muted); font-size: var(--size-small); margin-top: -8px; }
+
+/* ---- home guest sign-in banner ---- */
+.signin-banner {
+  flex: none;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit; font-size: var(--size-small);
+  cursor: pointer;
+  transition: transform var(--t-press) var(--ease-out);
+}
+.signin-banner[hidden] { display: none; }
+.signin-banner:active { transform: scale(0.99); }
+.signin-banner__cta {
+  flex: none; font-weight: 800;
+  color: var(--brand-ink);
+}
+.card__id { font-size: 0.75rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* ---- welcome / login-first screen ---- */
+.welcome { align-content: center; text-align: center; gap: 14px; }
+.welcome__mark { width: 120px; height: 120px; margin: 0 auto; }
+.welcome__mark svg, .welcome__mark img { width: 100%; height: 100%; object-fit: contain; }
+.welcome__actions { display: grid; gap: 10px; margin-top: 12px; }
+.welcome .ask__btn { justify-self: center; }
+
+/* ---- destructive: delete account ---- */
+
+/* ---- weekly letter card ---- */
+.letter { border-color: #9d7bff44; background: linear-gradient(180deg, #9d7bff11, var(--surface)); }
+.letter__line { font-size: var(--size-body); line-height: 1.5; }
+.letter__line + .letter__line { margin-top: 6px; color: var(--text-muted); }
+
+/* ---- button row + rename input ---- */
+.btn-row { display: flex; gap: 8px; margin-top: 4px; }
+.btn-row > .btn { flex: 1 1 0; }
+.rename-input { font-size: 1.125rem; font-weight: 700; }
+
+/* ---- habit goal line ---- */
+.habit-row__text { display: flex; flex-direction: column; gap: 1px; }
+.habit-row__goal { font-size: 0.75rem; color: var(--text-muted); }
+
+/* ---- webhook code block ---- */
+.code {
+  font: 12px/1.5 ui-monospace, monospace;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 10px; margin: 4px 0; overflow-x: auto; white-space: pre; color: var(--text-muted);
+}
+
+/* ---- share button ---- */
+.share-btn { width: 100%; margin-top: 8px; }
+
+/* ---- world fireflies (perfect-day garnish, §3.3). Transform/opacity only; motion off on request. */
+.firefly {
+  animation: firefly-drift 4.2s var(--ease-in-out, ease-in-out) infinite;
+  animation-delay: var(--fd, 0s);
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+@keyframes firefly-drift {
+  0%, 100% { transform: translate(0, 0); opacity: 0.35; }
+  50%      { transform: translate(4px, -6px); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .firefly { animation: none; opacity: 0.8; }
+}
+
+
+}
+
+/* An anchor styled as a button still needs to sit on the same baseline as real buttons. */
+a.ask__btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+
+/* ---- weekday picker ---- */
+.days { display: flex; gap: 6px; }
+.day {
+  flex: 1 1 0;
+  min-height: var(--tap);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font: inherit; font-size: var(--size-small); font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--t-press) var(--ease-out), color var(--t-ui) var(--ease-out),
+              background-color var(--t-ui) var(--ease-out), border-color var(--t-ui) var(--ease-out);
+}
+.day:active { transform: scale(0.96); }
+.day.on {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  font-weight: 800;              /* weight carries it too, so colour is not the only signal */
+}
+.days-summary { font-size: var(--size-small); color: var(--text-muted); margin-top: 6px; }
+.habit-row__goal + .habit-row__days, .habit-row__days { display: block; }
+
+/* A secondary call to action: reads as a real button, without competing with the primary one. */
+
 /* ---- fourteen-day chart ---- */
 .chart { gap: 8px; }
 .chart svg { display: block; width: 100%; overflow: visible; }
@@ -328,15 +745,15 @@ body {
 .glyph.on .glyph-icon { color: var(--accent-ink); }
 
 /* ---- buttons ----
-   One family. Before this the app ran three: 999px pills (.cta, .ask__btn, .chip-btn), 12px
-   controls (.segment, .glyph) and 18px cards, all on screen together. */
+   One family, three jobs. Before this the screen mixed 999px pills, 12px segments and 18px cards,
+   and the secondary button set its label to --text-muted, which is the colour disabled controls
+   use: a button that reads as unavailable is the "naive" tell, not the shape. */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: var(--tap);
   padding: 0 18px;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
-  background: none;
   font: inherit; font-size: var(--size-body); font-weight: 700;
   text-decoration: none;
   cursor: pointer;
@@ -347,14 +764,11 @@ body {
 .btn:active { transform: scale(0.97); }
 .btn:disabled { opacity: 0.45; cursor: default; }
 .btn:disabled:active { transform: none; }
-.btn--block { width: 100%; }
 
-/* One filled button per group. Two of them side by side is two primaries, which is none. */
 .btn--primary { background: var(--brand); color: #fff; }
 .btn--primary:hover { background: var(--brand-strong); }
 
-/* Available, just not the main thing. Full text colour: --text-muted is what disabled controls
-   use, and a live action wearing it reads as switched off. */
+/* Full text colour, not muted: this is an available action, it just is not the main one. */
 .btn--secondary {
   background: var(--surface-raised);
   border-color: var(--border);
@@ -363,28 +777,15 @@ body {
 }
 .btn--secondary:hover { border-color: var(--brand-line); }
 
-.btn--quiet { color: var(--text-muted); font-size: var(--size-small); }
-.btn--quiet:hover { color: var(--text); }
-
-/* Destructive is deliberately the quietest thing here. A full-width outlined red button sitting
-   under the primary reads as a peer of it, and the one irreversible action on the screen should
-   never compete for the tap. It only fills once armed, when filling is the warning. */
 .btn--danger {
+  background: none;
+  border-color: var(--danger-line);
   color: var(--danger);
-  border-color: transparent;
   font-size: var(--size-small);
 }
-.btn--danger:hover { border-color: var(--danger-line); }
-.btn--danger--armed {
-  background: var(--danger-soft);
-  border-color: var(--danger);
-  color: var(--danger);
-}
+.btn--danger--armed { background: var(--danger-soft); border-color: var(--danger); }
 
-/* Siblings in a row share the width. This is the uniformity rule: one button shrink-wrapping its
-   label beside a full-width neighbour is what made the account card look unfinished. */
-.btn-row { display: flex; gap: 8px; margin-top: 4px; }
-.btn-row > .btn { flex: 1 1 0; }
+.btn--primary.share-btn { width: 100%; margin-top: 8px; }
 
 /* ---- folded section ----
    The webhook is a real feature and a rare one. As a full card it cost the same weight as the
@@ -404,3 +805,62 @@ body {
 }
 .card--fold[open] > summary::after { transform: rotate(-135deg) translate(-2px, -2px); }
 .card--fold[open] { gap: 8px; }
+
+/* ---- buttons ----
+   One family, four jobs, on the system radius. The app previously ran three at once: 999px pills
+   (.cta, .ask__btn, .chip-btn), 12px controls and 18px cards, all on screen together. */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: var(--tap);
+  padding: 0 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: none;
+  font: inherit; font-size: var(--size-body); font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--t-press) var(--ease-out),
+              background-color var(--t-ui) var(--ease-out),
+              border-color var(--t-ui) var(--ease-out);
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.btn:disabled:active { transform: none; }
+.btn--block { width: 100%; }
+
+/* One filled button per group. Two side by side is two primaries, which is none. */
+.btn--primary { background: var(--brand); color: #fff; }
+.btn--primary:hover { background: var(--brand-strong); }
+
+/* Available, just not the main thing. Full text colour: --text-muted is what disabled controls
+   use, and a live action wearing it reads as switched off. */
+.btn--secondary {
+  background: var(--surface-raised);
+  border-color: var(--border);
+  color: var(--text);
+  font-size: var(--size-small);
+}
+.btn--secondary:hover { border-color: var(--brand-line); }
+
+.btn--quiet { color: var(--text-muted); font-size: var(--size-small); }
+.btn--quiet:hover { color: var(--text); }
+
+/* Destructive is deliberately the quietest control here. A full-width outlined red button under
+   the primary reads as its peer, and the one irreversible action should not compete for the tap.
+   It fills only once armed, when the fill is the warning. */
+.btn--danger { color: var(--danger); border-color: transparent; font-size: var(--size-small); }
+.btn--danger:hover { border-color: var(--danger-line); }
+.btn--danger--armed { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+
+/* ---- account / Google sign-in ---- */
+.btn--google {
+  background: #ffffff;
+  color: #1f1f1f;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+}
+.btn--google::before {
+  content: '';
+  width: 18px; height: 18px;
+  /* Google 'G', inlined as a data URI so the CSP-safe bundle needs no external asset. */
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="%234285F4" d="M45 24c0-1.6-.1-3.1-.4-4.6H24v9.1h11.8c-.5 2.7-2 5-4.3 6.6v5.5h7C42.6 36.7 45 30.9 45 24z"/><path fill="%2334A853" d="M24 46c5.8 0 10.6-1.9 14.2-5.2l-7-5.5c-1.9 1.3-4.4 2.1-7.2 2.1-5.5 0-10.2-3.7-11.9-8.7H5v5.6C8.6 41.1 15.7 46 24 46z"/><path fill="%23FBBC05" d="M12.1 28.7c-.4-1.3-.7-2.7-.7-4.7s.3-3.4.7-4.7v-5.6H5C3.1 17.1 2 20.4 2 24s1.1 6.9 3 9.3l7.1-4.6z"/><path fill="%23EA4335" d="M24 11.4c3.1 0 5.9 1.1 8.1 3.2l6-6C34.5 5.1 29.8 3 24 3 15.7 3 8.6 7.9 5 15.3l7.1 5.6c1.7-5 6.4-8.7 11.9-8.7z"/></svg>') center/contain no-repeat;
+}

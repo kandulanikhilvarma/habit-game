@@ -19,7 +19,7 @@ export function runWelcome(host, { onSignIn } = {}) {
       <h1 class="onboard__title">Kumo</h1>
       <p class="onboard__sub">A creature that grows from the habits you actually keep.</p>
       <div class="welcome__actions">
-        <button class="btn btn--primary btn--block" id="welcome-signin">Sign in with Google</button>
+        <button class="btn btn--google btn--block" id="welcome-signin">Sign in with Google</button>
         <button class="btn btn--quiet btn--block" id="welcome-guest">Continue as guest</button>
       </div>
     </div>`;

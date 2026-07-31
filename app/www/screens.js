@@ -278,7 +278,7 @@ function accountBlock(identity) {
   if (identity.anonymous) {
     return `
       <p class="card__meta">Sign in to keep your creature safe across devices.</p>
-      <button class="btn btn--primary btn--block" id="google-signin">Sign in with Google</button>`;
+      <button class="btn btn--google btn--block" id="google-signin">Sign in with Google</button>`;
   }
   // Show the name as the heading; only add the email underneath when it is a distinct second line.
   const heading = identity.name || identity.email || 'Signed in';
