@@ -1,4 +1,4 @@
-package app.kumo.habitgame;
+package app.bud.habitgame;
 
 import com.getcapacitor.BridgeActivity;
 
