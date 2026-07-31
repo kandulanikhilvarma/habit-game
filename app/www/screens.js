@@ -58,12 +58,9 @@ export function renderJourney(host, state) {
 
     ${memoriesMarkup(notes, state.day.date)}
 
-    ${log.length >= 21 ? `<h3 class="screen__sub">The long view</h3>${heatmapMarkup(heatmap(log, { days: 84 }))}` : ''}
-
     ${awardsMarkup(awardBoard(state))}
 
-    ${bestHourMarkup(bestHourInsight(log))}
-    ${weekdayMarkup(weekdayWeekendSplit(log), log.length)}
+    ${deeperMarkup(log, state)}
 
     <h3 class="screen__sub">Per habit</h3>
     <ul class="habit-stats">
@@ -200,6 +197,22 @@ function weekOverWeekMarkup(cells) {
 
 // Earned awards, then the single closest rung of each ladder. Seeing the next one, and how near
 // it is, is what brings someone back; a wall of locked medals just lists what you have not done.
+// The long view and the two conditions insights are read occasionally, not daily. Left open they
+// added most of a screen of scrolling to the part people visit for the week they just had.
+function deeperMarkup(log, state) {
+  const inner = [
+    log.length >= 21 ? heatmapMarkup(heatmap(log, { days: 84 })) : '',
+    bestHourMarkup(bestHourInsight(log)),
+    weekdayMarkup(weekdayWeekendSplit(log), log.length),
+  ].filter(Boolean).join('');
+  if (!inner) return '';
+  return `
+    <details class="card card--fold">
+      <summary class="card__label">The longer view</summary>
+      ${inner}
+    </details>`;
+}
+
 function awardsMarkup({ earned, next }) {
   if (!earned.length && !next.length) return '';
   return `
