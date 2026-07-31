@@ -66,7 +66,18 @@ Rules that hold the uniformity:
 
 ## Type
 
-Nunito, self-hosted, three sizes (`--size-title` 1.5rem, `--size-body` 1rem floor, `--size-small` 0.875rem). Weight carries emphasis. Gradient text is not used anywhere.
+**Figtree**, variable 400–800, self-hosted (`assets/fonts/`, SIL OFL 1.1, 30 KB across two subsets).
+Three sizes: `--size-title` 1.5rem, `--size-body` 1rem floor, `--size-small` 0.875rem. Weight
+carries emphasis; gradient text is not used anywhere.
+
+`--font` named Nunito from Gate 0 with **no `@font-face` behind it**, so every screen built until
+now actually rendered in system sans. Self-hosted rather than a CDN call: the app has to work
+offline and inside a WebView, and a font request that fails leaves the interface in a fallback
+nobody chose.
+
+The share card embeds the same face as a base64 `@font-face` inside its SVG. The card rasterises
+from a Blob and cannot see the page's webfont, so without embedding, the one artifact that leaves
+the app renders in whatever sans the renderer defaults to.
 
 ## Motion
 
