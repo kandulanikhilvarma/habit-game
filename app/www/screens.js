@@ -314,7 +314,7 @@ export function renderYou(host, state, identity = { anonymous: true }) {
       <p class="card__label">Account</p>
       ${accountBlock(identity)}
       <div class="btn-row">
-        <button class="btn btn--secondary" id="export-data">Download my data</button>
+        ${identity.anonymous ? '' : '<button class="btn btn--secondary" id="export-data">Download my data</button>'}
         <button class="btn btn--secondary" id="send-feedback">Send feedback</button>
       </div>
       ${identity.anonymous
