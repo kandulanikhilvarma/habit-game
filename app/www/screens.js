@@ -6,7 +6,7 @@ import { heatmap, successRate, trend, bestHourInsight, weekdayWeekendSplit, hour
 import { weeklyLetter } from './letter.js';
 import { SPECIES, LINEAGE_STYLE } from './creature.js';
 import { scheduleLabel } from './schedule.js';
-import { habitGlyph } from './icons.js';
+import { icons, habitIcons, habitGlyph } from './icons.js';
 import { awardBoard } from './achievements.js';
 
 const TREND_ICON = { up: '↗', down: '↘', flat: '→' };
@@ -213,6 +213,14 @@ function deeperMarkup(log, state) {
     </details>`;
 }
 
+// Each ladder gets its own glyph so a shelf of discs is readable at a glance without reading a
+// single label.
+const AWARD_GLYPH = { ...habitIcons, ...icons };
+const AWARD_ICON = {
+  start: 'check', volume: 'chart', streak: 'flame',
+  growth: 'lotus', glade: 'moon', perfect: 'star', return: 'sun',
+};
+
 function awardsMarkup({ earned, next }) {
   if (!earned.length && !next.length) return '';
   return `
@@ -220,8 +228,8 @@ function awardsMarkup({ earned, next }) {
     <div class="card awards">
       ${earned.length ? `<div class="awards__grid">
         ${earned.map((a) => `
-          <span class="award is-earned" title="${escapeAttr(a.note)}">
-            <span class="award__mark" aria-hidden="true"></span>
+          <span class="award is-earned" data-tier="${a.tier}" title="${escapeAttr(a.note)}">
+            <span class="award__mark" aria-hidden="true">${AWARD_GLYPH[AWARD_ICON[a.tier]] ?? icons.star}</span>
             <span class="award__name">${escapeHtml(a.name)}</span>
           </span>`).join('')}
       </div>` : `<p class="card__meta">Complete a habit and your first award lands here.</p>`}
