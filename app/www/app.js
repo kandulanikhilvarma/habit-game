@@ -86,6 +86,14 @@ function render() {
 
   if (screen === 'journey') {
     renderJourney(el('screen-journey'), state);
+    el('chart-view')?.querySelectorAll('[data-chart]').forEach((b) => {
+      b.addEventListener('click', () => {
+        state.settings.chart = b.dataset.chart;
+        save(state);
+        haptic('light');
+        render();
+      });
+    });
     const memory = el('memory');
     // `change` only fires on blur, and on a phone you often type a note and then background the app
     // or tap straight to another tab — the keystrokes were being thrown away. Persist as they type.

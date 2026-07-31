@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   heatmap, successRate, trend, hourHistogram, bestHourInsight,
-  weekdayWeekendSplit, hourLabel,
+  weekdayWeekendSplit, hourLabel, habitGrid, rollingRate,
 } from './analytics.js';
 
 const DAY = 86400000;
@@ -138,4 +138,52 @@ test('missing a scheduled day still shows below 100%', () => {
   const log = [{ hid: 'gym', date: '2026-07-27' }];   // one Monday only
   const r = successRate(log, gym, { windowDays: 14, now });
   assert.ok(r.rate > 0 && r.rate < 1, `partial record, got ${r.rate}`);
+});
+
+test('habitGrid: one row per habit, one cell per day, marking what was done', () => {
+  const now = Date.parse('2026-07-29T12:00:00');
+  const habits = [{ id: 'a' }, { id: 'b' }];
+  const log = [{ hid: 'a', date: dayKey(now) }];
+  const grid = habitGrid(log, habits, { days: 5, now });
+  assert.equal(grid.length, 2);
+  assert.equal(grid[0].cells.length, 5);
+  assert.equal(grid[0].cells.at(-1).done, true, "today's completion is marked");
+  assert.equal(grid[1].cells.at(-1).done, false, 'the other habit is not');
+});
+
+test('habitGrid: a rest day is flagged, so it never reads as a miss', () => {
+  // 2026-07-27 is a Monday; a Tue/Thu habit is not due that day.
+  const now = Date.parse('2026-07-27T12:00:00');
+  const grid = habitGrid([], [{ id: 'gym', days: [2, 4] }], { days: 1, now });
+  assert.equal(grid[0].cells[0].scheduled, false);
+  assert.equal(grid[0].cells[0].done, false);
+});
+
+test('rollingRate: a perfect trailing window reads 100%', () => {
+  const now = Date.parse('2026-07-29T12:00:00');
+  const habits = [{ id: 'a' }];
+  const log = [];
+  for (let i = 0; i < 20; i += 1) log.push({ hid: 'a', date: dayKey(now - i * 86400000) });
+  const pts = rollingRate(log, habits, { days: 5, window: 7, now });
+  assert.equal(pts.length, 5);
+  assert.equal(pts.at(-1).rate, 1);
+});
+
+test('rollingRate: adding a habit does not fake an improvement', () => {
+  // A rate, not a count: two habits both half-kept read the same as one habit half-kept.
+  const now = Date.parse('2026-07-29T12:00:00');
+  const mk = (ids) => {
+    const log = [];
+    for (let i = 0; i < 8; i += 2) for (const id of ids) log.push({ hid: id, date: dayKey(now - i * 86400000) });
+    return log;
+  };
+  const one = rollingRate(mk(['a']), [{ id: 'a' }], { days: 1, window: 7, now }).at(-1).rate;
+  const two = rollingRate(mk(['a', 'b']), [{ id: 'a' }, { id: 'b' }], { days: 1, window: 7, now }).at(-1).rate;
+  assert.equal(one, two);
+});
+
+test('rollingRate: no habits due means no false zero-rate', () => {
+  const now = Date.parse('2026-07-29T12:00:00');
+  const pts = rollingRate([], [], { days: 3, window: 7, now });
+  assert.ok(pts.every((p) => p.due === 0));
 });
