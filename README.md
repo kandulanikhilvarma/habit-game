@@ -1,8 +1,7 @@
 <div align="center">
-
-<img width="1983" height="793" alt="Budreadme" src="https://github.com/user-attachments/assets/89a89651-cc06-40c4-b3f9-b6630045b543" />
-
 # Bud
+  
+<img width="1983" height="793" alt="Budreadme" src="https://github.com/user-attachments/assets/89a89651-cc06-40c4-b3f9-b6630045b543" />
 
 **A habit tracker that refuses to punish you for missing a day.**
 
