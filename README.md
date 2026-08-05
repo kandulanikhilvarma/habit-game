@@ -152,7 +152,7 @@ Issues and PRs welcome. Two things to know before opening one:
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE).
+Apache 2.0  — see [LICENSE](LICENSE).
 
 The eleven creature images are original assets for this project and are **not** covered by the MIT
 grant. Fork the code freely; draw your own creatures.
